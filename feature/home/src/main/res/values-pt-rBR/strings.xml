@@ -1,0 +1,26 @@
+<resources>
+    <string name="home_title">Meu Companheiro de Carro</string>
+    <string name="settings">Configurações</string>
+    <string name="no_vehicle_selected">Nenhum veículo selecionado. Por favor, adicione um veículo nas configurações.</string>
+    <string name="settings_title">Configurações</string>
+    <string name="back">Voltar</string>
+    <string name="preferences">Preferências</string>
+    <string name="manage_garage">Gerenciar Garagem</string>
+    <string name="manage_garage_description">Adicione, edite ou exclua veículos e peças</string>
+    <string name="distance_unit">Unidade de Distância</string>
+    <string name="kilometers_km">Quilômetros (km)</string>
+    <string name="miles_mi">Milhas (mi)</string>
+    <string name="current_odometer">Odômetro Atual</string>
+    <string name="upcoming_maintenance">Próximas Manutenções</string>
+    <string name="due_in">Vence em %1$d %2$s</string>
+    <string name="overdue_by">Atrasado em %1$d %2$s</string>
+    <string name="mark_as_done">Marcar como concluído</string>
+    <string name="maintenance_title">Manutenção: %s</string>
+    <string name="maintenance_instruction">Insira a leitura atual do odômetro para marcar esta manutenção como concluída.</string>
+    <string name="current_odometer_label">Odômetro Atual (%s)</string>
+    <string name="odometer_error_min">Deve ser pelo menos a leitura atual (%d)</string>
+    <string name="confirm">Confirmar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="error_odometer_greater">O novo odômetro deve ser maior que a leitura atual</string>
+    <string name="error_unknown">Erro desconhecido</string>
+</resources>

@@ -1,0 +1,53 @@
+# Gradle and Build
+.gradle/
+build/
+**/build/
+captures/
+.externalNativeBuild
+.cxx/
+local.properties
+
+# Kotlin
+.kotlin/
+
+# Android Artifacts
+*.apk
+*.ap_
+*.aab
+*.dex
+*.class
+bin/
+gen/
+out/
+proguard/
+
+# IDE - IntelliJ IDEA / Android Studio
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/assetWizardSettings.xml
+.idea/dictionaries
+.idea/libraries
+.idea/caches
+.idea/shelf/
+.idea/navEditor.xml
+*.iml
+*.iws
+*.ipr
+.navigation/
+
+# Signing files
+*.jks
+*.keystore
+*.p12
+
+# Secrets
+google-services.json
+
+# Logs and Temporary files
+*.log
+*~
+.DS_Store
+
+# Agent and Project Specific
+.agent/
+.artifacts/

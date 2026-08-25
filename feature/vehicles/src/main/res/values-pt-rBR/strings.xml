@@ -1,0 +1,16 @@
+<resources>
+    <string name="garage_title">Garagem</string>
+    <string name="add_vehicle">Adicionar Veículo</string>
+    <string name="edit_vehicle">Editar Veículo</string>
+    <string name="vehicle_name_label">Nome</string>
+    <string name="vehicle_odometer_label">Odômetro (%s)</string>
+    <string name="confirm">Confirmar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="set_current">Definir como Atual</string>
+    <string name="edit">Editar</string>
+    <string name="delete">Excluir</string>
+    <string name="error_add_vehicle">Falha ao adicionar veículo</string>
+    <string name="error_update_vehicle">Falha ao atualizar veículo</string>
+    <string name="error_delete_vehicle">Falha ao excluir veículo</string>
+    <string name="error_set_current_vehicle">Falha ao definir veículo atual</string>
+</resources>

@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">My Car Companion</string>
+    <string name="garage_parts_title">Garage &amp; Parts</string>
+    <string name="back">Back</string>
+    <string name="select_vehicle_message">Select a vehicle to see its parts</string>
+</resources>

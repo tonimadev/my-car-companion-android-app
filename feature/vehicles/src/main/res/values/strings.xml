@@ -1,0 +1,16 @@
+<resources>
+    <string name="garage_title">Garage</string>
+    <string name="add_vehicle">Add Vehicle</string>
+    <string name="edit_vehicle">Edit Vehicle</string>
+    <string name="vehicle_name_label">Name</string>
+    <string name="vehicle_odometer_label">Odometer (%s)</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="set_current">Set Current</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="error_add_vehicle">Failed to add vehicle</string>
+    <string name="error_update_vehicle">Failed to update vehicle</string>
+    <string name="error_delete_vehicle">Failed to delete vehicle</string>
+    <string name="error_set_current_vehicle">Failed to set current vehicle</string>
+</resources>

@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Meu Companheiro de Carro</string>
+    <string name="garage_parts_title">Garagem &amp; Peças</string>
+    <string name="back">Voltar</string>
+    <string name="select_vehicle_message">Selecione um veículo para ver suas peças</string>
+</resources>

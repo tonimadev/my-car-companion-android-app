@@ -1,0 +1,9 @@
+package digital.tonima.mycarcompanion.core.data
+
+import digital.tonima.mycarcompanion.core.model.DistanceUnit
+import kotlinx.coroutines.flow.Flow
+
+interface UserPreferencesRepository {
+    val distanceUnit: Flow<DistanceUnit>
+    suspend fun setDistanceUnit(distanceUnit: DistanceUnit)
+}

@@ -1,0 +1,19 @@
+<resources>
+    <string name="parts_title_format">Peças: %s</string>
+    <string name="parts_title">Peças</string>
+    <string name="back">Voltar</string>
+    <string name="add_part">Adicionar Peça</string>
+    <string name="edit_part">Editar Peça</string>
+    <string name="part_name_label">Nome da Peça</string>
+    <string name="part_lifespan_label">Vida útil (%s)</string>
+    <string name="part_last_maintenance_label">Odômetro da Última Manutenção (%s)</string>
+    <string name="confirm">Confirmar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="lifespan_format">Vida útil: %1$d %2$s</string>
+    <string name="last_maint_format">Última Mant.: %1$d %2$s</string>
+    <string name="edit">Editar</string>
+    <string name="delete">Excluir</string>
+    <string name="error_add_part">Falha ao adicionar peça</string>
+    <string name="error_update_part">Falha ao atualizar peça</string>
+    <string name="error_delete_part">Falha ao excluir peça</string>
+</resources>

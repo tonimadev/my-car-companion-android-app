@@ -1,0 +1,147 @@
+package digital.tonima.mycarcompanion.feature.home
+
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
+import digital.tonima.mycarcompanion.core.model.DistanceUnit
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
+    private val userPreferencesRepository: UserPreferencesRepository
+) : ViewModel() {
+    val distanceUnit: StateFlow<DistanceUnit> = userPreferencesRepository.distanceUnit
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DistanceUnit.KM)
+
+    fun setDistanceUnit(unit: DistanceUnit) {
+        viewModelScope.launch {
+            userPreferencesRepository.setDistanceUnit(unit)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsScreen(
+    onBack: () -> Unit,
+    onNavigateToGarage: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel()
+) {
+    val distanceUnit by viewModel.distanceUnit.collectAsStateWithLifecycle()
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = { Text(stringResource(R.string.settings_title)) },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+        ) {
+            Text(
+                text = stringResource(R.string.preferences),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+            
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.manage_garage)) },
+                supportingContent = { Text(stringResource(R.string.manage_garage_description)) },
+                leadingContent = { Icon(Icons.Rounded.DirectionsCar, contentDescription = null) },
+                modifier = Modifier.selectable(selected = false, onClick = onNavigateToGarage)
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Text(
+                text = stringResource(R.string.distance_unit),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+            
+            UnitOption(
+                text = stringResource(R.string.kilometers_km),
+                selected = distanceUnit == DistanceUnit.KM,
+                onClick = { viewModel.setDistanceUnit(DistanceUnit.KM) }
+            )
+            
+            UnitOption(
+                text = stringResource(R.string.miles_mi),
+                selected = distanceUnit == DistanceUnit.MILES,
+                onClick = { viewModel.setDistanceUnit(DistanceUnit.MILES) }
+            )
+            
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        }
+    }
+}
+
+@Composable
+fun UnitOption(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.RadioButton
+            )
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick = null // handled by row selectable
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.padding(start = 16.dp)
+        )
+    }
+}

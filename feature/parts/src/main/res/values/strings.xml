@@ -1,0 +1,19 @@
+<resources>
+    <string name="parts_title_format">Parts: %s</string>
+    <string name="parts_title">Parts</string>
+    <string name="back">Back</string>
+    <string name="add_part">Add Part</string>
+    <string name="edit_part">Edit Part</string>
+    <string name="part_name_label">Part Name</string>
+    <string name="part_lifespan_label">Lifespan (%s)</string>
+    <string name="part_last_maintenance_label">Last Maintenance Odometer (%s)</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+    <string name="lifespan_format">Lifespan: %1$d %2$s</string>
+    <string name="last_maint_format">Last Maint: %1$d %2$s</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="error_add_part">Failed to add part</string>
+    <string name="error_update_part">Failed to update part</string>
+    <string name="error_delete_part">Failed to delete part</string>
+</resources>
