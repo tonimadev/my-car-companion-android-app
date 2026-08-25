@@ -23,4 +23,7 @@
     <string name="cancel">Cancelar</string>
     <string name="error_odometer_greater">O novo odômetro deve ser maior que a leitura atual</string>
     <string name="error_unknown">Erro desconhecido</string>
+    <string name="update_odometer">Atualizar Odômetro</string>
+    <string name="edit_odometer">Editar Odômetro</string>
+    <string name="predicted_date">Previsto para: %s</string>
 </resources>

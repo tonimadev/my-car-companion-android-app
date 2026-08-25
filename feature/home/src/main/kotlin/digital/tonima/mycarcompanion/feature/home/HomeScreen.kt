@@ -40,6 +40,7 @@ internal fun HomeScreen(
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedPartForMaintenance by remember { mutableStateOf<Part?>(null) }
+    var showUpdateOdometerDialog by remember { mutableStateOf(false) }
 
     // Handle events
     LaunchedEffect(uiState.events) {
@@ -91,11 +92,13 @@ internal fun HomeScreen(
                     OdometerDisplay(
                         odometer = vehicle.currentOdometer,
                         unit = uiState.distanceUnit,
+                        onEditClick = { showUpdateOdometerDialog = true },
                         modifier = Modifier.padding(16.dp)
                     )
 
                     MaintenanceList(
                         parts = uiState.parts,
+                        predictions = uiState.predictions,
                         currentOdometer = vehicle.currentOdometer,
                         unit = uiState.distanceUnit,
                         onPerformMaintenance = { selectedPartForMaintenance = it },
@@ -124,6 +127,18 @@ internal fun HomeScreen(
                 selectedPartForMaintenance = null
             },
             onDismiss = { selectedPartForMaintenance = null }
+        )
+    }
+
+    if (showUpdateOdometerDialog) {
+        UpdateOdometerDialog(
+            currentOdometer = uiState.currentVehicle?.currentOdometer ?: 0.0,
+            unit = uiState.distanceUnit,
+            onConfirm = { newOdometer ->
+                onIntent(HomeUiIntent.UpdateOdometer(newOdometer))
+                showUpdateOdometerDialog = false
+            },
+            onDismiss = { showUpdateOdometerDialog = false }
         )
     }
 }

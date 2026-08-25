@@ -7,6 +7,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -62,6 +63,7 @@ fun VehicleSelector(
 fun OdometerDisplay(
     odometer: Double,
     unit: DistanceUnit,
+    onEditClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -71,30 +73,43 @@ fun OdometerDisplay(
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         )
     ) {
-        Column(
-            modifier = Modifier
-                .padding(24.dp)
-                .fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = stringResource(R.string.current_odometer),
-                style = MaterialTheme.typography.labelLarge
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                verticalAlignment = Alignment.Bottom
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .padding(24.dp)
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = unit.fromKm(odometer).roundToInt().toString(),
-                    style = MaterialTheme.typography.displayLarge,
-                    fontWeight = FontWeight.Bold
+                    text = stringResource(R.string.current_odometer),
+                    style = MaterialTheme.typography.labelLarge
                 )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = unit.name.lowercase(),
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.padding(bottom = 12.dp)
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Text(
+                        text = unit.fromKm(odometer).roundToInt().toString(),
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = unit.name.lowercase(),
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(bottom = 12.dp)
+                    )
+                }
+            }
+            IconButton(
+                onClick = onEditClick,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(8.dp)
+            ) {
+                Icon(
+                    Icons.Rounded.Edit,
+                    contentDescription = stringResource(R.string.edit_odometer)
                 )
             }
         }
@@ -104,6 +119,7 @@ fun OdometerDisplay(
 @Composable
 fun MaintenanceList(
     parts: List<Part>,
+    predictions: Map<Long, kotlinx.datetime.Instant?>,
     currentOdometer: Double,
     unit: DistanceUnit,
     onPerformMaintenance: (Part) -> Unit,
@@ -124,6 +140,7 @@ fun MaintenanceList(
         items(parts, key = { it.id }) { part ->
             MaintenanceItem(
                 part = part,
+                prediction = predictions[part.id],
                 currentOdometer = currentOdometer,
                 unit = unit,
                 onPerformMaintenance = { onPerformMaintenance(part) }
@@ -135,6 +152,7 @@ fun MaintenanceList(
 @Composable
 fun MaintenanceItem(
     part: Part,
+    prediction: kotlinx.datetime.Instant?,
     currentOdometer: Double,
     unit: DistanceUnit,
     onPerformMaintenance: () -> Unit,
@@ -174,6 +192,14 @@ fun MaintenanceItem(
                         style = MaterialTheme.typography.bodyMedium,
                         color = color
                     )
+                    if (prediction != null) {
+                        Text(
+                            text = stringResource(R.string.predicted_date, prediction.formatToShortDate()),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
                 }
                 IconButton(onClick = onPerformMaintenance) {
                     Icon(
@@ -237,6 +263,53 @@ fun MaintenanceDialog(
                     } 
                 },
                 enabled = !isError
+            ) {
+                Text(stringResource(R.string.confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
+}
+
+@Composable
+fun UpdateOdometerDialog(
+    currentOdometer: Double, // in KM
+    unit: DistanceUnit,
+    onConfirm: (Double) -> Unit, // in KM
+    onDismiss: () -> Unit
+) {
+    val currentOdometerInUnit = unit.fromKm(currentOdometer)
+    var odometerText by rememberSaveable { mutableStateOf(currentOdometerInUnit.roundToInt().toString()) }
+    val isValid = odometerText.toDoubleOrNull() != null
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(text = stringResource(R.string.update_odometer)) },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = odometerText,
+                    onValueChange = { odometerText = it },
+                    label = { Text(stringResource(R.string.current_odometer_label, unit.name)) },
+                    isError = !isValid,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    odometerText.toDoubleOrNull()?.let {
+                        onConfirm(unit.toKm(it))
+                    }
+                },
+                enabled = isValid
             ) {
                 Text(stringResource(R.string.confirm))
             }

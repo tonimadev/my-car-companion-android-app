@@ -41,6 +41,7 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     
     implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.kotlinx.datetime)
     
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

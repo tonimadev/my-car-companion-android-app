@@ -51,6 +51,14 @@ fun VehicleEditDialog(
                     label = { Text(stringResource(R.string.vehicle_odometer_label, unit.name)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
+                if (vehicle == null) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.default_parts_added_note),
+                        style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.secondary
+                    )
+                }
             }
         },
         confirmButton = {

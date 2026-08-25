@@ -21,6 +21,7 @@ android {
 
 dependencies {
     implementation(project(":core:model"))
+    implementation(libs.kotlinx.datetime)
     
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="part_engine_oil">Óleo do Motor</string>
+    <string name="part_oil_filter">Filtro de Óleo</string>
+    <string name="part_air_filter">Filtro de Ar</string>
+    <string name="part_fuel_filter">Filtro de Combustível</string>
+    <string name="part_cabin_filter">Filtro de Cabine</string>
+    <string name="part_spark_plugs">Velas de Ignição</string>
+    <string name="part_timing_belt">Correia Dentada</string>
+    <string name="part_brake_pads">Pastilhas de Freio</string>
+    <string name="part_brake_fluid">Fluido de Freio</string>
+    <string name="part_coolant">Líquido de Arrefecimento</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="part_engine_oil">Engine Oil</string>
+    <string name="part_oil_filter">Oil Filter</string>
+    <string name="part_air_filter">Air Filter</string>
+    <string name="part_fuel_filter">Fuel Filter</string>
+    <string name="part_cabin_filter">Cabin Filter</string>
+    <string name="part_spark_plugs">Spark Plugs</string>
+    <string name="part_timing_belt">Timing Belt</string>
+    <string name="part_brake_pads">Brake Pads</string>
+    <string name="part_brake_fluid">Brake Fluid</string>
+    <string name="part_coolant">Coolant</string>
+</resources>

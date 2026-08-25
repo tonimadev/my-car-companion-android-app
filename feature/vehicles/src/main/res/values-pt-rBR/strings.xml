@@ -13,4 +13,5 @@
     <string name="error_update_vehicle">Falha ao atualizar veículo</string>
     <string name="error_delete_vehicle">Falha ao excluir veículo</string>
     <string name="error_set_current_vehicle">Falha ao definir veículo atual</string>
+    <string name="default_parts_added_note">Itens de manutenção padrão serão adicionados automaticamente.</string>
 </resources>

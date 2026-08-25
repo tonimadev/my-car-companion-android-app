@@ -13,4 +13,5 @@
     <string name="error_update_vehicle">Failed to update vehicle</string>
     <string name="error_delete_vehicle">Failed to delete vehicle</string>
     <string name="error_set_current_vehicle">Failed to set current vehicle</string>
+    <string name="default_parts_added_note">Standard maintenance items will be added automatically.</string>
 </resources>

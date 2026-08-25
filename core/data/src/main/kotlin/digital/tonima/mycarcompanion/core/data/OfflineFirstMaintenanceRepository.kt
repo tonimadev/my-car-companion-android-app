@@ -1,0 +1,27 @@
+package digital.tonima.mycarcompanion.core.data
+
+import digital.tonima.mycarcompanion.core.database.MaintenanceDao
+import digital.tonima.mycarcompanion.core.database.asEntity
+import digital.tonima.mycarcompanion.core.database.asExternalModel
+import digital.tonima.mycarcompanion.core.model.MaintenanceRecord
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+
+class OfflineFirstMaintenanceRepository @Inject constructor(
+    private val maintenanceDao: MaintenanceDao
+) : MaintenanceRepository {
+    override fun getMaintenanceRecordsForPart(partId: Long): Flow<List<MaintenanceRecord>> =
+        maintenanceDao.getMaintenanceRecordsForPart(partId).map { entities ->
+            entities.map { it.asExternalModel() }
+        }
+
+    override suspend fun insertMaintenanceRecord(record: MaintenanceRecord): Long =
+        maintenanceDao.insertMaintenanceRecord(record.asEntity())
+
+    override suspend fun updateMaintenanceRecord(record: MaintenanceRecord) =
+        maintenanceDao.updateMaintenanceRecord(record.asEntity())
+
+    override suspend fun deleteMaintenanceRecord(record: MaintenanceRecord) =
+        maintenanceDao.deleteMaintenanceRecord(record.asEntity())
+}

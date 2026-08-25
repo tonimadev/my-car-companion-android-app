@@ -32,6 +32,16 @@ interface DataModule {
         repository: OfflineFirstPartRepository
     ): PartRepository
 
+    @Binds
+    fun bindsMaintenanceRepository(
+        repository: OfflineFirstMaintenanceRepository
+    ): MaintenanceRepository
+
+    @Binds
+    fun bindsOdometerRepository(
+        repository: OfflineFirstOdometerRepository
+    ): OdometerRepository
+
     companion object {
         @Provides
         @Singleton
