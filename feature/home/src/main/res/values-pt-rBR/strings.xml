@@ -27,4 +27,5 @@
     <string name="edit_odometer">Editar Odômetro</string>
     <string name="predicted_date">Previsto para: %s</string>
     <string name="add_vehicle_button">Adicionar Veículo</string>
+    <string name="no_vehicle_selected_subtext">Adicione um veículo à sua garagem para começar a rastrear manutenções e quilometragem.</string>
 </resources>
