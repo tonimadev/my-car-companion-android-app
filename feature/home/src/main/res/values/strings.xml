@@ -26,4 +26,5 @@
     <string name="update_odometer">Update Odometer</string>
     <string name="edit_odometer">Edit Odometer</string>
     <string name="predicted_date">Predicted: %s</string>
+    <string name="add_vehicle_button">Add a Vehicle</string>
 </resources>

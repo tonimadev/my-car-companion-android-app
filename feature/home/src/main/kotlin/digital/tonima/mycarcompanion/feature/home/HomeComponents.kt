@@ -1,5 +1,8 @@
 package digital.tonima.mycarcompanion.feature.home
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -68,6 +71,7 @@ fun OdometerDisplay(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -90,7 +94,9 @@ fun OdometerDisplay(
                 ) {
                     Text(
                         text = unit.fromKm(odometer).roundToInt().toString(),
-                        style = MaterialTheme.typography.displayLarge,
+                        style = MaterialTheme.typography.displayLarge.copy(
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        ),
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.width(8.dp))
@@ -116,6 +122,7 @@ fun OdometerDisplay(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MaintenanceList(
     parts: List<Part>,
@@ -143,7 +150,8 @@ fun MaintenanceList(
                 prediction = predictions[part.id],
                 currentOdometer = currentOdometer,
                 unit = unit,
-                onPerformMaintenance = { onPerformMaintenance(part) }
+                onPerformMaintenance = { onPerformMaintenance(part) },
+                modifier = Modifier.animateItem()
             )
         }
     }
@@ -159,8 +167,14 @@ fun MaintenanceItem(
     modifier: Modifier = Modifier
 ) {
     val remaining = (part.lastMaintenanceOdometer + part.lifeSpanMileage) - currentOdometer
-    val progress = (remaining / part.lifeSpanMileage).coerceIn(0.0, 1.0).toFloat()
+    val targetProgress = (remaining / part.lifeSpanMileage).coerceIn(0.0, 1.0).toFloat()
     
+    val animatedProgress by animateFloatAsState(
+        targetValue = targetProgress,
+        animationSpec = tween(durationMillis = 1000),
+        label = "progress_animation"
+    )
+
     val color = when {
         remaining < 500 -> MaterialTheme.colorScheme.error
         remaining < 2000 -> MaterialTheme.colorScheme.tertiary
@@ -168,7 +182,11 @@ fun MaintenanceItem(
     }
 
     ElevatedCard(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface,
+        )
     ) {
         Column(
             modifier = Modifier.padding(16.dp)
@@ -211,10 +229,13 @@ fun MaintenanceItem(
             }
             Spacer(modifier = Modifier.height(12.dp))
             LinearProgressIndicator(
-                progress = { 1f - progress },
-                modifier = Modifier.fillMaxWidth(),
+                progress = { 1f - animatedProgress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp),
                 color = color,
-                trackColor = color.copy(alpha = 0.2f)
+                trackColor = color.copy(alpha = 0.2f),
+                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
             )
         }
     }
