@@ -12,13 +12,12 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Part
 import kotlin.math.roundToInt
@@ -28,7 +27,7 @@ fun PartEditDialog(
     part: Part? = null,
     unit: DistanceUnit,
     onDismiss: () -> Unit,
-    onConfirm: (String, Double, Double) -> Unit
+    onConfirm: (name: String, lifeSpan: Double, lastMaintenance: Double, lifeSpanMonths: Int?, lastMaintenanceDate: kotlinx.datetime.Instant?) -> Unit
 ) {
     var name by rememberSaveable { mutableStateOf(part?.name ?: "") }
     var lifeSpanStr by rememberSaveable { 
@@ -36,6 +35,9 @@ fun PartEditDialog(
     }
     var lastMaintenanceStr by rememberSaveable { 
         mutableStateOf(part?.lastMaintenanceOdometer?.let { unit.fromKm(it).roundToInt().toString() } ?: "") 
+    }
+    var lifeSpanMonthsStr by rememberSaveable {
+        mutableStateOf(part?.lifeSpanMonths?.toString() ?: "")
     }
 
     AlertDialog(
@@ -62,6 +64,13 @@ fun PartEditDialog(
                     label = { Text(stringResource(R.string.part_last_maintenance_label, unit.name)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                TextField(
+                    value = lifeSpanMonthsStr,
+                    onValueChange = { lifeSpanMonthsStr = it },
+                    label = { Text("Validade em meses (ex: 6 ou 12)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
             }
         },
         confirmButton = {
@@ -69,7 +78,15 @@ fun PartEditDialog(
                 onClick = {
                     val lifeSpanInUnit = lifeSpanStr.toDoubleOrNull() ?: 0.0
                     val lastMaintenanceInUnit = lastMaintenanceStr.toDoubleOrNull() ?: 0.0
-                    onConfirm(name, unit.toKm(lifeSpanInUnit), unit.toKm(lastMaintenanceInUnit))
+                    val lifeSpanMonths = lifeSpanMonthsStr.toIntOrNull()
+                    val lastDate = part?.lastMaintenanceDate ?: kotlinx.datetime.Instant.fromEpochMilliseconds(System.currentTimeMillis())
+                    onConfirm(
+                        name,
+                        unit.toKm(lifeSpanInUnit),
+                        unit.toKm(lastMaintenanceInUnit),
+                        lifeSpanMonths,
+                        if (lifeSpanMonths != null) lastDate else null
+                    )
                 },
                 enabled = name.isNotBlank() && 
                         lifeSpanStr.toDoubleOrNull() != null && 

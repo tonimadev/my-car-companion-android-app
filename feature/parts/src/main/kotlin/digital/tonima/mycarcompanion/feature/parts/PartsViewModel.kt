@@ -32,7 +32,13 @@ data class PartsState(
 )
 
 sealed interface PartsIntent {
-    data class AddPart(val name: String, val lifeSpan: Double, val lastMaintenance: Double) : PartsIntent
+    data class AddPart(
+        val name: String,
+        val lifeSpan: Double,
+        val lastMaintenance: Double,
+        val lifeSpanMonths: Int? = null,
+        val lastMaintenanceDate: kotlinx.datetime.Instant? = null
+    ) : PartsIntent
     data class UpdatePart(val part: Part) : PartsIntent
     data class DeletePart(val part: Part) : PartsIntent
 }
@@ -88,13 +94,25 @@ class PartsViewModel @AssistedInject constructor(
 
     fun handleIntent(intent: PartsIntent) {
         when (intent) {
-            is PartsIntent.AddPart -> addPart(intent.name, intent.lifeSpan, intent.lastMaintenance)
+            is PartsIntent.AddPart -> addPart(
+                intent.name,
+                intent.lifeSpan,
+                intent.lastMaintenance,
+                intent.lifeSpanMonths,
+                intent.lastMaintenanceDate
+            )
             is PartsIntent.UpdatePart -> updatePart(intent.part)
             is PartsIntent.DeletePart -> deletePart(intent.part)
         }
     }
 
-    private fun addPart(name: String, lifeSpan: Double, lastMaintenance: Double) {
+    private fun addPart(
+        name: String,
+        lifeSpan: Double,
+        lastMaintenance: Double,
+        lifeSpanMonths: Int?,
+        lastMaintenanceDate: kotlinx.datetime.Instant?
+    ) {
         viewModelScope.launch {
             try {
                 partRepository.insertPart(
@@ -102,7 +120,9 @@ class PartsViewModel @AssistedInject constructor(
                         vehicleId = vehicleId,
                         name = name,
                         lifeSpanMileage = lifeSpan,
-                        lastMaintenanceOdometer = lastMaintenance
+                        lastMaintenanceOdometer = lastMaintenance,
+                        lifeSpanMonths = lifeSpanMonths,
+                        lastMaintenanceDate = lastMaintenanceDate
                     )
                 )
             } catch (e: Exception) {

@@ -23,6 +23,9 @@ class OfflineFirstFuelRepository @Inject constructor(
     override fun getPreviousFuelRecord(vehicleId: Long, currentDate: Long): Flow<FuelRecord?> =
         fuelDao.getPreviousFuelRecord(vehicleId, currentDate).map { it?.asExternalModel() }
 
+    override fun getTotalFuelCostForVehicle(vehicleId: Long): Flow<Double?> =
+        fuelDao.getTotalFuelCostForVehicle(vehicleId)
+
     override suspend fun insertFuelRecord(record: FuelRecord): Long =
         fuelDao.insertFuelRecord(record.asEntity())
 

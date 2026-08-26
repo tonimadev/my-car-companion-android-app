@@ -6,12 +6,14 @@ import android.content.Context
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.mycarcompanion.core.data.FuelRepository
+import digital.tonima.mycarcompanion.core.data.MaintenanceRepository
 import digital.tonima.mycarcompanion.core.data.PartRepository
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.data.OdometerRepository
 import digital.tonima.mycarcompanion.core.data.PredictionEngine
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
+import digital.tonima.mycarcompanion.core.model.MaintenanceRecord
 import digital.tonima.mycarcompanion.core.model.OdometerRecord
 import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
@@ -27,12 +29,15 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.time.Clock
 
 data class HomeUiState(
     val vehicles: List<Vehicle> = emptyList(),
     val currentVehicle: Vehicle? = null,
     val parts: List<Part> = emptyList(),
     val predictions: Map<Long, kotlinx.datetime.Instant?> = emptyMap(),
+    val totalMaintenanceCost: Double = 0.0,
+    val totalFuelCost: Double = 0.0,
     val averageFuelConsumption: Double? = null,
     val distanceUnit: DistanceUnit = DistanceUnit.KM,
     val isLoading: Boolean = false,
@@ -41,7 +46,12 @@ data class HomeUiState(
 
 sealed interface HomeUiIntent {
     data class SelectVehicle(val vehicleId: Long) : HomeUiIntent
-    data class PerformMaintenance(val part: Part, val newOdometer: Double) : HomeUiIntent
+    data class PerformMaintenance(
+        val part: Part,
+        val newOdometer: Double,
+        val cost: Double = 0.0,
+        val notes: String = ""
+    ) : HomeUiIntent
     data class UpdateOdometer(val newMileage: Double) : HomeUiIntent
     data object NavigateToSettings : HomeUiIntent
     data object NavigateToFuel : HomeUiIntent
@@ -61,6 +71,7 @@ class HomeViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val vehicleRepository: VehicleRepository,
     private val partRepository: PartRepository,
+    private val maintenanceRepository: MaintenanceRepository,
     private val odometerRepository: OdometerRepository,
     private val fuelRepository: FuelRepository,
     private val userPreferencesRepository: UserPreferencesRepository
@@ -89,25 +100,28 @@ class HomeViewModel @Inject constructor(
                 combine(
                     partRepository.getPartsForVehicle(vehicle.id),
                     odometerRepository.getOdometerRecordsForVehicle(vehicle.id),
-                    fuelRepository.getFuelRecordsForVehicle(vehicle.id)
-                ) { parts, records, fuels ->
-                    Triple(parts, records, fuels)
-                }
+                    fuelRepository.getFuelRecordsForVehicle(vehicle.id),
+                    maintenanceRepository.getTotalMaintenanceCostForVehicle(vehicle.id),
+                    fuelRepository.getTotalFuelCostForVehicle(vehicle.id),
+                    transform = { parts, records, fuels, maintCost, fuelCost ->
+                        UiData(parts, records, fuels, maintCost ?: 0.0, fuelCost ?: 0.0)
+                    }
+                )
             } else {
-                flowOf(Triple(emptyList<Part>(), emptyList<OdometerRecord>(), emptyList()))
+                flowOf(UiData())
             }
         },
         vehicleRepository.getCurrentVehicle(),
         userPreferencesRepository.distanceUnit,
         _events
-    ) { vehicles, (parts, odometerRecords, fuels), currentVehicle, distanceUnit, events ->
-        val sortedParts = parts.sortedBy { (it.lastMaintenanceOdometer + it.lifeSpanMileage) - (currentVehicle?.currentOdometer ?: 0.0) }
+    ) { vehicles, uiData, currentVehicle, distanceUnit, events ->
+        val sortedParts = uiData.parts.sortedBy { (it.lastMaintenanceOdometer + it.lifeSpanMileage) - (currentVehicle?.currentOdometer ?: 0.0) }
         val predictions = sortedParts.associate { part ->
-            part.id to PredictionEngine.estimateNextMaintenanceDate(part, odometerRecords)
+            part.id to PredictionEngine.estimateNextMaintenanceDate(part, uiData.records)
         }
         
         // Calculate average consumption
-        val consumptions = fuels.mapNotNull { fuelRepository.calculateFuelConsumption(it) }
+        val consumptions = uiData.fuels.mapNotNull { fuelRepository.calculateFuelConsumption(it) }
         val avgConsumption = if (consumptions.isNotEmpty()) consumptions.average() else null
         
         HomeUiState(
@@ -115,6 +129,8 @@ class HomeViewModel @Inject constructor(
             currentVehicle = currentVehicle,
             parts = sortedParts,
             predictions = predictions,
+            totalMaintenanceCost = uiData.totalMaintCost,
+            totalFuelCost = uiData.totalFuelCost,
             averageFuelConsumption = avgConsumption,
             distanceUnit = distanceUnit,
             events = events,
@@ -126,10 +142,18 @@ class HomeViewModel @Inject constructor(
         initialValue = HomeUiState(isLoading = true)
     )
 
+    private data class UiData(
+        val parts: List<Part> = emptyList(),
+        val records: List<OdometerRecord> = emptyList(),
+        val fuels: List<digital.tonima.mycarcompanion.core.model.FuelRecord> = emptyList(),
+        val totalMaintCost: Double = 0.0,
+        val totalFuelCost: Double = 0.0
+    )
+
     fun onIntent(intent: HomeUiIntent) {
         when (intent) {
             is HomeUiIntent.SelectVehicle -> selectVehicle(intent.vehicleId)
-            is HomeUiIntent.PerformMaintenance -> performMaintenance(intent.part, intent.newOdometer)
+            is HomeUiIntent.PerformMaintenance -> performMaintenance(intent.part, intent.newOdometer, intent.cost, intent.notes)
             is HomeUiIntent.UpdateOdometer -> updateOdometer(intent.newMileage)
             HomeUiIntent.NavigateToSettings -> addEvent(HomeUiEvent.NavigateToSettings(UUID.randomUUID().toString()))
             HomeUiIntent.NavigateToFuel -> addEvent(HomeUiEvent.NavigateToFuel(UUID.randomUUID().toString()))
@@ -143,15 +167,30 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun performMaintenance(part: Part, newOdometer: Double) {
+    private fun performMaintenance(part: Part, newOdometer: Double, cost: Double, notes: String) {
         viewModelScope.launch {
             try {
                 val currentVehicle = uiState.value.currentVehicle
                 if (currentVehicle != null) {
                     val increment = newOdometer - currentVehicle.currentOdometer
                     if (increment >= 0) {
+                        val now = kotlinx.datetime.Instant.fromEpochMilliseconds(System.currentTimeMillis())
                         vehicleRepository.updateActiveVehicleOdometer(increment)
-                        partRepository.updatePart(part.copy(lastMaintenanceOdometer = newOdometer))
+                        partRepository.updatePart(
+                            part.copy(
+                                lastMaintenanceOdometer = newOdometer,
+                                lastMaintenanceDate = now
+                            )
+                        )
+                        maintenanceRepository.insertMaintenanceRecord(
+                            MaintenanceRecord(
+                                partId = part.id,
+                                date = now,
+                                odometerAtMaintenance = newOdometer,
+                                cost = cost,
+                                notes = notes
+                            )
+                        )
                     } else {
                         addEvent(HomeUiEvent.ShowError(UUID.randomUUID().toString(), context.getString(R.string.error_odometer_greater)))
                     }

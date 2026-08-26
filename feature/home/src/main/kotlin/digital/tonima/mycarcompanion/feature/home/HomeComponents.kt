@@ -246,11 +246,13 @@ fun MaintenanceDialog(
     part: Part,
     currentOdometer: Double, // in KM
     unit: DistanceUnit,
-    onConfirm: (Double) -> Unit, // in KM
+    onConfirm: (odometer: Double, cost: Double, notes: String) -> Unit, // in KM
     onDismiss: () -> Unit
 ) {
     val currentOdometerInUnit = unit.fromKm(currentOdometer)
     var odometerText by rememberSaveable { mutableStateOf(currentOdometerInUnit.roundToInt().toString()) }
+    var costText by rememberSaveable { mutableStateOf("") }
+    var notesText by rememberSaveable { mutableStateOf("") }
     val isError = odometerText.toDoubleOrNull()?.let { it < currentOdometerInUnit } ?: true
 
     AlertDialog(
@@ -274,13 +276,32 @@ fun MaintenanceDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = costText,
+                    onValueChange = { costText = it },
+                    label = { Text("Custo total (R$)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = notesText,
+                    onValueChange = { notesText = it },
+                    label = { Text("Observações / Mecânica (opcional)") },
+                    singleLine = false,
+                    maxLines = 3,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {
             Button(
                 onClick = { 
-                    odometerText.toDoubleOrNull()?.let { 
-                        onConfirm(unit.toKm(it)) 
+                    odometerText.toDoubleOrNull()?.let { odo ->
+                        val cost = costText.toDoubleOrNull() ?: 0.0
+                        onConfirm(unit.toKm(odo), cost, notesText) 
                     } 
                 },
                 enabled = !isError

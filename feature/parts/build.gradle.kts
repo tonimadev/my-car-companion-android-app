@@ -27,6 +27,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:data"))
     implementation(project(":core:designsystem"))
+    implementation(libs.kotlinx.datetime)
     
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)
@@ -36,8 +37,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.hilt.navigation.compose)
-    implementation(libs.androidx.compose.material.icons.extended)
-    
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     

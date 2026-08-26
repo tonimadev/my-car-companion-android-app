@@ -136,16 +136,18 @@ fun PartsContent(
                 part = editingPart,
                 unit = state.distanceUnit,
                 onDismiss = { showDialog = false },
-                onConfirm = { name, lifeSpan, lastMaintenance ->
+                onConfirm = { name, lifeSpan, lastMaintenance, lifeSpanMonths, lastMaintenanceDate ->
                     if (editingPart == null) {
-                        onIntent(PartsIntent.AddPart(name, lifeSpan, lastMaintenance))
+                        onIntent(PartsIntent.AddPart(name, lifeSpan, lastMaintenance, lifeSpanMonths, lastMaintenanceDate))
                     } else {
                         onIntent(
                             PartsIntent.UpdatePart(
                                 editingPart.copy(
                                     name = name,
                                     lifeSpanMileage = lifeSpan,
-                                    lastMaintenanceOdometer = lastMaintenance
+                                    lastMaintenanceOdometer = lastMaintenance,
+                                    lifeSpanMonths = lifeSpanMonths,
+                                    lastMaintenanceDate = lastMaintenanceDate
                                 )
                             )
                         )
@@ -185,6 +187,13 @@ fun PartItem(
                     text = stringResource(R.string.lifespan_format, unit.fromKm(part.lifeSpanMileage).roundToInt(), unit.name.lowercase()),
                     style = MaterialTheme.typography.bodySmall
                 )
+                part.lifeSpanMonths?.let { months ->
+                    Text(
+                        text = "Intervalo: $months meses",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary
+                    )
+                }
                 Text(
                     text = stringResource(R.string.last_maint_format, unit.fromKm(part.lastMaintenanceOdometer).roundToInt(), unit.name.lowercase()),
                     style = MaterialTheme.typography.bodySmall

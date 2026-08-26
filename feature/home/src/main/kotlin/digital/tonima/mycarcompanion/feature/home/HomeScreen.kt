@@ -109,36 +109,53 @@ internal fun HomeScreen(
                         modifier = Modifier.padding(16.dp)
                     )
 
-                    // Card de Consumo Médio se disponível
-                    uiState.averageFuelConsumption?.let { avg ->
+                    // Resumo Financeiro e Consumo
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            modifier = Modifier.weight(1f),
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                            ),
-                            onClick = onNavigateToFuel
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
                         ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(text = "Gastos Totais", style = MaterialTheme.typography.labelSmall)
+                                Text(
+                                    text = "R$ %.2f".format(uiState.totalMaintenanceCost + uiState.totalFuelCost),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(
+                                    text = "Mnt: R$ %.0f | Comb: R$ %.0f".format(uiState.totalMaintenanceCost, uiState.totalFuelCost),
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+                            }
+                        }
+
+                        uiState.averageFuelConsumption?.let { avg ->
+                            Card(
+                                modifier = Modifier.weight(1f),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                ),
+                                onClick = onNavigateToFuel
                             ) {
-                                Column {
-                                    Text(
-                                        text = "Média de Consumo",
-                                        style = MaterialTheme.typography.labelMedium
-                                    )
+                                Column(modifier = Modifier.padding(12.dp)) {
+                                    Text(text = "Média Consumo", style = MaterialTheme.typography.labelSmall)
                                     Text(
                                         text = "%.1f km/L".format(avg),
-                                        style = MaterialTheme.typography.titleLarge
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        text = "Ver histórico",
+                                        style = MaterialTheme.typography.bodySmall
                                     )
                                 }
-                                Icon(Icons.Default.LocalGasStation, contentDescription = null)
                             }
                         }
                     }
@@ -200,8 +217,8 @@ internal fun HomeScreen(
             part = part,
             currentOdometer = uiState.currentVehicle?.currentOdometer ?: 0.0,
             unit = uiState.distanceUnit,
-            onConfirm = { newOdometer ->
-                onIntent(HomeUiIntent.PerformMaintenance(part, newOdometer))
+            onConfirm = { newOdometer, cost, notes ->
+                onIntent(HomeUiIntent.PerformMaintenance(part, newOdometer, cost, notes))
                 selectedPartForMaintenance = null
             },
             onDismiss = { selectedPartForMaintenance = null }

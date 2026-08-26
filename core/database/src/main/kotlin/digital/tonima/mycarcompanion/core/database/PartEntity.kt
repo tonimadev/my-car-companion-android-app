@@ -5,6 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import digital.tonima.mycarcompanion.core.model.Part
+import kotlinx.datetime.Instant
 
 @Entity(
     tableName = "parts",
@@ -23,7 +24,9 @@ data class PartEntity(
     val vehicleId: Long,
     val name: String,
     val lifeSpanMileage: Double,
-    val lastMaintenanceOdometer: Double
+    val lastMaintenanceOdometer: Double,
+    val lifeSpanMonths: Int? = null,
+    val lastMaintenanceDate: Instant? = null
 )
 
 fun PartEntity.asExternalModel() = Part(
@@ -31,7 +34,9 @@ fun PartEntity.asExternalModel() = Part(
     vehicleId = vehicleId,
     name = name,
     lifeSpanMileage = lifeSpanMileage,
-    lastMaintenanceOdometer = lastMaintenanceOdometer
+    lastMaintenanceOdometer = lastMaintenanceOdometer,
+    lifeSpanMonths = lifeSpanMonths,
+    lastMaintenanceDate = lastMaintenanceDate
 )
 
 fun Part.asEntity() = PartEntity(
@@ -39,5 +44,7 @@ fun Part.asEntity() = PartEntity(
     vehicleId = vehicleId,
     name = name,
     lifeSpanMileage = lifeSpanMileage,
-    lastMaintenanceOdometer = lastMaintenanceOdometer
+    lastMaintenanceOdometer = lastMaintenanceOdometer,
+    lifeSpanMonths = lifeSpanMonths,
+    lastMaintenanceDate = lastMaintenanceDate
 )

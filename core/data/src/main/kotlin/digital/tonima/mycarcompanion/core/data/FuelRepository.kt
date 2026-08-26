@@ -7,6 +7,7 @@ interface FuelRepository {
     fun getFuelRecordsForVehicle(vehicleId: Long): Flow<List<FuelRecord>>
     fun getLastFuelRecordForVehicle(vehicleId: Long): Flow<FuelRecord?>
     fun getPreviousFuelRecord(vehicleId: Long, currentDate: Long): Flow<FuelRecord?>
+    fun getTotalFuelCostForVehicle(vehicleId: Long): Flow<Double?>
     suspend fun insertFuelRecord(record: FuelRecord): Long
     suspend fun updateFuelRecord(record: FuelRecord)
     suspend fun deleteFuelRecord(record: FuelRecord)

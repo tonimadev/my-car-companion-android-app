@@ -22,7 +22,8 @@ object DatabaseModule {
             AppDatabase::class.java,
             "my-car-companion-db"
         )
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
         .build()
     }
 
@@ -69,6 +70,13 @@ object DatabaseModule {
                 )
             """.trimIndent())
             db.execSQL("CREATE INDEX IF NOT EXISTS `index_fuel_records_vehicleId` ON `fuel_records` (`vehicleId`)")
+        }
+    }
+
+    private val MIGRATION_3_4 = object : androidx.room.migration.Migration(3, 4) {
+        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `parts` ADD COLUMN `lifeSpanMonths` INTEGER DEFAULT NULL")
+            db.execSQL("ALTER TABLE `parts` ADD COLUMN `lastMaintenanceDate` INTEGER DEFAULT NULL")
         }
     }
 

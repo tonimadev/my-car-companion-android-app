@@ -16,6 +16,14 @@ class OfflineFirstMaintenanceRepository @Inject constructor(
             entities.map { it.asExternalModel() }
         }
 
+    override fun getMaintenanceRecordsForVehicle(vehicleId: Long): Flow<List<MaintenanceRecord>> =
+        maintenanceDao.getMaintenanceRecordsForVehicle(vehicleId).map { entities ->
+            entities.map { it.asExternalModel() }
+        }
+
+    override fun getTotalMaintenanceCostForVehicle(vehicleId: Long): Flow<Double?> =
+        maintenanceDao.getTotalMaintenanceCostForVehicle(vehicleId)
+
     override suspend fun insertMaintenanceRecord(record: MaintenanceRecord): Long =
         maintenanceDao.insertMaintenanceRecord(record.asEntity())
 
