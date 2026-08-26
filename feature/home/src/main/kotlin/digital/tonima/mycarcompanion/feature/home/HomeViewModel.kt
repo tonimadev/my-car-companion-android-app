@@ -3,6 +3,7 @@ package digital.tonima.mycarcompanion.feature.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.content.Context
+import androidx.compose.runtime.Immutable
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.mycarcompanion.core.data.FuelRepository
@@ -12,6 +13,7 @@ import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.data.OdometerRepository
 import digital.tonima.mycarcompanion.core.data.PredictionEngine
+import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.MaintenanceRecord
 import digital.tonima.mycarcompanion.core.model.OdometerRecord
@@ -31,6 +33,7 @@ import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Clock
 
+@Immutable
 data class HomeUiState(
     val vehicles: List<Vehicle> = emptyList(),
     val currentVehicle: Vehicle? = null,
@@ -40,6 +43,8 @@ data class HomeUiState(
     val totalFuelCost: Double = 0.0,
     val averageFuelConsumption: Double? = null,
     val distanceUnit: DistanceUnit = DistanceUnit.KM,
+    val isProUser: Boolean = false,
+    val isAiUser: Boolean = false,
     val isLoading: Boolean = false,
     val events: List<HomeUiEvent> = emptyList()
 )
@@ -74,7 +79,8 @@ class HomeViewModel @Inject constructor(
     private val maintenanceRepository: MaintenanceRepository,
     private val odometerRepository: OdometerRepository,
     private val fuelRepository: FuelRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val proUserProvider: ProUserProvider
 ) : ViewModel() {
 
     private val _events = MutableStateFlow<List<HomeUiEvent>>(emptyList())
@@ -94,7 +100,10 @@ class HomeViewModel @Inject constructor(
     }
 
     val uiState: StateFlow<HomeUiState> = combine(
-        vehicleRepository.getVehicles(),
+        combine(
+            vehicleRepository.getVehicles(),
+            vehicleRepository.getCurrentVehicle()
+        ) { vehicles, current -> vehicles to current },
         vehicleRepository.getCurrentVehicle().flatMapLatest { vehicle ->
             if (vehicle != null) {
                 combine(
@@ -111,10 +120,10 @@ class HomeViewModel @Inject constructor(
                 flowOf(UiData())
             }
         },
-        vehicleRepository.getCurrentVehicle(),
         userPreferencesRepository.distanceUnit,
+        combine(proUserProvider.isProUser, proUserProvider.isAiUser) { pro, ai -> pro to ai },
         _events
-    ) { vehicles, uiData, currentVehicle, distanceUnit, events ->
+    ) { (vehicles, currentVehicle), uiData, distanceUnit, (isPro, isAi), events ->
         val sortedParts = uiData.parts.sortedBy { (it.lastMaintenanceOdometer + it.lifeSpanMileage) - (currentVehicle?.currentOdometer ?: 0.0) }
         val predictions = sortedParts.associate { part ->
             part.id to PredictionEngine.estimateNextMaintenanceDate(part, uiData.records)
@@ -133,6 +142,8 @@ class HomeViewModel @Inject constructor(
             totalFuelCost = uiData.totalFuelCost,
             averageFuelConsumption = avgConsumption,
             distanceUnit = distanceUnit,
+            isProUser = isPro,
+            isAiUser = isAi,
             events = events,
             isLoading = false
         )

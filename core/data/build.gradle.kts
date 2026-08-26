@@ -22,6 +22,7 @@ android {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:database"))
+    implementation(project(":core:billing:bridge"))
     implementation(libs.kotlinx.datetime)
     
     implementation(libs.androidx.datastore.preferences)

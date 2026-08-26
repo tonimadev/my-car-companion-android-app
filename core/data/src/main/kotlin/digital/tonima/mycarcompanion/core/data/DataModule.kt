@@ -48,6 +48,11 @@ interface DataModule {
         repository: OfflineFirstOdometerRepository
     ): OdometerRepository
 
+    @Binds
+    fun bindsProUserProvider(
+        provider: DefaultProUserProvider
+    ): ProUserProvider
+
     companion object {
         @Provides
         @Singleton

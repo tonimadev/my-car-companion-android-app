@@ -29,6 +29,7 @@ dependencies {
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material.icons.extended)
+    implementation(libs.play.services.ads.api)
     
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

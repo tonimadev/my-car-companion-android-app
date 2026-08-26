@@ -1,6 +1,7 @@
 package digital.tonima.mycarcompanion.feature.home
 
 import android.Manifest
+import android.app.Activity
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -15,8 +16,12 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.GpsFixed
+import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -45,6 +50,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.feature.tracking.service.MileageTrackingService
@@ -56,15 +62,34 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val proUserProvider: ProUserProvider,
 ) : ViewModel() {
     val distanceUnit: StateFlow<DistanceUnit> = userPreferencesRepository.distanceUnit
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DistanceUnit.KM)
+
+    val isProUser: StateFlow<Boolean> = proUserProvider.isProUser
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    val isAiUser: StateFlow<Boolean> = proUserProvider.isAiUser
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun setDistanceUnit(unit: DistanceUnit) {
         viewModelScope.launch {
             userPreferencesRepository.setDistanceUnit(unit)
         }
+    }
+
+    fun refreshPurchases() {
+        proUserProvider.refresh()
+    }
+
+    fun purchasePro(activity: Activity) {
+        proUserProvider.launchPurchasePro(activity)
+    }
+
+    fun subscribeAi(activity: Activity) {
+        proUserProvider.launchSubscribeAi(activity)
     }
 }
 
@@ -73,10 +98,14 @@ class SettingsViewModel @Inject constructor(
 fun SettingsScreen(
     onBack: () -> Unit,
     onNavigateToGarage: () -> Unit,
+    onPurchaseRequest: () -> Unit = {},
+    onSubscriptionRequest: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val distanceUnit by viewModel.distanceUnit.collectAsStateWithLifecycle()
+    val isProUser by viewModel.isProUser.collectAsStateWithLifecycle()
+    val isAiUser by viewModel.isAiUser.collectAsStateWithLifecycle()
     var isTrackingEnabled by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
@@ -110,6 +139,63 @@ fun SettingsScreen(
                 .padding(padding)
                 .verticalScroll(rememberScrollState())
         ) {
+            Text(
+                text = "Planos e Assinatura",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+
+            if (!isAiUser) {
+                ListItem(
+                    headlineContent = { Text("Assinar Assistente IA") },
+                    supportingContent = { Text("Diagnósticos com IA, predições avançadas e remoção total de anúncios.") },
+                    leadingContent = { Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                    modifier = Modifier.selectable(
+                        selected = false,
+                        onClick = {
+                            val activity = context as? Activity
+                            activity?.let { viewModel.subscribeAi(it) } ?: onSubscriptionRequest()
+                        }
+                    )
+                )
+            } else {
+                ListItem(
+                    headlineContent = { Text("Plano Pro IA Ativo") },
+                    supportingContent = { Text("Sua assinatura do Assistente IA está ativa.") },
+                    leadingContent = { Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                )
+            }
+
+            if (!isProUser) {
+                ListItem(
+                    headlineContent = { Text("Remover Anúncios") },
+                    supportingContent = { Text("Compra única para desfrutar do aplicativo sem anúncios.") },
+                    leadingContent = { Icon(Icons.Rounded.Block, contentDescription = null) },
+                    modifier = Modifier.selectable(
+                        selected = false,
+                        onClick = {
+                            val activity = context as? Activity
+                            activity?.let { viewModel.purchasePro(it) } ?: onPurchaseRequest()
+                        }
+                    )
+                )
+            } else if (!isAiUser) {
+                ListItem(
+                    headlineContent = { Text("Remoção de Anúncios Ativa") },
+                    supportingContent = { Text("Você possui a versão sem anúncios.") },
+                    leadingContent = { Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
+                )
+            }
+
+            ListItem(
+                headlineContent = { Text("Restaurar Compras") },
+                supportingContent = { Text("Sincronizar compras e assinaturas com sua conta da Play Store.") },
+                leadingContent = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
+                modifier = Modifier.selectable(selected = false, onClick = { viewModel.refreshPurchases() })
+            )
+
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
             Text(
                 text = "Rastreamento e GPS",
                 style = MaterialTheme.typography.titleMedium,

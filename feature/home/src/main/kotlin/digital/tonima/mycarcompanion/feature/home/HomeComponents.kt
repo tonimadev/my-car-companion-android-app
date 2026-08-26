@@ -127,6 +127,7 @@ fun OdometerDisplay(
 fun MaintenanceList(
     parts: List<Part>,
     predictions: Map<Long, kotlinx.datetime.Instant?>,
+    isAiUser: Boolean,
     currentOdometer: Double,
     unit: DistanceUnit,
     onPerformMaintenance: (Part) -> Unit,
@@ -147,7 +148,7 @@ fun MaintenanceList(
         items(parts, key = { it.id }) { part ->
             MaintenanceItem(
                 part = part,
-                prediction = predictions[part.id],
+                prediction = if (isAiUser) predictions[part.id] else null,
                 currentOdometer = currentOdometer,
                 unit = unit,
                 onPerformMaintenance = { onPerformMaintenance(part) },

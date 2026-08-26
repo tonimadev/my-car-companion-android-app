@@ -17,6 +17,8 @@ class DataStoreUserPreferencesRepository @Inject constructor(
     private object PreferencesKeys {
         val DISTANCE_UNIT = stringPreferencesKey("distance_unit")
         val IS_ONBOARDING_COMPLETED = booleanPreferencesKey("is_onboarding_completed")
+        val IS_PRO_USER = booleanPreferencesKey("is_pro_user")
+        val IS_AI_USER = booleanPreferencesKey("is_ai_user")
     }
 
     override val distanceUnit: Flow<DistanceUnit> = dataStore.data.map { preferences ->
@@ -37,6 +39,26 @@ class DataStoreUserPreferencesRepository @Inject constructor(
     override suspend fun setOnboardingCompleted(completed: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_ONBOARDING_COMPLETED] = completed
+        }
+    }
+
+    override val isProUser: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.IS_PRO_USER] ?: false
+    }
+
+    override suspend fun setProUser(isPro: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_PRO_USER] = isPro
+        }
+    }
+
+    override val isAiUser: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.IS_AI_USER] ?: false
+    }
+
+    override suspend fun setAiUser(isAi: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_AI_USER] = isAi
         }
     }
 }

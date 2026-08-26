@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -14,10 +16,22 @@ android {
         applicationId = "digital.tonima.mycarcompanion"
         minSdk = 24
         targetSdk = 37
-        versionCode = 3
-        versionName = "1.2"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(localPropertiesFile.inputStream())
+        }
+
+        val admobAppId = localProperties.getProperty("admob.app.id") ?: ""
+        manifestPlaceholders["ADMOB_APP_ID"] = admobAppId
+
+        val admobBannerHomeId = localProperties.getProperty("admob.banner.home.id") ?: ""
+        buildConfigField("String", "ADMOB_BANNER_HOME_ID", "\"$admobBannerHomeId\"")
     }
 
     buildTypes {
@@ -33,6 +47,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -46,6 +61,8 @@ dependencies {
     implementation(project(":feature:vehicles"))
     implementation(project(":feature:parts"))
     implementation(project(":core:notifications"))
+    implementation(project(":core:billing:impl"))
+    implementation(libs.play.services.ads.api)
 
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)

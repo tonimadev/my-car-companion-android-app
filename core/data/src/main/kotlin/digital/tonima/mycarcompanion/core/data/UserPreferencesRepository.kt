@@ -9,4 +9,10 @@ interface UserPreferencesRepository {
     
     val isOnboardingCompleted: Flow<Boolean>
     suspend fun setOnboardingCompleted(completed: Boolean)
+
+    val isProUser: Flow<Boolean>
+    suspend fun setProUser(isPro: Boolean)
+
+    val isAiUser: Flow<Boolean>
+    suspend fun setAiUser(isAi: Boolean)
 }

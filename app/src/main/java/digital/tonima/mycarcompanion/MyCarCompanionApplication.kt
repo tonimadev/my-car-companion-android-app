@@ -10,6 +10,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import digital.tonima.mycarcompanion.core.notifications.MaintenanceWorker
 import dagger.hilt.android.HiltAndroidApp
+import com.google.android.gms.ads.MobileAds
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -25,6 +26,9 @@ class MyCarCompanionApplication : Application(), Configuration.Provider {
             
     override fun onCreate() {
         super.onCreate()
+        MobileAds.initialize(this) { status ->
+            android.util.Log.d("AdMob", "MobileAds initialized: $status")
+        }
         scheduleMaintenanceCheck()
     }
 

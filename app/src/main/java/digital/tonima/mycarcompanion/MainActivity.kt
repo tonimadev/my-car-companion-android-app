@@ -24,6 +24,7 @@ import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.designsystem.MyCarCompanionTheme
 import digital.tonima.mycarcompanion.feature.home.HomeRoute
 import digital.tonima.mycarcompanion.feature.home.onboarding.OnboardingRoute
+import digital.tonima.mycarcompanion.BuildConfig
 import digital.tonima.mycarcompanion.feature.parts.PartsScreen
 import digital.tonima.mycarcompanion.feature.parts.PartsViewModel
 import digital.tonima.mycarcompanion.feature.tracking.ui.AddFuelRecordScreen
@@ -117,7 +118,8 @@ fun AppNavigation(
                 )
                 Route.Home -> HomeRoute(
                     onNavigateToSettings = { backStack.add(Route.Settings) },
-                    onNavigateToFuel = { backStack.add(Route.FuelHistory) }
+                    onNavigateToFuel = { backStack.add(Route.FuelHistory) },
+                    adUnitId = BuildConfig.ADMOB_BANNER_HOME_ID
                 )
                 Route.Garage -> GarageAdaptiveScreen(
                     onBack = {
