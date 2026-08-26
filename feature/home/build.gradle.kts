@@ -27,6 +27,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:data"))
     implementation(project(":core:designsystem"))
+    implementation(project(":feature:tracking"))
     
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.material3)

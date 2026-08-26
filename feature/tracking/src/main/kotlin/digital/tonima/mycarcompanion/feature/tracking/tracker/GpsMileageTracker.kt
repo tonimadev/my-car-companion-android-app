@@ -2,6 +2,7 @@ package digital.tonima.mycarcompanion.feature.tracking.tracker
 
 import android.annotation.SuppressLint
 import android.location.Location
+import android.os.Looper
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -35,7 +36,7 @@ class GpsMileageTracker @Inject constructor(
             }
         }
 
-        fusedLocationClient.requestLocationUpdates(locationRequest, callback, null)
+        fusedLocationClient.requestLocationUpdates(locationRequest, callback, Looper.getMainLooper())
 
         awaitClose {
             fusedLocationClient.removeLocationUpdates(callback)
