@@ -5,9 +5,39 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
+    <!-- Car Body matching exact silhouette -->
+    <!-- Car silhouette with spoiler, sloping roof, front fender, bumper -->
     <path
         android:fillColor="#FFFFFF"
-        android:fillType="evenOdd"
-        android:pathData="M24,62 H32 A6,6 0 0,0 44,62 H64 A6,6 0 0,0 76,62 H84 V54 C84,48 80,46 76,46 H68 L60,32 H48 L40,46 H32 C28,46 24,48 24,54 V62 Z M54,56 A9,9 0 1,0 54,38 A9,9 0 1,0 54,56 Z M54,40 A7,7 0 1,1 54,54 A7,7 0 1,1 54,40 Z M54,47 L58,43 L59,44 L55,48 Z" />
+        android:pathData="M24,57 C24,53 26,49.5 30,48 C34,46.5 44,45 47,44 L54,39 C59,35.5 69,35.5 78,39 C83,41 87,43.5 90,44.5 L91,40 L93,40 L90,46 L91,52 C91,54 89,56 86,56 L83,56 C83,52.5 80,49.5 76,49.5 C72,49.5 69,52.5 69,56 L43,56 C43,52.5 40,49.5 36,49.5 C32,49.5 29,52.5 29,56 L24,56 C23,56 22,55.5 22,54.5 L22,53 C22,52 23,51 24,51 Z" />
+
+    <!-- Front & Rear Window Cutouts -->
+    <path
+        android:fillColor="#0B3046"
+        android:pathData="M52,43.5 L58.5,43.5 L58.5,39 C55.5,39.5 53.5,41 52,43.5 Z" />
+    <path
+        android:fillColor="#0B3046"
+        android:pathData="M60.5,43.5 L77,43.5 C73,40.5 67,39 60.5,39 Z" />
+
+    <!-- Rear Wheel -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M36,49.5 A6.5,6.5 0 1,0 36,62.5 A6.5,6.5 0 1,0 36,49.5 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M36,53 A3,3 0 1,0 36,59 A3,3 0 1,0 36,53 Z" />
+
+    <!-- Front Wheel -->
+    <path
+        android:fillColor="#1E293B"
+        android:pathData="M76,49.5 A6.5,6.5 0 1,0 76,62.5 A6.5,6.5 0 1,0 76,49.5 Z" />
+    <path
+        android:fillColor="#38BDF8"
+        android:pathData="M76,53 A3,3 0 1,0 76,59 A3,3 0 1,0 76,53 Z" />
+
+    <!-- Sleek Maintenance Wrench positioned dynamically in gold accent -->
+    <path
+        android:fillColor="#FBBF24"
+        android:pathData="M66,22 C64.5,20.5 62.5,20.8 61,22.3 L57,26.3 L59.7,29 L62.5,26.2 C62.9,25.8 63.5,25.8 63.9,26.2 C64.3,26.6 64.3,27.2 63.9,27.6 L61.1,30.4 L63.8,33.1 L67.8,29.1 C69.3,27.6 69.6,25.6 68.1,24.1 L66,22 Z M56,27.3 L40,43.3 C39.2,44.1 39.2,45.4 40,46.2 L41.8,48 C42.6,48.8 43.9,48.8 44.7,48 L60.7,32 L56,27.3 Z" />
 
 </vector>
