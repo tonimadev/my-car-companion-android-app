@@ -2,6 +2,7 @@ package digital.tonima.mycarcompanion.feature.home
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -22,6 +23,7 @@ import digital.tonima.mycarcompanion.core.model.Vehicle
 @Composable
 fun HomeRoute(
     onNavigateToSettings: () -> Unit,
+    onNavigateToFuel: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -29,7 +31,8 @@ fun HomeRoute(
     HomeScreen(
         uiState = uiState,
         onIntent = viewModel::onIntent,
-        onNavigateToSettings = onNavigateToSettings
+        onNavigateToSettings = onNavigateToSettings,
+        onNavigateToFuel = onNavigateToFuel
     )
 }
 
@@ -38,7 +41,8 @@ fun HomeRoute(
 internal fun HomeScreen(
     uiState: HomeUiState,
     onIntent: (HomeUiIntent) -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToFuel: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var selectedPartForMaintenance by remember { mutableStateOf<Part?>(null) }
@@ -56,6 +60,10 @@ internal fun HomeScreen(
                     onNavigateToSettings()
                     onIntent(HomeUiIntent.ConsumeEvent(event.id))
                 }
+                is HomeUiEvent.NavigateToFuel -> {
+                    onNavigateToFuel()
+                    onIntent(HomeUiIntent.ConsumeEvent(event.id))
+                }
             }
         }
     }
@@ -65,6 +73,9 @@ internal fun HomeScreen(
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.home_title)) },
                 actions = {
+                    IconButton(onClick = { onIntent(HomeUiIntent.NavigateToFuel) }) {
+                        Icon(Icons.Default.LocalGasStation, contentDescription = "Abastecimento")
+                    }
                     IconButton(onClick = { onIntent(HomeUiIntent.NavigateToSettings) }) {
                         Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings))
                     }
@@ -97,6 +108,40 @@ internal fun HomeScreen(
                         onEditClick = { showUpdateOdometerDialog = true },
                         modifier = Modifier.padding(16.dp)
                     )
+
+                    // Card de Consumo Médio se disponível
+                    uiState.averageFuelConsumption?.let { avg ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            ),
+                            onClick = onNavigateToFuel
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column {
+                                    Text(
+                                        text = "Média de Consumo",
+                                        style = MaterialTheme.typography.labelMedium
+                                    )
+                                    Text(
+                                        text = "%.1f km/L".format(avg),
+                                        style = MaterialTheme.typography.titleLarge
+                                    )
+                                }
+                                Icon(Icons.Default.LocalGasStation, contentDescription = null)
+                            }
+                        }
+                    }
 
                     MaintenanceList(
                         parts = uiState.parts,
@@ -194,7 +239,8 @@ fun HomePreview() {
                 distanceUnit = DistanceUnit.KM
             ),
             onIntent = {},
-            onNavigateToSettings = {}
+            onNavigateToSettings = {},
+            onNavigateToFuel = {}
         )
     }
 }

@@ -1,5 +1,4 @@
 <resources>
-    <string name="home_title">Meu Companheiro de Carro</string>
     <string name="settings">Configurações</string>
     <string name="no_vehicle_selected">Nenhum veículo selecionado. Por favor, adicione um veículo nas configurações.</string>
     <string name="settings_title">Configurações</string>
@@ -28,4 +27,17 @@
     <string name="predicted_date">Previsto para: %s</string>
     <string name="add_vehicle_button">Adicionar Veículo</string>
     <string name="no_vehicle_selected_subtext">Adicione um veículo à sua garagem para começar a rastrear manutenções e quilometragem.</string>
+
+    <!-- Strings de Onboarding -->
+    <string name="onboarding_skip">Pular</string>
+    <string name="onboarding_next">Avançar</string>
+    <string name="onboarding_get_started">Começar</string>
+    <string name="onboarding_slide1_title">Manutenção Inteligente</string>
+    <string name="onboarding_slide1_desc">Acompanhe o desgaste de peças em tempo real e receba alertas preditivos antes de ter problemas na estrada.</string>
+    <string name="onboarding_slide2_title">Controle de Abastecimento</string>
+    <string name="onboarding_slide2_desc">Monitore seu consumo médio, gastos totais e mantenha o custo do seu veículo sob controle.</string>
+    <string name="onboarding_slide3_title">Vamos Configurar seu Carro</string>
+    <string name="onboarding_slide3_desc">Escolha sua unidade de medida preferida e cadastre seu primeiro veículo para começar.</string>
+    <string name="vehicle_name_hint">Nome do Veículo (ex: Honda Civic)</string>
+    <string name="initial_odometer_hint">Odômetro Atual</string>
 </resources>

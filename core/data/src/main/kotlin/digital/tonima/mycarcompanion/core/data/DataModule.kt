@@ -18,6 +18,12 @@ import javax.inject.Singleton
 interface DataModule {
 
     @Binds
+    fun bindsFuelRepository(
+        repository: OfflineFirstFuelRepository
+    ): FuelRepository
+
+
+    @Binds
     fun bindsUserPreferencesRepository(
         repository: DataStoreUserPreferencesRepository
     ): UserPreferencesRepository

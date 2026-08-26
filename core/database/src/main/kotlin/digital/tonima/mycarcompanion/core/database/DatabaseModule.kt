@@ -22,7 +22,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "my-car-companion-db"
         )
-        .addMigrations(MIGRATION_1_2)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
         .build()
     }
 
@@ -53,6 +53,24 @@ object DatabaseModule {
             db.execSQL("CREATE INDEX IF NOT EXISTS `index_maintenance_records_partId` ON `maintenance_records` (`partId`)")
         }
     }
+    
+    private val MIGRATION_2_3 = object : androidx.room.migration.Migration(2, 3) {
+        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS `fuel_records` (
+                    `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                    `vehicleId` INTEGER NOT NULL, 
+                    `date` INTEGER NOT NULL, 
+                    `mileage` REAL NOT NULL, 
+                    `liters` REAL NOT NULL, 
+                    `totalCost` REAL NOT NULL,
+                    `fuelType` TEXT NOT NULL,
+                    FOREIGN KEY(`vehicleId`) REFERENCES `vehicles`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE 
+                )
+            """.trimIndent())
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_fuel_records_vehicleId` ON `fuel_records` (`vehicleId`)")
+        }
+    }
 
     @Provides
     fun provideVehicleDao(database: AppDatabase): VehicleDao = database.vehicleDao()
@@ -65,4 +83,7 @@ object DatabaseModule {
 
     @Provides
     fun provideOdometerDao(database: AppDatabase): OdometerDao = database.odometerDao()
+    
+    @Provides
+    fun provideFuelDao(database: AppDatabase): FuelDao = database.fuelDao()
 }

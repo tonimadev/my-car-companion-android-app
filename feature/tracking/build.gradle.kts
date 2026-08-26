@@ -24,6 +24,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.kotlinx.datetime)
     implementation(project(":core:model"))
     implementation(project(":core:data"))
     implementation(project(":core:designsystem"))
@@ -39,6 +40,8 @@ dependencies {
     ksp(libs.hilt.compiler)
     
     implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.hilt.navigation.compose)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.play.services.location)
     implementation(libs.androidx.car.app)
     implementation(libs.androidx.car.app.projected)

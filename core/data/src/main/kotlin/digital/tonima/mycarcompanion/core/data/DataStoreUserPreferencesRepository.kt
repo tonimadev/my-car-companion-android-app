@@ -2,6 +2,7 @@ package digital.tonima.mycarcompanion.core.data
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
@@ -15,6 +16,7 @@ class DataStoreUserPreferencesRepository @Inject constructor(
 
     private object PreferencesKeys {
         val DISTANCE_UNIT = stringPreferencesKey("distance_unit")
+        val IS_ONBOARDING_COMPLETED = booleanPreferencesKey("is_onboarding_completed")
     }
 
     override val distanceUnit: Flow<DistanceUnit> = dataStore.data.map { preferences ->
@@ -25,6 +27,16 @@ class DataStoreUserPreferencesRepository @Inject constructor(
     override suspend fun setDistanceUnit(distanceUnit: DistanceUnit) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.DISTANCE_UNIT] = distanceUnit.name
+        }
+    }
+
+    override val isOnboardingCompleted: Flow<Boolean> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.IS_ONBOARDING_COMPLETED] ?: false
+    }
+
+    override suspend fun setOnboardingCompleted(completed: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.IS_ONBOARDING_COMPLETED] = completed
         }
     }
 }

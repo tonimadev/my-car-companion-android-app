@@ -9,9 +9,10 @@ import androidx.room.TypeConverters
         VehicleEntity::class,
         PartEntity::class,
         MaintenanceEntity::class,
-        OdometerEntity::class
+        OdometerEntity::class,
+        FuelEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(InstantConverter::class)
@@ -20,4 +21,5 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun partDao(): PartDao
     abstract fun maintenanceDao(): MaintenanceDao
     abstract fun odometerDao(): OdometerDao
+    abstract fun fuelDao(): FuelDao
 }
