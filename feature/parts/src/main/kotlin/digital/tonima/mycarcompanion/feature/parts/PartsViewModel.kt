@@ -1,8 +1,8 @@
 package digital.tonima.mycarcompanion.feature.parts
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import android.content.Context
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -21,23 +21,27 @@ import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.time.Instant
 
 data class PartsState(
     val vehicle: VehicleUi? = null,
     val parts: ImmutableList<PartUi> = persistentListOf(),
     val distanceUnit: DistanceUnit = DistanceUnit.KM,
     val isProUser: Boolean = false,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val effect: PartsUiEffect? = null
 )
+
+sealed interface PartsUiEffect {
+    data class ShowError(val message: String) : PartsUiEffect
+}
 
 sealed interface PartsIntent {
     data class AddPart(
@@ -45,14 +49,11 @@ sealed interface PartsIntent {
         val lifeSpan: Double,
         val lastMaintenance: Double,
         val lifeSpanMonths: Int? = null,
-        val lastMaintenanceDate: kotlinx.datetime.Instant? = null
+        val lastMaintenanceDate: Instant? = null
     ) : PartsIntent
     data class UpdatePart(val part: PartUi) : PartsIntent
     data class DeletePart(val part: PartUi) : PartsIntent
-}
-
-sealed interface PartsEffect {
-    data class ShowError(val message: String) : PartsEffect
+    data object ConsumeEffect : PartsIntent
 }
 
 @HiltViewModel(assistedFactory = PartsViewModel.Factory::class)
@@ -60,8 +61,8 @@ class PartsViewModel @AssistedInject constructor(
     @ApplicationContext private val context: Context,
     private val partRepository: PartRepository,
     private val vehicleRepository: VehicleRepository,
-    private val userPreferencesRepository: UserPreferencesRepository,
-    private val proUserProvider: ProUserProvider,
+    userPreferencesRepository: UserPreferencesRepository,
+    proUserProvider: ProUserProvider,
     @Assisted private val vehicleId: Long
 ) : ViewModel() {
 
@@ -71,30 +72,31 @@ class PartsViewModel @AssistedInject constructor(
     }
 
     private val _vehicle = MutableStateFlow<Vehicle?>(null)
-    private val _effects = Channel<PartsEffect>()
-    val effects = _effects.receiveAsFlow()
-
-    val state: StateFlow<PartsState> = combine(
-        _vehicle,
-        partRepository.getPartsForVehicle(vehicleId),
-        userPreferencesRepository.distanceUnit,
-        proUserProvider.isProUser
-    ) { vehicle, parts, unit, isPro ->
-        PartsState(
-            vehicle = vehicle?.toUi(),
-            parts = parts.toPartUiModels(),
-            distanceUnit = unit,
-            isProUser = isPro,
-            isLoading = false
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = PartsState(isLoading = true)
-    )
+    private val _uiState = MutableStateFlow(PartsState(isLoading = true))
+    val state: StateFlow<PartsState> = _uiState.asStateFlow()
+    val effect = state.map { it.effect }
 
     init {
         loadVehicle()
+
+        viewModelScope.launch {
+            combine(
+                _vehicle,
+                partRepository.getPartsForVehicle(vehicleId),
+                userPreferencesRepository.distanceUnit,
+                proUserProvider.isProUser
+            ) { vehicle, parts, unit, isPro ->
+                _uiState.update {
+                    it.copy(
+                        vehicle = vehicle?.toUi(),
+                        parts = parts.toPartUiModels(),
+                        distanceUnit = unit,
+                        isProUser = isPro,
+                        isLoading = false
+                    )
+                }
+            }.collect {}
+        }
     }
 
     private fun loadVehicle() {
@@ -114,6 +116,7 @@ class PartsViewModel @AssistedInject constructor(
             )
             is PartsIntent.UpdatePart -> updatePart(intent.part)
             is PartsIntent.DeletePart -> deletePart(intent.part)
+            PartsIntent.ConsumeEffect -> consumeEffect()
         }
     }
 
@@ -122,7 +125,7 @@ class PartsViewModel @AssistedInject constructor(
         lifeSpan: Double,
         lastMaintenance: Double,
         lifeSpanMonths: Int?,
-        lastMaintenanceDate: kotlinx.datetime.Instant?
+        lastMaintenanceDate: Instant?
     ) {
         viewModelScope.launch {
             try {
@@ -137,7 +140,7 @@ class PartsViewModel @AssistedInject constructor(
                     )
                 )
             } catch (e: Exception) {
-                _effects.send(PartsEffect.ShowError(e.message ?: context.getString(R.string.error_add_part)))
+                triggerEffect(PartsUiEffect.ShowError(e.message ?: context.getString(R.string.error_add_part)))
             }
         }
     }
@@ -157,7 +160,7 @@ class PartsViewModel @AssistedInject constructor(
                     )
                 )
             } catch (e: Exception) {
-                _effects.send(PartsEffect.ShowError(e.message ?: context.getString(R.string.error_update_part)))
+                triggerEffect(PartsUiEffect.ShowError(e.message ?: context.getString(R.string.error_update_part)))
             }
         }
     }
@@ -177,8 +180,16 @@ class PartsViewModel @AssistedInject constructor(
                     )
                 )
             } catch (e: Exception) {
-                _effects.send(PartsEffect.ShowError(e.message ?: context.getString(R.string.error_delete_part)))
+                triggerEffect(PartsUiEffect.ShowError(e.message ?: context.getString(R.string.error_delete_part)))
             }
         }
+    }
+
+    private fun triggerEffect(effect: PartsUiEffect) {
+        _uiState.update { it.copy(effect = effect) }
+    }
+
+    private fun consumeEffect() {
+        _uiState.update { it.copy(effect = null) }
     }
 }

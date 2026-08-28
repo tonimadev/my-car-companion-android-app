@@ -34,7 +34,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,7 +53,9 @@ import digital.tonima.mycarcompanion.core.designsystem.MyCarCompanionTheme
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
+import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun HomeRoute(
@@ -67,6 +68,7 @@ fun HomeRoute(
 
     HomeScreen(
         uiState = uiState,
+        effectFlow = viewModel.effect,
         onIntent = viewModel::onIntent,
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToFuel = onNavigateToFuel,
@@ -78,6 +80,7 @@ fun HomeRoute(
 @Composable
 internal fun HomeScreen(
     uiState: HomeUiState,
+    effectFlow: Flow<HomeUiEffect?>,
     onIntent: (HomeUiIntent) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToFuel: () -> Unit,
@@ -90,25 +93,23 @@ internal fun HomeScreen(
     val adaptiveInfo = currentWindowAdaptiveInfoV2()
     val useTwoColumns = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
-    // Handle events
-    LaunchedEffect(uiState.events) {
-        uiState.events.forEach { event ->
-            when (event) {
-                is HomeUiEvent.ShowError -> {
-                    snackbarHostState.showSnackbar(event.message)
-                    onIntent(HomeUiIntent.ConsumeEvent(event.id))
+    LaunchedUiEffectHandler(
+        effectFlow = effectFlow,
+        onConsumeEffect = { onIntent(HomeUiIntent.ConsumeEffect) },
+        onEffect = { effect ->
+            when (effect) {
+                is HomeUiEffect.ShowError -> {
+                    snackbarHostState.showSnackbar(effect.message)
                 }
-                is HomeUiEvent.NavigateToSettings -> {
+                HomeUiEffect.NavigateToSettings -> {
                     onNavigateToSettings()
-                    onIntent(HomeUiIntent.ConsumeEvent(event.id))
                 }
-                is HomeUiEvent.NavigateToFuel -> {
+                HomeUiEffect.NavigateToFuel -> {
                     onNavigateToFuel()
-                    onIntent(HomeUiIntent.ConsumeEvent(event.id))
                 }
             }
         }
-    }
+    )
 
     Scaffold(
         topBar = {
@@ -419,6 +420,7 @@ fun HomePreview() {
                 parts = sampleParts,
                 distanceUnit = DistanceUnit.KM
             ),
+            effectFlow = kotlinx.coroutines.flow.flowOf(null),
             onIntent = {},
             onNavigateToSettings = {},
             onNavigateToFuel = {},

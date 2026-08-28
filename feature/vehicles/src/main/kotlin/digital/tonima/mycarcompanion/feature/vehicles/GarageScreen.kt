@@ -30,7 +30,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,14 +39,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
+import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
+import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GarageScreen(
     onNavigateToParts: (Long) -> Unit,
@@ -55,43 +55,27 @@ fun GarageScreen(
     viewModel: GarageViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) {
-        viewModel.effects.collect { effect ->
-            when (effect) {
-                is GarageEffect.NavigateToParts -> onNavigateToParts(effect.vehicleId)
-                is GarageEffect.ShowError -> {
-                    snackbarHostState.showSnackbar(effect.message)
-                }
-            }
-        }
-    }
-
-    Scaffold(
-        topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.garage_title)) })
-        },
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) { padding ->
-        GarageContent(
-            state = state,
-            onIntent = viewModel::handleIntent,
-            onOpenParts = viewModel::onNavigateToParts,
-            adUnitId = adUnitId,
-            modifier = Modifier.padding(padding)
-        )
-    }
+    GarageContent(
+        state = state,
+        effectFlow = viewModel.effect,
+        onIntent = viewModel::handleIntent,
+        onOpenParts = onNavigateToParts,
+        adUnitId = adUnitId
+    )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GarageContent(
     state: GarageState,
+    effectFlow: Flow<GarageUiEffect?>,
     onIntent: (GarageIntent) -> Unit,
     onOpenParts: (Long) -> Unit,
     adUnitId: String,
     modifier: Modifier = Modifier
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var editingVehicleId by rememberSaveable { mutableStateOf<Long?>(null) }
     
@@ -99,68 +83,91 @@ fun GarageContent(
         state.vehicles.find { it.id == editingVehicleId }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        if (state.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                items(state.vehicles, key = { it.id }) { vehicle ->
-                    VehicleItem(
-                        vehicle = vehicle,
-                        unit = state.distanceUnit,
-                        onEdit = {
-                            editingVehicleId = vehicle.id
-                            showDialog = true
-                        },
-                        onDelete = { onIntent(GarageIntent.DeleteVehicle(vehicle)) },
-                        onSetCurrent = { onIntent(GarageIntent.SetCurrentVehicle(vehicle.id)) },
-                        onOpenParts = { onOpenParts(vehicle.id) }
-                    )
+    LaunchedUiEffectHandler(
+        effectFlow = effectFlow,
+        onConsumeEffect = { onIntent(GarageIntent.ConsumeEffect) },
+        onEffect = { effect ->
+            when (effect) {
+                is GarageUiEffect.NavigateToParts -> {
+                    onOpenParts(effect.vehicleId)
                 }
-
-                item {
-                    AdBannerView(
-                        isProUser = state.isProUser,
-                        adId = adUnitId,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
+                is GarageUiEffect.ShowError -> {
+                    snackbarHostState.showSnackbar(effect.message)
                 }
             }
         }
+    )
 
-        FloatingActionButton(
-            onClick = {
-                editingVehicleId = null
-                showDialog = true
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_vehicle))
-        }
-
-        if (showDialog) {
-            VehicleEditDialog(
-                vehicle = editingVehicle,
-                unit = state.distanceUnit,
-                onDismiss = { showDialog = false },
-                onConfirm = { name, odometer ->
-                    if (editingVehicle == null) {
-                        onIntent(GarageIntent.AddVehicle(name, odometer))
-                    } else {
-                        onIntent(
-                            GarageIntent.UpdateVehicle(
-                                editingVehicle.copy(name = name, currentOdometer = odometer)
-                            )
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text(stringResource(R.string.garage_title)) })
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = modifier
+    ) { padding ->
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+            if (state.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    items(state.vehicles, key = { it.id }) { vehicle ->
+                        VehicleItem(
+                            vehicle = vehicle,
+                            unit = state.distanceUnit,
+                            onEdit = {
+                                editingVehicleId = vehicle.id
+                                showDialog = true
+                            },
+                            onDelete = { onIntent(GarageIntent.DeleteVehicle(vehicle)) },
+                            onSetCurrent = { onIntent(GarageIntent.SetCurrentVehicle(vehicle.id)) },
+                            onOpenParts = { onOpenParts(vehicle.id) }
                         )
                     }
-                    showDialog = false
+
+                    item {
+                        AdBannerView(
+                            isProUser = state.isProUser,
+                            adId = adUnitId,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
                 }
-            )
+            }
+
+            FloatingActionButton(
+                onClick = {
+                    editingVehicleId = null
+                    showDialog = true
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_vehicle))
+            }
+
+            if (showDialog) {
+                VehicleEditDialog(
+                    vehicle = editingVehicle,
+                    unit = state.distanceUnit,
+                    onDismiss = { showDialog = false },
+                    onConfirm = { name, odometer ->
+                        if (editingVehicle == null) {
+                            onIntent(GarageIntent.AddVehicle(name, odometer))
+                        } else {
+                            onIntent(
+                                GarageIntent.UpdateVehicle(
+                                    editingVehicle.copy(name = name, currentOdometer = odometer)
+                                )
+                            )
+                        }
+                        showDialog = false
+                    }
+                )
+            }
         }
     }
 }

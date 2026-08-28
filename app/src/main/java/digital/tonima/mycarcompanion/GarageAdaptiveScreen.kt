@@ -21,9 +21,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
 import digital.tonima.mycarcompanion.feature.parts.PartsContent
+import digital.tonima.mycarcompanion.feature.parts.PartsIntent
 import digital.tonima.mycarcompanion.feature.parts.PartsViewModel
 import digital.tonima.mycarcompanion.feature.vehicles.GarageContent
+import digital.tonima.mycarcompanion.feature.vehicles.GarageIntent
+import digital.tonima.mycarcompanion.feature.vehicles.GarageUiEffect
 import digital.tonima.mycarcompanion.feature.vehicles.GarageViewModel
 import kotlinx.coroutines.launch
 
@@ -79,13 +83,27 @@ fun GarageAdaptiveScreen(
             directive = navigator.scaffoldDirective,
             value = navigator.scaffoldValue,
             listPane = {
+                LaunchedUiEffectHandler(
+                    effectFlow = garageViewModel.effect,
+                    onConsumeEffect = { garageViewModel.handleIntent(GarageIntent.ConsumeEffect) },
+                    onEffect = { effect ->
+                        when (effect) {
+                            is GarageUiEffect.NavigateToParts -> {
+                                coroutineScope.launch {
+                                    navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, effect.vehicleId)
+                                }
+                            }
+                            else -> {}
+                        }
+                    }
+                )
+
                 GarageContent(
                     state = garageState,
+                    effectFlow = garageViewModel.effect,
                     onIntent = garageViewModel::handleIntent,
                     onOpenParts = { id ->
-                        coroutineScope.launch {
-                            navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, id)
-                        }
+                        garageViewModel.onNavigateToParts(id)
                     },
                     adUnitId = adUnitId
                 )
@@ -98,9 +116,22 @@ fun GarageAdaptiveScreen(
                         creationCallback = { factory -> factory.create(vehicleId) }
                     )
                     val partsState by partsViewModel.state.collectAsStateWithLifecycle()
+
+                    LaunchedUiEffectHandler(
+                        effectFlow = partsViewModel.effect,
+                        onConsumeEffect = { partsViewModel.handleIntent(PartsIntent.ConsumeEffect) },
+                        onEffect = { _ -> } // Currently only ShowError which is handled in PartsContent
+                    )
+
                     PartsContent(
                         state = partsState,
+                        effectFlow = partsViewModel.effect,
                         onIntent = partsViewModel::handleIntent,
+                        onBack = {
+                            coroutineScope.launch {
+                                navigator.navigateBack()
+                            }
+                        },
                         adUnitId = partsAdUnitId
                     )
                 } else {

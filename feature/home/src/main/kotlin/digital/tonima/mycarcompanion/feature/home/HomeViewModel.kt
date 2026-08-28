@@ -28,15 +28,14 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Instant
 
@@ -54,7 +53,7 @@ data class HomeUiState(
     val isProUser: Boolean = false,
     val isAiUser: Boolean = false,
     val isLoading: Boolean = false,
-    val events: List<HomeUiEvent> = emptyList()
+    val effect: HomeUiEffect? = null
 )
 
 enum class FuelTrend {
@@ -72,14 +71,13 @@ sealed interface HomeUiIntent {
     data class UpdateOdometer(val newMileage: Double) : HomeUiIntent
     data object NavigateToSettings : HomeUiIntent
     data object NavigateToFuel : HomeUiIntent
-    data class ConsumeEvent(val eventId: String) : HomeUiIntent
+    data object ConsumeEffect : HomeUiIntent
 }
 
-sealed interface HomeUiEvent {
-    val id: String
-    data class ShowError(override val id: String, val message: String) : HomeUiEvent
-    data class NavigateToSettings(override val id: String) : HomeUiEvent
-    data class NavigateToFuel(override val id: String) : HomeUiEvent
+sealed interface HomeUiEffect {
+    data class ShowError(val message: String) : HomeUiEffect
+    data object NavigateToSettings : HomeUiEffect
+    data object NavigateToFuel : HomeUiEffect
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -95,7 +93,7 @@ class HomeViewModel @Inject constructor(
     proUserProvider: ProUserProvider
 ) : ViewModel() {
 
-    private val _events = MutableStateFlow<List<HomeUiEvent>>(emptyList())
+    private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
 
     init {
         viewModelScope.launch {
@@ -109,72 +107,73 @@ class HomeViewModel @Inject constructor(
                 }
             }.collect {}
         }
+
+        viewModelScope.launch {
+            combine(
+                combine(
+                    vehicleRepository.getVehicles(),
+                    vehicleRepository.getCurrentVehicle()
+                ) { vehicles, current -> vehicles to current },
+                vehicleRepository.getCurrentVehicle().flatMapLatest { vehicle ->
+                    if (vehicle != null) {
+                        combine(
+                            partRepository.getPartsForVehicle(vehicle.id),
+                            odometerRepository.getOdometerRecordsForVehicle(vehicle.id),
+                            fuelRepository.getFuelRecordsForVehicle(vehicle.id),
+                            maintenanceRepository.getTotalMaintenanceCostForVehicle(vehicle.id),
+                            fuelRepository.getTotalFuelCostForVehicle(vehicle.id),
+                            transform = { parts, records, fuels, maintCost, fuelCost ->
+                                UiData(parts, records, fuels, maintCost ?: 0.0, fuelCost ?: 0.0)
+                            }
+                        )
+                    } else {
+                        flowOf(UiData())
+                    }
+                },
+                userPreferencesRepository.distanceUnit,
+                combine(proUserProvider.isProUser, proUserProvider.isAiUser) { pro, ai -> pro to ai }
+            ) { (vehicles, currentVehicle), uiData, distanceUnit, (isPro, isAi) ->
+                val sortedParts = uiData.parts.sortedBy { (it.lastMaintenanceOdometer + it.lifeSpanMileage) - (currentVehicle?.currentOdometer ?: 0.0) }
+                val predictions = sortedParts.associate { part ->
+                    part.id to PredictionEngine.estimateNextMaintenanceDate(part, uiData.records)
+                }
+
+                // Calculate average consumption
+                val consumptions = uiData.fuels.mapNotNull { fuelRepository.calculateFuelConsumption(it) }
+                val avgConsumption = if (consumptions.isNotEmpty()) consumptions.average() else null
+
+                val trend = if (consumptions.size >= 2) {
+                    val last = consumptions.first()
+                    val previous = consumptions.drop(1).first()
+                    when {
+                        last > previous + 0.1 -> FuelTrend.IMPROVING
+                        last < previous - 0.1 -> FuelTrend.WORSENING
+                        else -> FuelTrend.STABLE
+                    }
+                } else FuelTrend.STABLE
+
+                _uiState.update {
+                    it.copy(
+                        vehicles = vehicles.toUiModels(),
+                        currentVehicle = currentVehicle?.toUi(),
+                        parts = sortedParts.toPartUiModels(),
+                        predictions = predictions,
+                        totalMaintenanceCost = uiData.totalMaintCost,
+                        totalFuelCost = uiData.totalFuelCost,
+                        averageFuelConsumption = avgConsumption,
+                        fuelConsumptionTrend = trend,
+                        distanceUnit = distanceUnit,
+                        isProUser = isPro,
+                        isAiUser = isAi,
+                        isLoading = false
+                    )
+                }
+            }.collect {}
+        }
     }
 
-    val uiState: StateFlow<HomeUiState> = combine(
-        combine(
-            vehicleRepository.getVehicles(),
-            vehicleRepository.getCurrentVehicle()
-        ) { vehicles, current -> vehicles to current },
-        vehicleRepository.getCurrentVehicle().flatMapLatest { vehicle ->
-            if (vehicle != null) {
-                combine(
-                    partRepository.getPartsForVehicle(vehicle.id),
-                    odometerRepository.getOdometerRecordsForVehicle(vehicle.id),
-                    fuelRepository.getFuelRecordsForVehicle(vehicle.id),
-                    maintenanceRepository.getTotalMaintenanceCostForVehicle(vehicle.id),
-                    fuelRepository.getTotalFuelCostForVehicle(vehicle.id),
-                    transform = { parts, records, fuels, maintCost, fuelCost ->
-                        UiData(parts, records, fuels, maintCost ?: 0.0, fuelCost ?: 0.0)
-                    }
-                )
-            } else {
-                flowOf(UiData())
-            }
-        },
-        userPreferencesRepository.distanceUnit,
-        combine(proUserProvider.isProUser, proUserProvider.isAiUser) { pro, ai -> pro to ai },
-        _events
-    ) { (vehicles, currentVehicle), uiData, distanceUnit, (isPro, isAi), events ->
-        val sortedParts = uiData.parts.sortedBy { (it.lastMaintenanceOdometer + it.lifeSpanMileage) - (currentVehicle?.currentOdometer ?: 0.0) }
-        val predictions = sortedParts.associate { part ->
-            part.id to PredictionEngine.estimateNextMaintenanceDate(part, uiData.records)
-        }
-        
-        // Calculate average consumption
-        val consumptions = uiData.fuels.mapNotNull { fuelRepository.calculateFuelConsumption(it) }
-        val avgConsumption = if (consumptions.isNotEmpty()) consumptions.average() else null
-        
-        val trend = if (consumptions.size >= 2) {
-            val last = consumptions.first()
-            val previous = consumptions.drop(1).first()
-            when {
-                last > previous + 0.1 -> FuelTrend.IMPROVING
-                last < previous - 0.1 -> FuelTrend.WORSENING
-                else -> FuelTrend.STABLE
-            }
-        } else FuelTrend.STABLE
-
-        HomeUiState(
-            vehicles = vehicles.toUiModels(),
-            currentVehicle = currentVehicle?.toUi(),
-            parts = sortedParts.toPartUiModels(),
-            predictions = predictions,
-            totalMaintenanceCost = uiData.totalMaintCost,
-            totalFuelCost = uiData.totalFuelCost,
-            averageFuelConsumption = avgConsumption,
-            fuelConsumptionTrend = trend,
-            distanceUnit = distanceUnit,
-            isProUser = isPro,
-            isAiUser = isAi,
-            events = events,
-            isLoading = false
-        )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
-        initialValue = HomeUiState(isLoading = true)
-    )
+    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    val effect = uiState.map { it.effect }
 
     private data class UiData(
         val parts: List<Part> = emptyList(),
@@ -189,9 +188,9 @@ class HomeViewModel @Inject constructor(
             is HomeUiIntent.SelectVehicle -> selectVehicle(intent.vehicleId)
             is HomeUiIntent.PerformMaintenance -> performMaintenance(intent.part, intent.newOdometer, intent.cost, intent.notes)
             is HomeUiIntent.UpdateOdometer -> updateOdometer(intent.newMileage)
-            HomeUiIntent.NavigateToSettings -> addEvent(HomeUiEvent.NavigateToSettings(UUID.randomUUID().toString()))
-            HomeUiIntent.NavigateToFuel -> addEvent(HomeUiEvent.NavigateToFuel(UUID.randomUUID().toString()))
-            is HomeUiIntent.ConsumeEvent -> consumeEvent(intent.eventId)
+            HomeUiIntent.NavigateToSettings -> triggerEffect(HomeUiEffect.NavigateToSettings)
+            HomeUiIntent.NavigateToFuel -> triggerEffect(HomeUiEffect.NavigateToFuel)
+            HomeUiIntent.ConsumeEffect -> consumeEffect()
         }
     }
 
@@ -231,11 +230,11 @@ class HomeViewModel @Inject constructor(
                             )
                         )
                     } else {
-                        addEvent(HomeUiEvent.ShowError(UUID.randomUUID().toString(), context.getString(R.string.error_odometer_greater)))
+                        triggerEffect(HomeUiEffect.ShowError(context.getString(R.string.error_odometer_greater)))
                     }
                 }
             } catch (e: Exception) {
-                addEvent(HomeUiEvent.ShowError(UUID.randomUUID().toString(), e.message ?: context.getString(R.string.error_unknown)))
+                triggerEffect(HomeUiEffect.ShowError(e.message ?: context.getString(R.string.error_unknown)))
             }
         }
     }
@@ -255,16 +254,16 @@ class HomeViewModel @Inject constructor(
                     )
                 }
             } catch (e: Exception) {
-                addEvent(HomeUiEvent.ShowError(UUID.randomUUID().toString(), e.message ?: context.getString(R.string.error_unknown)))
+                triggerEffect(HomeUiEffect.ShowError(e.message ?: context.getString(R.string.error_unknown)))
             }
         }
     }
 
-    private fun addEvent(event: HomeUiEvent) {
-        _events.update { it + event }
+    private fun triggerEffect(effect: HomeUiEffect) {
+        _uiState.update { it.copy(effect = effect) }
     }
 
-    private fun consumeEvent(eventId: String) {
-        _events.update { it.filterNot { event -> event.id == eventId } }
+    private fun consumeEffect() {
+        _uiState.update { it.copy(effect = null) }
     }
 }

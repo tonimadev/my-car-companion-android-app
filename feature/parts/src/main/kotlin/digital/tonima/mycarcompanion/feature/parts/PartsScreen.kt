@@ -28,7 +28,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,10 +41,11 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
+import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
+import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PartsScreen(
     onBack: () -> Unit,
@@ -53,17 +53,45 @@ fun PartsScreen(
     viewModel: PartsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(Unit) {
-        viewModel.effects.collect { effect ->
+    PartsContent(
+        state = state,
+        effectFlow = viewModel.effect,
+        onIntent = viewModel::handleIntent,
+        onBack = onBack,
+        adUnitId = adUnitId
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PartsContent(
+    state: PartsState,
+    effectFlow: Flow<PartsUiEffect?>,
+    onIntent: (PartsIntent) -> Unit,
+    onBack: () -> Unit,
+    adUnitId: String,
+    modifier: Modifier = Modifier
+) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showDialog by rememberSaveable { mutableStateOf(false) }
+    var editingPartId by rememberSaveable { mutableStateOf<Long?>(null) }
+    
+    val editingPart = remember(editingPartId, state.parts) {
+        state.parts.find { it.id == editingPartId }
+    }
+
+    LaunchedUiEffectHandler(
+        effectFlow = effectFlow,
+        onConsumeEffect = { onIntent(PartsIntent.ConsumeEffect) },
+        onEffect = { effect ->
             when (effect) {
-                is PartsEffect.ShowError -> {
+                is PartsUiEffect.ShowError -> {
                     snackbarHostState.showSnackbar(effect.message)
                 }
             }
         }
-    }
+    )
 
     Scaffold(
         topBar = {
@@ -77,96 +105,75 @@ fun PartsScreen(
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
+        modifier = modifier
     ) { padding ->
-        PartsContent(
-            state = state,
-            onIntent = viewModel::handleIntent,
-            adUnitId = adUnitId,
-            modifier = Modifier.padding(padding)
-        )
-    }
-}
-
-@Composable
-fun PartsContent(
-    state: PartsState,
-    onIntent: (PartsIntent) -> Unit,
-    adUnitId: String,
-    modifier: Modifier = Modifier
-) {
-    var showDialog by rememberSaveable { mutableStateOf(false) }
-    var editingPartId by rememberSaveable { mutableStateOf<Long?>(null) }
-    
-    val editingPart = remember(editingPartId, state.parts) {
-        state.parts.find { it.id == editingPartId }
-    }
-
-    Box(modifier = modifier.fillMaxSize()) {
-        if (state.isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-        } else {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp)
-            ) {
-                items(state.parts, key = { it.id }) { part ->
-                    PartItem(
-                        part = part,
-                        unit = state.distanceUnit,
-                        onEdit = {
-                            editingPartId = part.id
-                            showDialog = true
-                        },
-                        onDelete = { onIntent(PartsIntent.DeletePart(part)) }
-                    )
-                }
-
-                item {
-                    AdBannerView(
-                        isProUser = state.isProUser,
-                        adId = adUnitId,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                }
-            }
-        }
-
-        FloatingActionButton(
-            onClick = {
-                editingPartId = null
-                showDialog = true
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
-        ) {
-            Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_part))
-        }
-
-        if (showDialog) {
-            PartEditDialog(
-                part = editingPart,
-                unit = state.distanceUnit,
-                onDismiss = { showDialog = false },
-                onConfirm = { name, lifeSpan, lastMaintenance, lifeSpanMonths, lastMaintenanceDate ->
-                    if (editingPart == null) {
-                        onIntent(PartsIntent.AddPart(name, lifeSpan, lastMaintenance, lifeSpanMonths, lastMaintenanceDate))
-                    } else {
-                        onIntent(
-                            PartsIntent.UpdatePart(
-                                editingPart.copy(
-                                    name = name,
-                                    lifeSpanMileage = lifeSpan,
-                                    lastMaintenanceOdometer = lastMaintenance,
-                                    lifeSpanMonths = lifeSpanMonths,
-                                    lastMaintenanceDate = lastMaintenanceDate
-                                )
-                            )
+        Box(modifier = Modifier.padding(padding).fillMaxSize()) {
+            if (state.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp)
+                ) {
+                    items(state.parts, key = { it.id }) { part ->
+                        PartItem(
+                            part = part,
+                            unit = state.distanceUnit,
+                            onEdit = {
+                                editingPartId = part.id
+                                showDialog = true
+                            },
+                            onDelete = { onIntent(PartsIntent.DeletePart(part)) }
                         )
                     }
-                    showDialog = false
+
+                    item {
+                        AdBannerView(
+                            isProUser = state.isProUser,
+                            adId = adUnitId,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                    }
                 }
-            )
+            }
+
+            FloatingActionButton(
+                onClick = {
+                    editingPartId = null
+                    showDialog = true
+                },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(16.dp)
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_part))
+            }
+
+            if (showDialog) {
+                PartEditDialog(
+                    part = editingPart,
+                    unit = state.distanceUnit,
+                    onDismiss = { showDialog = false },
+                    onConfirm = { name, lifeSpan, lastMaintenance, lifeSpanMonths, lastMaintenanceDate ->
+                        if (editingPart == null) {
+                            onIntent(PartsIntent.AddPart(name, lifeSpan, lastMaintenance, lifeSpanMonths, lastMaintenanceDate))
+                        } else {
+                            onIntent(
+                                PartsIntent.UpdatePart(
+                                    editingPart.copy(
+                                        name = name,
+                                        lifeSpanMileage = lifeSpan,
+                                        lastMaintenanceOdometer = lastMaintenance,
+                                        lifeSpanMonths = lifeSpanMonths,
+                                        lastMaintenanceDate = lastMaintenanceDate
+                                    )
+                                )
+                            )
+                        }
+                        showDialog = false
+                    }
+                )
+            }
         }
     }
 }
