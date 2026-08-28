@@ -19,7 +19,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.MyCarCompanion"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -37,7 +36,8 @@
             android:name="digital.tonima.mycarcompanion.core.data.MccAppFunctionService"
             android:permission="android.permission.BIND_APP_FUNCTION_SERVICE"
             android:exported="true"
-            tools:ignore="ExportedService">
+            tools:ignore="ExportedService,Instantiatable"
+            tools:targetApi="36">
             <intent-filter>
                 <action android:name="android.app.appfunctions.AppFunctionService" />
             </intent-filter>
