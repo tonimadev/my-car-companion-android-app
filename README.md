@@ -14,9 +14,11 @@ Maintaining a vehicle can be complex. **My Car Companion** simplifies this by mo
     *   **GPS Foreground Service:** Precise tracking for active trips.
     *   **Manual Entry:** Simple input for legacy tracking or corrections.
 *   **MVI-driven Predictive Maintenance Dashboard:** A data-driven view of upcoming service needs based on historical usage.
+*   **AI & Assistant Ready:** Integrated with **Android App Functions**, allowing voice commands to update mileage or fuel records.
+*   **Quick Actions:** Support for **App Shortcuts** to jump directly to fuel entry or garage management.
 *   **Proactive Notifications:** Powered by `WorkManager` to remind you of critical maintenance before it's too late.
 *   **Adaptive UI:** Fully responsive design supporting Phones, Tablets, and Foldables using Material 3 Adaptive.
-*   **Multi-unit Support:** Seamlessly switch between Kilometers and Miles.
+*   **Modern Interactions:** Smooth **Swipe-to-Action** gestures and **Haptic Feedback** for a premium feel.
 
 ## 🛠️ Tech Stack
 
@@ -28,10 +30,16 @@ Maintaining a vehicle can be complex. **My Car Companion** simplifies this by mo
 *   **Navigation:** Jetpack Navigation 3
 *   **Adaptive Layouts:** Material 3 Adaptive Library
 *   **Concurrency:** Kotlin Coroutines & Flow
+*   **Stability:** `kotlinx-collections-immutable` for high-performance UI rendering.
 
 ## 🏗️ Architecture
 
-The project follows **Clean Architecture** principles combined with the **MVI (Model-View-Intent)** pattern for the presentation layer. This ensures a unidirectional data flow, making the app predictable, testable, and maintainable.
+The project follows **Clean Architecture** principles combined with an optimized **MVI (Model-View-Intent)** pattern:
+
+*   **UDF (Unidirectional Data Flow):** State is managed in ViewModels and exposed as a single source of truth.
+*   **Explicit Effect Handling:** Side effects (navigation, snackbars) are modeled as state properties and consumed explicitly to ensure reliability.
+*   **Performance First:** Use of specialized UI Models (`VehicleUi`, `PartUi`) annotated with `@Immutable` to maximize Compose compiler optimizations.
+*   **Module Decoupling:** The domain layer (`:core:model`) remains pure Kotlin, entirely free from UI framework dependencies.
 
 ## 📦 Modularization Details
 
@@ -40,13 +48,13 @@ The project is highly modularized to improve build times and separation of conce
 *   **`:app`**: The main entry point, handling application-wide configuration, DI setup, and root navigation.
 *   **`:core:model`**: Pure Kotlin module containing domain entities used across the entire project.
 *   **`:core:database`**: Local data persistence using Room, including DAOs and Entity definitions.
-*   **`:core:data`**: Implementation of repositories, managing data flow between the database and features.
-*   **`:core:designsystem`**: Shared UI components, theme definitions (Material 3), and design tokens.
+*   **`:core:data`**: Implementation of repositories and **App Functions** for system integration.
+*   **`:core:designsystem`**: Shared UI components, UI Models, and custom utilities like `LaunchedUiEffectHandler`.
 *   **`:core:notifications`**: Centralized logic for scheduling and displaying maintenance alerts.
 *   **`:feature:home`**: The predictive maintenance dashboard and main landing experience.
-*   **`:feature:vehicles`**: Garage management, allowing users to add, edit, and switch between vehicles.
-*   **`:feature:parts`**: Management of specific vehicle parts and their individual maintenance schedules.
-*   **`:feature:tracking`**: The core mileage engine, handling GPS services and Android Auto integration.
+*   **`:feature:vehicles`**: Garage management and adaptive vehicle views.
+*   **`:feature:parts`**: Management of specific vehicle parts and maintenance schedules.
+*   **`:feature:tracking`**: The core mileage engine, handling GPS and Android Auto integration.
 
 ## 🛠️ Setup & Installation
 
@@ -60,10 +68,6 @@ The project is highly modularized to improve build times and separation of conce
     Wait for the project to sync and download all dependencies.
 4.  **Run:** 
     Select the `app` configuration and click **Run**.
-
-## 📈 Project Status
-
-This project is currently in the **MVP (Minimum Viable Product)** stage. We are actively refining the mileage prediction algorithms and expanding Android Auto capabilities.
 
 ---
 *Developed with ❤️ for car enthusiasts.*
