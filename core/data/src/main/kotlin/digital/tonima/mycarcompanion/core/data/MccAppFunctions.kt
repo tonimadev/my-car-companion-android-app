@@ -1,14 +1,14 @@
 package digital.tonima.mycarcompanion.core.data
 
+import androidx.annotation.RequiresApi
 import androidx.appfunctions.AppFunction
 import androidx.appfunctions.AppFunctionService
 import androidx.appfunctions.AppFunctionServiceEntryPoint
+import dagger.hilt.android.AndroidEntryPoint
 import digital.tonima.mycarcompanion.core.model.FuelRecord
 import kotlinx.coroutines.flow.first
-import kotlinx.datetime.Clock
-import androidx.annotation.RequiresApi
 import javax.inject.Inject
-import dagger.hilt.android.AndroidEntryPoint
+import kotlin.time.Instant
 
 /**
  * Entry point for Android App Functions.
@@ -54,7 +54,7 @@ abstract class BaseMccAppFunctionService : AppFunctionService() {
         if (currentVehicle != null) {
             val record = FuelRecord(
                 vehicleId = currentVehicle.id,
-                date = kotlinx.datetime.Instant.fromEpochMilliseconds(System.currentTimeMillis()),
+                date = Instant.fromEpochMilliseconds(System.currentTimeMillis()),
                 liters = liters,
                 totalCost = totalCost,
                 mileage = mileage,

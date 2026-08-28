@@ -1,19 +1,19 @@
 package digital.tonima.mycarcompanion.feature.home
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import android.content.Context
 import androidx.compose.runtime.Immutable
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.mycarcompanion.core.data.FuelRepository
 import digital.tonima.mycarcompanion.core.data.MaintenanceRepository
-import digital.tonima.mycarcompanion.core.data.PartRepository
-import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
-import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.data.OdometerRepository
+import digital.tonima.mycarcompanion.core.data.PartRepository
 import digital.tonima.mycarcompanion.core.data.PredictionEngine
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
+import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
+import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.designsystem.model.toPartUiModels
@@ -38,14 +38,14 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
-import kotlin.time.Clock
+import kotlin.time.Instant
 
 @Immutable
 data class HomeUiState(
     val vehicles: ImmutableList<VehicleUi> = persistentListOf(),
     val currentVehicle: VehicleUi? = null,
     val parts: ImmutableList<PartUi> = persistentListOf(),
-    val predictions: Map<Long, kotlinx.datetime.Instant?> = emptyMap(),
+    val predictions: Map<Long, Instant?> = emptyMap(),
     val totalMaintenanceCost: Double = 0.0,
     val totalFuelCost: Double = 0.0,
     val averageFuelConsumption: Double? = null,
@@ -91,8 +91,8 @@ class HomeViewModel @Inject constructor(
     private val maintenanceRepository: MaintenanceRepository,
     private val odometerRepository: OdometerRepository,
     private val fuelRepository: FuelRepository,
-    private val userPreferencesRepository: UserPreferencesRepository,
-    private val proUserProvider: ProUserProvider
+    userPreferencesRepository: UserPreferencesRepository,
+    proUserProvider: ProUserProvider
 ) : ViewModel() {
 
     private val _events = MutableStateFlow<List<HomeUiEvent>>(emptyList())
@@ -208,7 +208,7 @@ class HomeViewModel @Inject constructor(
                 if (currentVehicle != null) {
                     val increment = newOdometer - currentVehicle.currentOdometer
                     if (increment >= 0) {
-                        val now = kotlinx.datetime.Instant.fromEpochMilliseconds(System.currentTimeMillis())
+                        val now = Instant.fromEpochMilliseconds(System.currentTimeMillis())
                         vehicleRepository.updateActiveVehicleOdometer(increment)
                         partRepository.updatePart(
                             Part(
