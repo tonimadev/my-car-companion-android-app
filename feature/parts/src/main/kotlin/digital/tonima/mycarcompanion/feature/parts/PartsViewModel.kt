@@ -9,6 +9,7 @@ import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.mycarcompanion.core.data.PartRepository
+import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
@@ -28,6 +29,7 @@ data class PartsState(
     val vehicle: Vehicle? = null,
     val parts: List<Part> = emptyList(),
     val distanceUnit: DistanceUnit = DistanceUnit.KM,
+    val isProUser: Boolean = false,
     val isLoading: Boolean = true
 )
 
@@ -53,6 +55,7 @@ class PartsViewModel @AssistedInject constructor(
     private val partRepository: PartRepository,
     private val vehicleRepository: VehicleRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val proUserProvider: ProUserProvider,
     @Assisted private val vehicleId: Long
 ) : ViewModel() {
 
@@ -68,12 +71,14 @@ class PartsViewModel @AssistedInject constructor(
     val state: StateFlow<PartsState> = combine(
         _vehicle,
         partRepository.getPartsForVehicle(vehicleId),
-        userPreferencesRepository.distanceUnit
-    ) { vehicle, parts, unit ->
+        userPreferencesRepository.distanceUnit,
+        proUserProvider.isProUser
+    ) { vehicle, parts, unit, isPro ->
         PartsState(
             vehicle = vehicle,
             parts = parts,
             distanceUnit = unit,
+            isProUser = isPro,
             isLoading = false
         )
     }.stateIn(

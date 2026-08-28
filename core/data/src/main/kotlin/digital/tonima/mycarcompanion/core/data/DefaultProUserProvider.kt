@@ -1,16 +1,16 @@
 package digital.tonima.mycarcompanion.core.data
 
 import android.app.Activity
-import digital.tonima.mycarcompanion.core.billing.BillingManager
-import digital.tonima.mycarcompanion.core.billing.SubscriptionManager
+
+import digital.tonima.paywall.core.PayWallManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.runBlocking
@@ -19,8 +19,7 @@ import javax.inject.Singleton
 
 @Singleton
 class DefaultProUserProvider @Inject constructor(
-    private val billingManager: BillingManager,
-    private val subscriptionManager: SubscriptionManager,
+    private val payWallManager: PayWallManager,
     private val userPreferencesRepository: UserPreferencesRepository,
 ) : ProUserProvider {
 
@@ -34,26 +33,28 @@ class DefaultProUserProvider @Inject constructor(
         userPreferencesRepository.isAiUser.first()
     }
 
-    override val isProUser: StateFlow<Boolean> = combine(
-        billingManager.isProUser,
-        subscriptionManager.isProUser,
-    ) { inApp, sub -> inApp || sub }
+    override val isProUser: StateFlow<Boolean> = payWallManager.ownedProductIds
+        .map { owned -> 
+            owned.contains("remove_ads_premium") || owned.contains("month_subscription")
+        }
         .stateIn(scope, SharingStarted.Eagerly, initialProStatus)
 
-    override val isAiUser: StateFlow<Boolean> = subscriptionManager.isProUser
+    override val isAiUser: StateFlow<Boolean> = payWallManager.ownedProductIds
+        .map { owned ->
+            owned.contains("month_subscription")
+        }
         .stateIn(scope, SharingStarted.Eagerly, initialAiStatus)
 
     override fun launchPurchasePro(activity: Activity) {
-        billingManager.launchPurchaseFlow(activity)
+        payWallManager.launchPurchase(activity, "remove_ads_premium")
     }
 
     override fun launchSubscribeAi(activity: Activity) {
-        subscriptionManager.launchSubscriptionFlow(activity)
+        payWallManager.launchSubscription(activity, "month_subscription")
     }
 
     init {
-        billingManager.connect()
-        subscriptionManager.connect()
+        payWallManager.connect()
 
         // Persistir status pro (sem anúncios)
         isProUser.onEach { isPro ->
@@ -67,7 +68,6 @@ class DefaultProUserProvider @Inject constructor(
     }
 
     override fun refresh() {
-        billingManager.refresh()
-        subscriptionManager.refresh()
+        payWallManager.refresh()
     }
 }

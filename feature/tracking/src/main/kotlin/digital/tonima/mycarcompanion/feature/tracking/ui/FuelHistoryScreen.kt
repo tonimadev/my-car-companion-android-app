@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -26,6 +27,7 @@ import java.util.*
 fun FuelHistoryScreen(
     onNavigateUp: () -> Unit,
     onNavigateToAddFuel: () -> Unit,
+    adUnitId: String,
     modifier: Modifier = Modifier,
     viewModel: FuelHistoryViewModel = hiltViewModel()
 ) {
@@ -155,6 +157,14 @@ fun FuelHistoryScreen(
                             FuelRecordCard(
                                 item = item,
                                 onDelete = { viewModel.deleteRecord(item.record) }
+                            )
+                        }
+
+                        item {
+                            AdBannerView(
+                                isProUser = uiState.isProUser,
+                                adId = adUnitId,
+                                modifier = Modifier.padding(vertical = 8.dp)
                             )
                         }
                     }

@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import kotlin.math.roundToInt
@@ -50,6 +51,7 @@ import kotlin.math.roundToInt
 @Composable
 fun GarageScreen(
     onNavigateToParts: (Long) -> Unit,
+    adUnitId: String,
     viewModel: GarageViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -76,6 +78,7 @@ fun GarageScreen(
             state = state,
             onIntent = viewModel::handleIntent,
             onOpenParts = viewModel::onNavigateToParts,
+            adUnitId = adUnitId,
             modifier = Modifier.padding(padding)
         )
     }
@@ -86,6 +89,7 @@ fun GarageContent(
     state: GarageState,
     onIntent: (GarageIntent) -> Unit,
     onOpenParts: (Long) -> Unit,
+    adUnitId: String,
     modifier: Modifier = Modifier
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
@@ -114,6 +118,14 @@ fun GarageContent(
                         onDelete = { onIntent(GarageIntent.DeleteVehicle(vehicle)) },
                         onSetCurrent = { onIntent(GarageIntent.SetCurrentVehicle(vehicle.id)) },
                         onOpenParts = { onOpenParts(vehicle.id) }
+                    )
+                }
+
+                item {
+                    AdBannerView(
+                        isProUser = state.isProUser,
+                        adId = adUnitId,
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
             }

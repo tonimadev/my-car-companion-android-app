@@ -128,7 +128,9 @@ fun AppNavigation(
                         } else {
                             onFinish()
                         }
-                    }
+                    },
+                    adUnitId = BuildConfig.ADMOB_BANNER_GARAGE_ID,
+                    partsAdUnitId = BuildConfig.ADMOB_BANNER_PARTS_ID
                 )
                 Route.Settings -> digital.tonima.mycarcompanion.feature.home.SettingsScreen(
                     onBack = {
@@ -148,6 +150,7 @@ fun AppNavigation(
                             onFinish()
                         }
                     },
+                    adUnitId = BuildConfig.ADMOB_BANNER_PARTS_ID,
                     viewModel = hiltViewModel<PartsViewModel, PartsViewModel.Factory>(
                         creationCallback = { factory -> factory.create(key.vehicleId) }
                     )
@@ -160,7 +163,8 @@ fun AppNavigation(
                             onFinish()
                         }
                     },
-                    onNavigateToAddFuel = { backStack.add(Route.AddFuel) }
+                    onNavigateToAddFuel = { backStack.add(Route.AddFuel) },
+                    adUnitId = BuildConfig.ADMOB_BANNER_FUEL_ID
                 )
                 Route.AddFuel -> AddFuelRecordScreen(
                     onNavigateUp = {

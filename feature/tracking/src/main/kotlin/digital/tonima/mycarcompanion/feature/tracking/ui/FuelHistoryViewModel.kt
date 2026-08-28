@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.mycarcompanion.core.data.FuelRepository
+import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.model.FuelRecord
 import digital.tonima.mycarcompanion.core.model.Vehicle
@@ -28,6 +29,7 @@ data class FuelHistoryUiState(
     val items: List<FuelRecordItemUiState> = emptyList(),
     val averageConsumption: Double? = null,
     val totalSpent: Double = 0.0,
+    val isProUser: Boolean = false,
     val isLoading: Boolean = false
 )
 
@@ -35,11 +37,15 @@ data class FuelHistoryUiState(
 @HiltViewModel
 class FuelHistoryViewModel @Inject constructor(
     private val fuelRepository: FuelRepository,
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    private val proUserProvider: ProUserProvider
 ) : ViewModel() {
 
-    val uiState: StateFlow<FuelHistoryUiState> = vehicleRepository.getCurrentVehicle()
-        .flatMapLatest { vehicle ->
+    val uiState: StateFlow<FuelHistoryUiState> = kotlinx.coroutines.flow.combine(
+        vehicleRepository.getCurrentVehicle(),
+        proUserProvider.isProUser
+    ) { vehicle, isPro -> vehicle to isPro }
+        .flatMapLatest { (vehicle, isPro) ->
             if (vehicle != null) {
                 fuelRepository.getFuelRecordsForVehicle(vehicle.id).map { records ->
                     val uiItems = records.map { record ->
@@ -59,11 +65,12 @@ class FuelHistoryViewModel @Inject constructor(
                         items = uiItems,
                         averageConsumption = avgConsumption,
                         totalSpent = totalSpent,
+                        isProUser = isPro,
                         isLoading = false
                     )
                 }
             } else {
-                flowOf(FuelHistoryUiState(isLoading = false))
+                flowOf(FuelHistoryUiState(isProUser = isPro, isLoading = false))
             }
         }
         .stateIn(

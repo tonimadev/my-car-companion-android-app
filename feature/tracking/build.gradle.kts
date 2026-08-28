@@ -45,4 +45,8 @@ dependencies {
     implementation(libs.play.services.location)
     implementation(libs.androidx.car.app)
     implementation(libs.androidx.car.app.projected)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
 }

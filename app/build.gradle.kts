@@ -16,8 +16,8 @@ android {
         applicationId = "digital.tonima.mycarcompanion"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 5
-        versionName = "1.4"
+        versionCode = 6
+        versionName = "1.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -32,6 +32,15 @@ android {
 
         val admobBannerHomeId = localProperties.getProperty("admob.banner.home.id") ?: ""
         buildConfigField("String", "ADMOB_BANNER_HOME_ID", "\"$admobBannerHomeId\"")
+
+        val admobBannerPartsId = localProperties.getProperty("admob.banner.parts.id") ?: ""
+        buildConfigField("String", "ADMOB_BANNER_PARTS_ID", "\"$admobBannerPartsId\"")
+
+        val admobBannerFuelId = localProperties.getProperty("admob.banner.fuel.id") ?: ""
+        buildConfigField("String", "ADMOB_BANNER_FUEL_ID", "\"$admobBannerFuelId\"")
+
+        val admobBannerGarageId = localProperties.getProperty("admob.banner.garage.id") ?: ""
+        buildConfigField("String", "ADMOB_BANNER_GARAGE_ID", "\"$admobBannerGarageId\"")
     }
 
     buildTypes {
@@ -61,7 +70,8 @@ dependencies {
     implementation(project(":feature:vehicles"))
     implementation(project(":feature:parts"))
     implementation(project(":core:notifications"))
-    implementation(project(":core:billing:impl"))
+    implementation(libs.paywall.core)
+    implementation(libs.paywall.play)
     implementation(libs.play.services.ads.api)
 
     implementation(platform(libs.androidx.compose.bom))

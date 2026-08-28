@@ -22,7 +22,7 @@ android {
 dependencies {
     implementation(project(":core:model"))
     implementation(project(":core:database"))
-    implementation(project(":core:billing:bridge"))
+    implementation(libs.paywall.core)
     implementation(libs.kotlinx.datetime)
     
     implementation(libs.androidx.datastore.preferences)
@@ -32,4 +32,8 @@ dependencies {
     
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.core.ktx)
+    
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockk)
 }

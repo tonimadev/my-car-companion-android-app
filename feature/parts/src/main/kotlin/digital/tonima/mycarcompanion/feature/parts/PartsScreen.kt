@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Part
 import kotlin.math.roundToInt
@@ -48,6 +49,7 @@ import kotlin.math.roundToInt
 @Composable
 fun PartsScreen(
     onBack: () -> Unit,
+    adUnitId: String,
     viewModel: PartsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -79,6 +81,7 @@ fun PartsScreen(
         PartsContent(
             state = state,
             onIntent = viewModel::handleIntent,
+            adUnitId = adUnitId,
             modifier = Modifier.padding(padding)
         )
     }
@@ -88,6 +91,7 @@ fun PartsScreen(
 fun PartsContent(
     state: PartsState,
     onIntent: (PartsIntent) -> Unit,
+    adUnitId: String,
     modifier: Modifier = Modifier
 ) {
     var showDialog by rememberSaveable { mutableStateOf(false) }
@@ -114,6 +118,14 @@ fun PartsContent(
                             showDialog = true
                         },
                         onDelete = { onIntent(PartsIntent.DeletePart(part)) }
+                    )
+                }
+
+                item {
+                    AdBannerView(
+                        isProUser = state.isProUser,
+                        adId = adUnitId,
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
             }

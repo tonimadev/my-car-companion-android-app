@@ -33,7 +33,9 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3AdaptiveApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun GarageAdaptiveScreen(
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    adUnitId: String,
+    partsAdUnitId: String
 ) {
     val navigator = rememberListDetailPaneScaffoldNavigator<Long>()
     var selectedVehicleId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -72,7 +74,8 @@ fun GarageAdaptiveScreen(
                         coroutineScope.launch {
                             navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, id)
                         }
-                    }
+                    },
+                    adUnitId = adUnitId
                 )
             },
             detailPane = {
@@ -85,7 +88,8 @@ fun GarageAdaptiveScreen(
                     val partsState by partsViewModel.state.collectAsStateWithLifecycle()
                     PartsContent(
                         state = partsState,
-                        onIntent = partsViewModel::handleIntent
+                        onIntent = partsViewModel::handleIntent,
+                        adUnitId = partsAdUnitId
                     )
                 } else {
                     Text(stringResource(R.string.select_vehicle_message))

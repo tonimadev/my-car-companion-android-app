@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import android.content.Context
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
@@ -22,6 +23,7 @@ import javax.inject.Inject
 data class GarageState(
     val vehicles: List<Vehicle> = emptyList(),
     val distanceUnit: DistanceUnit = DistanceUnit.KM,
+    val isProUser: Boolean = false,
     val isLoading: Boolean = true,
     val error: String? = null
 )
@@ -42,7 +44,8 @@ sealed interface GarageEffect {
 class GarageViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val vehicleRepository: VehicleRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val proUserProvider: ProUserProvider
 ) : ViewModel() {
 
     private val _effects = Channel<GarageEffect>()
@@ -50,11 +53,13 @@ class GarageViewModel @Inject constructor(
 
     val state: StateFlow<GarageState> = combine(
         vehicleRepository.getVehicles(),
-        userPreferencesRepository.distanceUnit
-    ) { vehicles, unit ->
+        userPreferencesRepository.distanceUnit,
+        proUserProvider.isProUser
+    ) { vehicles, unit, isPro ->
         GarageState(
             vehicles = vehicles,
             distanceUnit = unit,
+            isProUser = isPro,
             isLoading = false
         )
     }.stateIn(
