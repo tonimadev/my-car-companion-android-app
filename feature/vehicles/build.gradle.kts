@@ -45,6 +45,7 @@ dependencies {
     implementation(libs.androidx.compose.adaptive)
     implementation(libs.androidx.compose.adaptive.layout)
     implementation(libs.androidx.compose.adaptive.navigation3)
+    implementation(libs.kotlinx.collections.immutable)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

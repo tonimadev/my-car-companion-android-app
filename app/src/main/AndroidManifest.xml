@@ -27,7 +27,24 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
+
+        <service
+            android:name="digital.tonima.mycarcompanion.core.data.MccAppFunctionService"
+            android:permission="android.permission.BIND_APP_FUNCTION_SERVICE"
+            android:exported="true"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="android.app.appfunctions.AppFunctionService" />
+            </intent-filter>
+            <property
+                android:name="android.app.appfunctions.PROPERTY_APP_FUNCTION_XML"
+                android:resource="@xml/mcc_functions" />
+        </service>
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

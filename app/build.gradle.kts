@@ -98,6 +98,7 @@ dependencies {
     implementation(libs.androidx.compose.adaptive.navigation3)
     implementation(libs.androidx.startup)
     implementation(libs.material)
+    implementation(libs.kotlinx.collections.immutable)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)

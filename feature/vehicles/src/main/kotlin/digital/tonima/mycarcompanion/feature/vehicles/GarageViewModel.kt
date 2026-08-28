@@ -8,20 +8,23 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
+import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
+import digital.tonima.mycarcompanion.core.designsystem.model.toUiModels
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Vehicle
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class GarageState(
-    val vehicles: List<Vehicle> = emptyList(),
+    val vehicles: ImmutableList<VehicleUi> = persistentListOf(),
     val distanceUnit: DistanceUnit = DistanceUnit.KM,
     val isProUser: Boolean = false,
     val isLoading: Boolean = true,
@@ -30,8 +33,8 @@ data class GarageState(
 
 sealed interface GarageIntent {
     data class AddVehicle(val name: String, val currentOdometer: Double) : GarageIntent
-    data class UpdateVehicle(val vehicle: Vehicle) : GarageIntent
-    data class DeleteVehicle(val vehicle: Vehicle) : GarageIntent
+    data class UpdateVehicle(val vehicle: VehicleUi) : GarageIntent
+    data class DeleteVehicle(val vehicle: VehicleUi) : GarageIntent
     data class SetCurrentVehicle(val id: Long) : GarageIntent
 }
 
@@ -57,7 +60,7 @@ class GarageViewModel @Inject constructor(
         proUserProvider.isProUser
     ) { vehicles, unit, isPro ->
         GarageState(
-            vehicles = vehicles,
+            vehicles = vehicles.toUiModels(),
             distanceUnit = unit,
             isProUser = isPro,
             isLoading = false
@@ -87,20 +90,34 @@ class GarageViewModel @Inject constructor(
         }
     }
 
-    private fun updateVehicle(vehicle: Vehicle) {
+    private fun updateVehicle(vehicle: VehicleUi) {
         viewModelScope.launch {
             try {
-                vehicleRepository.updateVehicle(vehicle)
+                vehicleRepository.updateVehicle(
+                    Vehicle(
+                        id = vehicle.id,
+                        name = vehicle.name,
+                        currentOdometer = vehicle.currentOdometer,
+                        isCurrent = vehicle.isCurrent
+                    )
+                )
             } catch (e: Exception) {
                 _effects.send(GarageEffect.ShowError(e.message ?: context.getString(R.string.error_update_vehicle)))
             }
         }
     }
 
-    private fun deleteVehicle(vehicle: Vehicle) {
+    private fun deleteVehicle(vehicle: VehicleUi) {
         viewModelScope.launch {
             try {
-                vehicleRepository.deleteVehicle(vehicle)
+                vehicleRepository.deleteVehicle(
+                    Vehicle(
+                        id = vehicle.id,
+                        name = vehicle.name,
+                        currentOdometer = vehicle.currentOdometer,
+                        isCurrent = vehicle.isCurrent
+                    )
+                )
             } catch (e: Exception) {
                 _effects.send(GarageEffect.ShowError(e.message ?: context.getString(R.string.error_delete_vehicle)))
             }

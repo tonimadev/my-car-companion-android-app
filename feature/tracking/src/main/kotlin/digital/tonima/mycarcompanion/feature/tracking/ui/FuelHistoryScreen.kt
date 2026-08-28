@@ -9,16 +9,22 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material3.*
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.window.core.layout.WindowSizeClass
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
+import digital.tonima.mycarcompanion.core.designsystem.model.FuelRecordUi
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -32,6 +38,8 @@ fun FuelHistoryScreen(
     viewModel: FuelHistoryViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
+    val useTwoColumns = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
     Scaffold(
         topBar = {
@@ -72,100 +80,281 @@ fun FuelHistoryScreen(
                 Text("Nenhum veículo selecionado.")
             }
         } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-            ) {
-                // Summary Cards
+            if (useTwoColumns) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 ) {
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
+                    // Left Column: Summaries
+                    Column(
+                        modifier = Modifier
+                            .weight(0.4f)
+                            .padding(16.dp)
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Consumo Médio",
-                                style = MaterialTheme.typography.labelMedium
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = uiState.averageConsumption?.let { "%.1f km/L".format(it) } ?: "-- km/L",
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Consumo Médio",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = uiState.averageConsumption?.let { "%.1f km/L".format(it) } ?: "-- km/L",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                             )
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Gasto Total",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "R$ %.2f".format(uiState.totalSpent),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
                     }
 
-                    Card(
-                        modifier = Modifier.weight(1f),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        )
+                    // Right Column: History List
+                    Column(
+                        modifier = Modifier
+                            .weight(0.6f)
+                            .fillMaxHeight()
                     ) {
-                        Column(modifier = Modifier.padding(16.dp)) {
-                            Text(
-                                text = "Gasto Total",
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = "R$ %.2f".format(uiState.totalSpent),
-                                style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.Bold
-                            )
+                        Text(
+                            text = "Histórico de Abastecimentos",
+                            style = MaterialTheme.typography.titleMedium,
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+
+                        if (uiState.items.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "Nenhum abastecimento registrado.",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(uiState.items, key = { it.id }) { item ->
+                                    val dismissState = rememberSwipeToDismissBoxState()
+
+                                    LaunchedEffect(dismissState.currentValue) {
+                                        if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                                            viewModel.deleteRecord(item)
+                                        }
+                                    }
+
+                                    SwipeToDismissBox(
+                                        state = dismissState,
+                                        backgroundContent = {
+                                            val backgroundColor = when (dismissState.dismissDirection) {
+                                                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error
+                                                else -> Color.Transparent
+                                            }
+                                            Surface(
+                                                color = backgroundColor,
+                                                modifier = Modifier.fillMaxSize()
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .fillMaxSize()
+                                                        .padding(horizontal = 20.dp),
+                                                    contentAlignment = Alignment.CenterEnd
+                                                ) {
+                                                    if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                                                        Icon(
+                                                            Icons.Default.Delete,
+                                                            contentDescription = null,
+                                                            tint = MaterialTheme.colorScheme.onError
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        enableDismissFromStartToEnd = false
+                                    ) {
+                                        FuelRecordCard(
+                                            item = item,
+                                            onDelete = { viewModel.deleteRecord(item) }
+                                        )
+                                    }
+                                }
+
+                                item {
+                                    AdBannerView(
+                                        isProUser = uiState.isProUser,
+                                        adId = adUnitId,
+                                        modifier = Modifier.padding(vertical = 8.dp)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
-
-                Text(
-                    text = "Histórico de Abastecimentos",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-                )
-
-                if (uiState.items.isEmpty()) {
-                    Box(
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                ) {
+                    // Summary Cards
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Text(
-                            text = "Nenhum abastecimento registrado.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(uiState.items, key = { it.record.id }) { item ->
-                            FuelRecordCard(
-                                item = item,
-                                onDelete = { viewModel.deleteRecord(item.record) }
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                             )
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Consumo Médio",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = uiState.averageConsumption?.let { "%.1f km/L".format(it) } ?: "-- km/L",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
                         }
 
-                        item {
-                            AdBannerView(
-                                isProUser = uiState.isProUser,
-                                adId = adUnitId,
-                                modifier = Modifier.padding(vertical = 8.dp)
+                        Card(
+                            modifier = Modifier.weight(1f),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                             )
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "Gasto Total",
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = "R$ %.2f".format(uiState.totalSpent),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                    }
+
+                    Text(
+                        text = "Histórico de Abastecimentos",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+
+                    if (uiState.items.isEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Nenhum abastecimento registrado.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(uiState.items, key = { it.id }) { item ->
+                                val dismissState = rememberSwipeToDismissBoxState()
+
+                                LaunchedEffect(dismissState.currentValue) {
+                                    if (dismissState.currentValue == SwipeToDismissBoxValue.EndToStart) {
+                                        viewModel.deleteRecord(item)
+                                    }
+                                }
+
+                                SwipeToDismissBox(
+                                    state = dismissState,
+                                    backgroundContent = {
+                                        val backgroundColor = when (dismissState.dismissDirection) {
+                                            SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.error
+                                            else -> Color.Transparent
+                                        }
+                                        Surface(
+                                            color = backgroundColor,
+                                            modifier = Modifier.fillMaxSize()
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .padding(horizontal = 20.dp),
+                                                contentAlignment = Alignment.CenterEnd
+                                            ) {
+                                                if (dismissState.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                                                    Icon(
+                                                        Icons.Default.Delete,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.onError
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    },
+                                    enableDismissFromStartToEnd = false
+                                ) {
+                                    FuelRecordCard(
+                                        item = item,
+                                        onDelete = { viewModel.deleteRecord(item) }
+                                    )
+                                }
+                            }
+
+                            item {
+                                AdBannerView(
+                                    isProUser = uiState.isProUser,
+                                    adId = adUnitId,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
                         }
                     }
                 }
@@ -176,12 +365,12 @@ fun FuelHistoryScreen(
 
 @Composable
 fun FuelRecordCard(
-    item: FuelRecordItemUiState,
+    item: FuelRecordUi,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val formatter = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
-    val formattedDate = formatter.format(Date(item.record.date.toEpochMilliseconds()))
+    val formattedDate = formatter.format(Date(item.date.toEpochMilliseconds()))
 
     Card(
         modifier = modifier.fillMaxWidth(),
@@ -207,12 +396,12 @@ fun FuelRecordCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${item.record.fuelType} - R$ %.2f".format(item.record.totalCost),
+                    text = "${item.fuelType} - R$ %.2f".format(item.totalCost),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "%.2f Litros | Km: %.0f".format(item.record.liters, item.record.mileage),
+                    text = "%.2f Litros | Km: %.0f".format(item.liters, item.mileage),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

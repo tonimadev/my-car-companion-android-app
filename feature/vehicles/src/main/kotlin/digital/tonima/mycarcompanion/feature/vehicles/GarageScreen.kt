@@ -43,8 +43,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
+import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
-import digital.tonima.mycarcompanion.core.model.Vehicle
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -167,7 +167,7 @@ fun GarageContent(
 
 @Composable
 fun VehicleItem(
-    vehicle: Vehicle,
+    vehicle: VehicleUi,
     unit: DistanceUnit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,

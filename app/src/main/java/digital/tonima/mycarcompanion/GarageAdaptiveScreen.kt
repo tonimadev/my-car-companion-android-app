@@ -16,13 +16,10 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.feature.parts.PartsContent
 import digital.tonima.mycarcompanion.feature.parts.PartsViewModel
@@ -37,9 +34,19 @@ fun GarageAdaptiveScreen(
     adUnitId: String,
     partsAdUnitId: String
 ) {
+    val garageViewModel: GarageViewModel = hiltViewModel()
+    val garageState by garageViewModel.state.collectAsStateWithLifecycle()
     val navigator = rememberListDetailPaneScaffoldNavigator<Long>()
-    var selectedVehicleId by rememberSaveable { mutableStateOf<Long?>(null) }
     val coroutineScope = rememberCoroutineScope()
+
+    val selectedVehicleId = navigator.currentDestination?.contentKey
+    val selectedVehicle = garageState.vehicles.find { it.id == selectedVehicleId }
+
+    val title = if (navigator.canNavigateBack() && selectedVehicle != null) {
+        selectedVehicle.name
+    } else {
+        stringResource(R.string.garage_parts_title)
+    }
 
     BackHandler(navigator.canNavigateBack()) {
         coroutineScope.launch {
@@ -50,9 +57,17 @@ fun GarageAdaptiveScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.garage_parts_title)) },
+                title = { Text(title) },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
+                    IconButton(
+                        onClick = {
+                            if (navigator.canNavigateBack()) {
+                                coroutineScope.launch { navigator.navigateBack() }
+                            } else {
+                                onBack()
+                            }
+                        }
+                    ) {
                         Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.back))
                     }
                 }
@@ -64,13 +79,10 @@ fun GarageAdaptiveScreen(
             directive = navigator.scaffoldDirective,
             value = navigator.scaffoldValue,
             listPane = {
-                val garageViewModel: GarageViewModel = hiltViewModel()
-                val garageState by garageViewModel.state.collectAsStateWithLifecycle()
                 GarageContent(
                     state = garageState,
                     onIntent = garageViewModel::handleIntent,
                     onOpenParts = { id ->
-                        selectedVehicleId = id
                         coroutineScope.launch {
                             navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, id)
                         }
@@ -79,7 +91,7 @@ fun GarageAdaptiveScreen(
                 )
             },
             detailPane = {
-                val vehicleId = navigator.currentDestination?.contentKey ?: selectedVehicleId
+                val vehicleId = navigator.currentDestination?.contentKey
                 if (vehicleId != null) {
                     val partsViewModel: PartsViewModel = hiltViewModel<PartsViewModel, PartsViewModel.Factory>(
                         key = "parts_$vehicleId",

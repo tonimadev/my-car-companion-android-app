@@ -3,4 +3,8 @@
     <string name="garage_parts_title">Garagem &amp; Peças</string>
     <string name="back">Voltar</string>
     <string name="select_vehicle_message">Selecione um veículo para ver suas peças</string>
+    <string name="shortcut_add_fuel">Abastecer</string>
+    <string name="shortcut_add_fuel_long">Adicionar Registro de Abastecimento</string>
+    <string name="shortcut_garage">Garagem</string>
+    <string name="shortcut_garage_long">Gerenciar Veículos</string>
 </resources>

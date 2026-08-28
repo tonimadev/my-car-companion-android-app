@@ -12,9 +12,15 @@ import digital.tonima.mycarcompanion.core.data.PartRepository
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
+import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
+import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
+import digital.tonima.mycarcompanion.core.designsystem.model.toPartUiModels
+import digital.tonima.mycarcompanion.core.designsystem.model.toUi
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,8 +32,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class PartsState(
-    val vehicle: Vehicle? = null,
-    val parts: List<Part> = emptyList(),
+    val vehicle: VehicleUi? = null,
+    val parts: ImmutableList<PartUi> = persistentListOf(),
     val distanceUnit: DistanceUnit = DistanceUnit.KM,
     val isProUser: Boolean = false,
     val isLoading: Boolean = true
@@ -41,8 +47,8 @@ sealed interface PartsIntent {
         val lifeSpanMonths: Int? = null,
         val lastMaintenanceDate: kotlinx.datetime.Instant? = null
     ) : PartsIntent
-    data class UpdatePart(val part: Part) : PartsIntent
-    data class DeletePart(val part: Part) : PartsIntent
+    data class UpdatePart(val part: PartUi) : PartsIntent
+    data class DeletePart(val part: PartUi) : PartsIntent
 }
 
 sealed interface PartsEffect {
@@ -75,8 +81,8 @@ class PartsViewModel @AssistedInject constructor(
         proUserProvider.isProUser
     ) { vehicle, parts, unit, isPro ->
         PartsState(
-            vehicle = vehicle,
-            parts = parts,
+            vehicle = vehicle?.toUi(),
+            parts = parts.toPartUiModels(),
             distanceUnit = unit,
             isProUser = isPro,
             isLoading = false
@@ -136,20 +142,40 @@ class PartsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun updatePart(part: Part) {
+    private fun updatePart(part: PartUi) {
         viewModelScope.launch {
             try {
-                partRepository.updatePart(part)
+                partRepository.updatePart(
+                    Part(
+                        id = part.id,
+                        vehicleId = part.vehicleId,
+                        name = part.name,
+                        lifeSpanMileage = part.lifeSpanMileage,
+                        lastMaintenanceOdometer = part.lastMaintenanceOdometer,
+                        lifeSpanMonths = part.lifeSpanMonths,
+                        lastMaintenanceDate = part.lastMaintenanceDate
+                    )
+                )
             } catch (e: Exception) {
                 _effects.send(PartsEffect.ShowError(e.message ?: context.getString(R.string.error_update_part)))
             }
         }
     }
 
-    private fun deletePart(part: Part) {
+    private fun deletePart(part: PartUi) {
         viewModelScope.launch {
             try {
-                partRepository.deletePart(part)
+                partRepository.deletePart(
+                    Part(
+                        id = part.id,
+                        vehicleId = part.vehicleId,
+                        name = part.name,
+                        lifeSpanMileage = part.lifeSpanMileage,
+                        lastMaintenanceOdometer = part.lastMaintenanceOdometer,
+                        lifeSpanMonths = part.lifeSpanMonths,
+                        lastMaintenanceDate = part.lastMaintenanceDate
+                    )
+                )
             } catch (e: Exception) {
                 _effects.send(PartsEffect.ShowError(e.message ?: context.getString(R.string.error_delete_part)))
             }

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add_fuel"
+        android:enabled="true"
+        android:icon="@drawable/ic_fuel"
+        android:shortcutShortLabel="@string/shortcut_add_fuel"
+        android:shortcutLongLabel="@string/shortcut_add_fuel_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="digital.tonima.mycarcompanion"
+            android:targetClass="digital.tonima.mycarcompanion.MainActivity">
+            <extra android:name="shortcut_route" android:value="add_fuel" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="garage"
+        android:enabled="true"
+        android:icon="@drawable/ic_garage"
+        android:shortcutShortLabel="@string/shortcut_garage"
+        android:shortcutLongLabel="@string/shortcut_garage_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="digital.tonima.mycarcompanion"
+            android:targetClass="digital.tonima.mycarcompanion.MainActivity">
+            <extra android:name="shortcut_route" android:value="garage" />
+        </intent>
+    </shortcut>
+</shortcuts>

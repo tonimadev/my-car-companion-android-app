@@ -42,6 +42,7 @@ dependencies {
     ksp(libs.hilt.compiler)
     
     implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.kotlinx.collections.immutable)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

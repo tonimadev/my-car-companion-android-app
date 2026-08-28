@@ -42,7 +42,10 @@ dependencies {
     implementation(libs.hilt.navigation.compose)
     
     implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.compose.adaptive)
+    implementation(libs.androidx.compose.adaptive.layout)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.collections.immutable)
     
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -14,11 +14,18 @@ import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.data.OdometerRepository
 import digital.tonima.mycarcompanion.core.data.PredictionEngine
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
+import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
+import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
+import digital.tonima.mycarcompanion.core.designsystem.model.toPartUiModels
+import digital.tonima.mycarcompanion.core.designsystem.model.toUi
+import digital.tonima.mycarcompanion.core.designsystem.model.toUiModels
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.MaintenanceRecord
 import digital.tonima.mycarcompanion.core.model.OdometerRecord
 import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,13 +42,14 @@ import kotlin.time.Clock
 
 @Immutable
 data class HomeUiState(
-    val vehicles: List<Vehicle> = emptyList(),
-    val currentVehicle: Vehicle? = null,
-    val parts: List<Part> = emptyList(),
+    val vehicles: ImmutableList<VehicleUi> = persistentListOf(),
+    val currentVehicle: VehicleUi? = null,
+    val parts: ImmutableList<PartUi> = persistentListOf(),
     val predictions: Map<Long, kotlinx.datetime.Instant?> = emptyMap(),
     val totalMaintenanceCost: Double = 0.0,
     val totalFuelCost: Double = 0.0,
     val averageFuelConsumption: Double? = null,
+    val fuelConsumptionTrend: FuelTrend = FuelTrend.STABLE,
     val distanceUnit: DistanceUnit = DistanceUnit.KM,
     val isProUser: Boolean = false,
     val isAiUser: Boolean = false,
@@ -49,10 +57,14 @@ data class HomeUiState(
     val events: List<HomeUiEvent> = emptyList()
 )
 
+enum class FuelTrend {
+    IMPROVING, WORSENING, STABLE
+}
+
 sealed interface HomeUiIntent {
     data class SelectVehicle(val vehicleId: Long) : HomeUiIntent
     data class PerformMaintenance(
-        val part: Part,
+        val part: PartUi,
         val newOdometer: Double,
         val cost: Double = 0.0,
         val notes: String = ""
@@ -133,14 +145,25 @@ class HomeViewModel @Inject constructor(
         val consumptions = uiData.fuels.mapNotNull { fuelRepository.calculateFuelConsumption(it) }
         val avgConsumption = if (consumptions.isNotEmpty()) consumptions.average() else null
         
+        val trend = if (consumptions.size >= 2) {
+            val last = consumptions.first()
+            val previous = consumptions.drop(1).first()
+            when {
+                last > previous + 0.1 -> FuelTrend.IMPROVING
+                last < previous - 0.1 -> FuelTrend.WORSENING
+                else -> FuelTrend.STABLE
+            }
+        } else FuelTrend.STABLE
+
         HomeUiState(
-            vehicles = vehicles,
-            currentVehicle = currentVehicle,
-            parts = sortedParts,
+            vehicles = vehicles.toUiModels(),
+            currentVehicle = currentVehicle?.toUi(),
+            parts = sortedParts.toPartUiModels(),
             predictions = predictions,
             totalMaintenanceCost = uiData.totalMaintCost,
             totalFuelCost = uiData.totalFuelCost,
             averageFuelConsumption = avgConsumption,
+            fuelConsumptionTrend = trend,
             distanceUnit = distanceUnit,
             isProUser = isPro,
             isAiUser = isAi,
@@ -178,7 +201,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private fun performMaintenance(part: Part, newOdometer: Double, cost: Double, notes: String) {
+    private fun performMaintenance(part: PartUi, newOdometer: Double, cost: Double, notes: String) {
         viewModelScope.launch {
             try {
                 val currentVehicle = uiState.value.currentVehicle
@@ -188,8 +211,13 @@ class HomeViewModel @Inject constructor(
                         val now = kotlinx.datetime.Instant.fromEpochMilliseconds(System.currentTimeMillis())
                         vehicleRepository.updateActiveVehicleOdometer(increment)
                         partRepository.updatePart(
-                            part.copy(
+                            Part(
+                                id = part.id,
+                                vehicleId = part.vehicleId,
+                                name = part.name,
+                                lifeSpanMileage = part.lifeSpanMileage,
                                 lastMaintenanceOdometer = newOdometer,
+                                lifeSpanMonths = part.lifeSpanMonths,
                                 lastMaintenanceDate = now
                             )
                         )
@@ -217,7 +245,14 @@ class HomeViewModel @Inject constructor(
             try {
                 val currentVehicle = uiState.value.currentVehicle
                 if (currentVehicle != null) {
-                    vehicleRepository.updateVehicle(currentVehicle.copy(currentOdometer = newMileage))
+                    vehicleRepository.updateVehicle(
+                        Vehicle(
+                            id = currentVehicle.id,
+                            name = currentVehicle.name,
+                            currentOdometer = newMileage,
+                            isCurrent = currentVehicle.isCurrent
+                        )
+                    )
                 }
             } catch (e: Exception) {
                 addEvent(HomeUiEvent.ShowError(UUID.randomUUID().toString(), e.message ?: context.getString(R.string.error_unknown)))

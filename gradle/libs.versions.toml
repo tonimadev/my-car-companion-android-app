@@ -54,6 +54,7 @@ androidxWork = "2.11.2"
 androidxHilt = "1.4.0"
 androidxStartup = "1.2.0"
 kotlinxDatetime = "0.8.0"
+kotlinxCollectionsImmutable = "0.5.1"
 vico = "3.3.0"
 paywall = "0.0.1"
 mockk = "1.14.11"
@@ -61,6 +62,7 @@ firebaseBom = "34.18.0"
 googleServices = "4.5.0"
 firebaseCrashlyticsPlugin = "3.0.8"
 firebasePerfPlugin = "2.0.2"
+appfunctions = "1.0.0-alpha11"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -123,6 +125,7 @@ androidx-hilt-work = { group = "androidx.hilt", name = "hilt-work", version.ref 
 androidx-hilt-work-compiler = { group = "androidx.hilt", name = "hilt-compiler", version.ref = "androidxHilt" }
 androidx-startup = { group = "androidx.startup", name = "startup-runtime", version.ref = "androidxStartup" }
 kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinxDatetime" }
+kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "kotlinxCollectionsImmutable" }
 vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", version.ref = "vico" }
 paywall-core = { group = "com.github.tonimadev.PayWall", name = "paywall-core", version.ref = "paywall" }
 paywall-play = { group = "com.github.tonimadev.PayWall", name = "paywall-play", version.ref = "paywall" }
@@ -131,6 +134,8 @@ firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.r
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 firebase-perf = { group = "com.google.firebase", name = "firebase-perf" }
 firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics" }
+androidx-appfunctions = { group = "androidx.appfunctions", name = "appfunctions", version.ref = "appfunctions" }
+androidx-appfunctions-compiler = { group = "androidx.appfunctions", name = "appfunctions-compiler", version.ref = "appfunctions" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

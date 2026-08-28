@@ -8,58 +8,79 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.BatteryFull
 import androidx.compose.material.icons.rounded.Build
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material.icons.rounded.DiscFull
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.FilterAlt
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.rounded.WaterDrop
 import androidx.compose.material3.*
+import androidx.compose.material3.SecondaryScrollableTabRow
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
+import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
+import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
-import digital.tonima.mycarcompanion.core.model.Part
-import digital.tonima.mycarcompanion.core.model.Vehicle
+import kotlinx.collections.immutable.ImmutableList
 import kotlin.math.roundToInt
 
 @Composable
 fun VehicleSelector(
-    vehicles: List<Vehicle>,
-    selectedVehicle: Vehicle?,
+    vehicles: ImmutableList<VehicleUi>,
+    selectedVehicle: VehicleUi?,
     onVehicleSelected: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (vehicles.isEmpty()) return
 
     val selectedIndex = vehicles.indexOfFirst { it.id == selectedVehicle?.id }.coerceAtLeast(0)
+    val haptic = LocalHapticFeedback.current
 
-    ScrollableTabRow(
+    SecondaryScrollableTabRow(
         selectedTabIndex = selectedIndex,
-        edgePadding = 16.dp,
+        modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.primary,
-        divider = {},
-        modifier = modifier
-    ) {
-        vehicles.forEachIndexed { index, vehicle ->
-            Tab(
-                selected = selectedIndex == index,
-                onClick = { onVehicleSelected(vehicle.id) },
-                text = {
-                    Text(
-                        text = vehicle.name,
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                },
-                icon = {
-                    Icon(Icons.Rounded.DirectionsCar, contentDescription = null)
-                }
+        edgePadding = 16.dp,
+        indicator = {
+            TabRowDefaults.SecondaryIndicator(
+                Modifier.tabIndicatorOffset(selectedTabIndex = selectedIndex)
             )
+        },
+        divider = {},
+        tabs = {
+            vehicles.forEachIndexed { index, vehicle ->
+                Tab(
+                    selected = selectedIndex == index,
+                    onClick = { 
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onVehicleSelected(vehicle.id) 
+                    },
+                    text = {
+                        Text(
+                            text = vehicle.name,
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                    },
+                    icon = {
+                        Icon(Icons.Rounded.DirectionsCar, contentDescription = null)
+                    }
+                )
+            }
         }
-    }
+    )
 }
 
 @Composable
@@ -69,6 +90,7 @@ fun OdometerDisplay(
     onEditClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
     Card(
         modifier = modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
@@ -108,7 +130,10 @@ fun OdometerDisplay(
                 }
             }
             IconButton(
-                onClick = onEditClick,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onEditClick()
+                },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .padding(8.dp)
@@ -125,12 +150,12 @@ fun OdometerDisplay(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MaintenanceList(
-    parts: List<Part>,
+    parts: ImmutableList<PartUi>,
     predictions: Map<Long, kotlinx.datetime.Instant?>,
     isAiUser: Boolean,
     currentOdometer: Double,
     unit: DistanceUnit,
-    onPerformMaintenance: (Part) -> Unit,
+    onPerformMaintenance: (PartUi) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -146,28 +171,78 @@ fun MaintenanceList(
             )
         }
         items(parts, key = { it.id }) { part ->
-            MaintenanceItem(
-                part = part,
-                prediction = if (isAiUser) predictions[part.id] else null,
-                currentOdometer = currentOdometer,
-                unit = unit,
-                onPerformMaintenance = { onPerformMaintenance(part) },
-                modifier = Modifier.animateItem()
-            )
+            val dismissState = rememberSwipeToDismissBoxState()
+
+            LaunchedEffect(dismissState.currentValue) {
+                if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) {
+                    onPerformMaintenance(part)
+                    dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+                }
+            }
+
+            SwipeToDismissBox(
+                state = dismissState,
+                backgroundContent = {
+                    val backgroundColor = when (dismissState.dismissDirection) {
+                        SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50)
+                        else -> Color.Transparent
+                    }
+                    Surface(
+                        color = backgroundColor,
+                        modifier = Modifier.fillMaxSize()
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 20.dp),
+                            contentAlignment = Alignment.CenterStart
+                        ) {
+                            if (dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
+                                Icon(
+                                    Icons.Rounded.Check,
+                                    contentDescription = null,
+                                    tint = Color.White
+                                )
+                            }
+                        }
+                    }
+                },
+                enableDismissFromEndToStart = false
+            ) {
+                MaintenanceItem(
+                    part = part,
+                    prediction = if (isAiUser) predictions[part.id] else null,
+                    currentOdometer = currentOdometer,
+                    unit = unit,
+                    onPerformMaintenance = { onPerformMaintenance(part) },
+                    modifier = Modifier.animateItem()
+                )
+            }
         }
     }
 }
 
 @Composable
 fun MaintenanceItem(
-    part: Part,
+    part: PartUi,
     prediction: kotlinx.datetime.Instant?,
     currentOdometer: Double,
     unit: DistanceUnit,
     onPerformMaintenance: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val haptic = LocalHapticFeedback.current
     val remaining = (part.lastMaintenanceOdometer + part.lifeSpanMileage) - currentOdometer
+
+    val partIcon = when {
+        part.name.contains("óleo", ignoreCase = true) || part.name.contains("oil", ignoreCase = true) -> Icons.Rounded.WaterDrop
+        part.name.contains("pneu", ignoreCase = true) || part.name.contains("tire", ignoreCase = true) -> Icons.Rounded.Settings
+        part.name.contains("freio", ignoreCase = true) || part.name.contains("brake", ignoreCase = true) -> Icons.Rounded.DiscFull
+        part.name.contains("bateria", ignoreCase = true) || part.name.contains("battery", ignoreCase = true) -> Icons.Rounded.BatteryFull
+        part.name.contains("filtro", ignoreCase = true) || part.name.contains("filter", ignoreCase = true) -> Icons.Rounded.FilterAlt
+        else -> Icons.Rounded.Build
+    }
+
     val targetProgress = (remaining / part.lifeSpanMileage).coerceIn(0.0, 1.0).toFloat()
     
     val animatedProgress by animateFloatAsState(
@@ -197,6 +272,14 @@ fun MaintenanceItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Icon(
+                    imageVector = partIcon,
+                    contentDescription = null,
+                    tint = color,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .padding(end = 12.dp)
+                )
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = part.name,
@@ -220,7 +303,10 @@ fun MaintenanceItem(
                         )
                     }
                 }
-                IconButton(onClick = onPerformMaintenance) {
+                IconButton(onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onPerformMaintenance()
+                }) {
                     Icon(
                         Icons.Rounded.Build,
                         contentDescription = stringResource(R.string.mark_as_done),
@@ -244,12 +330,13 @@ fun MaintenanceItem(
 
 @Composable
 fun MaintenanceDialog(
-    part: Part,
+    part: PartUi,
     currentOdometer: Double, // in KM
     unit: DistanceUnit,
     onConfirm: (odometer: Double, cost: Double, notes: String) -> Unit, // in KM
     onDismiss: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     val currentOdometerInUnit = unit.fromKm(currentOdometer)
     var odometerText by rememberSaveable { mutableStateOf(currentOdometerInUnit.roundToInt().toString()) }
     var costText by rememberSaveable { mutableStateOf("") }
@@ -300,6 +387,7 @@ fun MaintenanceDialog(
         confirmButton = {
             Button(
                 onClick = { 
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     odometerText.toDoubleOrNull()?.let { odo ->
                         val cost = costText.toDoubleOrNull() ?: 0.0
                         onConfirm(unit.toKm(odo), cost, notesText) 
@@ -325,6 +413,7 @@ fun UpdateOdometerDialog(
     onConfirm: (Double) -> Unit, // in KM
     onDismiss: () -> Unit
 ) {
+    val haptic = LocalHapticFeedback.current
     val currentOdometerInUnit = unit.fromKm(currentOdometer)
     var odometerText by rememberSaveable { mutableStateOf(currentOdometerInUnit.roundToInt().toString()) }
     val isValid = odometerText.toDoubleOrNull() != null
@@ -348,6 +437,7 @@ fun UpdateOdometerDialog(
         confirmButton = {
             Button(
                 onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     odometerText.toDoubleOrNull()?.let {
                         onConfirm(unit.toKm(it))
                     }

@@ -3,4 +3,8 @@
     <string name="garage_parts_title">Garage &amp; Parts</string>
     <string name="back">Back</string>
     <string name="select_vehicle_message">Select a vehicle to see its parts</string>
+    <string name="shortcut_add_fuel">Add Fuel</string>
+    <string name="shortcut_add_fuel_long">Add Fuel Record</string>
+    <string name="shortcut_garage">Garage</string>
+    <string name="shortcut_garage_long">Manage Vehicles</string>
 </resources>

@@ -18,16 +18,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
-import digital.tonima.mycarcompanion.core.model.Part
 import kotlin.math.roundToInt
+import kotlin.time.Instant
 
 @Composable
 fun PartEditDialog(
-    part: Part? = null,
+    part: PartUi? = null,
     unit: DistanceUnit,
     onDismiss: () -> Unit,
-    onConfirm: (name: String, lifeSpan: Double, lastMaintenance: Double, lifeSpanMonths: Int?, lastMaintenanceDate: kotlinx.datetime.Instant?) -> Unit
+    onConfirm: (name: String, lifeSpan: Double, lastMaintenance: Double, lifeSpanMonths: Int?, lastMaintenanceDate: Instant?) -> Unit
 ) {
     var name by rememberSaveable { mutableStateOf(part?.name ?: "") }
     var lifeSpanStr by rememberSaveable { 
@@ -79,7 +80,7 @@ fun PartEditDialog(
                     val lifeSpanInUnit = lifeSpanStr.toDoubleOrNull() ?: 0.0
                     val lastMaintenanceInUnit = lastMaintenanceStr.toDoubleOrNull() ?: 0.0
                     val lifeSpanMonths = lifeSpanMonthsStr.toIntOrNull()
-                    val lastDate = part?.lastMaintenanceDate ?: kotlinx.datetime.Instant.fromEpochMilliseconds(System.currentTimeMillis())
+                    val lastDate = part?.lastMaintenanceDate ?: Instant.fromEpochMilliseconds(System.currentTimeMillis())
                     onConfirm(
                         name,
                         unit.toKm(lifeSpanInUnit),

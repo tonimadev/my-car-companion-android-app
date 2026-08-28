@@ -19,13 +19,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
-import digital.tonima.mycarcompanion.core.model.Vehicle
 import kotlin.math.roundToInt
 
 @Composable
 fun VehicleEditDialog(
-    vehicle: Vehicle? = null,
+    vehicle: VehicleUi? = null,
     unit: DistanceUnit,
     onDismiss: () -> Unit,
     onConfirm: (String, Double) -> Unit

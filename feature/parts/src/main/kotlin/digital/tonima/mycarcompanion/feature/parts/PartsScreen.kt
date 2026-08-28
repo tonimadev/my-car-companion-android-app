@@ -41,8 +41,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
+import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
-import digital.tonima.mycarcompanion.core.model.Part
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -173,7 +173,7 @@ fun PartsContent(
 
 @Composable
 fun PartItem(
-    part: Part,
+    part: PartUi,
     unit: DistanceUnit,
     onEdit: () -> Unit,
     onDelete: () -> Unit

@@ -6,12 +6,17 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.TrendingDown
+import androidx.compose.material.icons.automirrored.rounded.TrendingFlat
+import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
@@ -27,6 +32,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,18 +41,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.window.core.layout.WindowSizeClass
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.MyCarCompanionTheme
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
+import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
+import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
-import digital.tonima.mycarcompanion.core.model.Part
-import digital.tonima.mycarcompanion.core.model.Vehicle
 
 @Composable
 fun HomeRoute(
@@ -76,8 +84,11 @@ internal fun HomeScreen(
     adUnitId: String
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
-    var selectedPartForMaintenance by remember { mutableStateOf<Part?>(null) }
+    var selectedPartForMaintenance by remember { mutableStateOf<PartUi?>(null) }
     var showUpdateOdometerDialog by remember { mutableStateOf(false) }
+
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
+    val useTwoColumns = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
     // Handle events
     LaunchedEffect(uiState.events) {
@@ -133,79 +144,194 @@ internal fun HomeScreen(
                 )
 
                 uiState.currentVehicle?.let { vehicle ->
-                    OdometerDisplay(
-                        odometer = vehicle.currentOdometer,
-                        unit = uiState.distanceUnit,
-                        onEditClick = { showUpdateOdometerDialog = true },
-                        modifier = Modifier.padding(16.dp)
-                    )
-
-                    // Resumo Financeiro e Consumo
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Card(
-                            modifier = Modifier.weight(1f),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer
-                            )
+                    if (useTwoColumns) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Column(modifier = Modifier.padding(12.dp)) {
-                                Text(text = "Gastos Totais", style = MaterialTheme.typography.labelSmall)
-                                Text(
-                                    text = "R$ %.2f".format(uiState.totalMaintenanceCost + uiState.totalFuelCost),
-                                    style = MaterialTheme.typography.titleMedium
+                            // Left Column: Stats & Odometer
+                            Column(
+                                modifier = Modifier
+                                    .weight(0.4f)
+                                    .fillMaxHeight()
+                                    .padding(vertical = 8.dp)
+                            ) {
+                                OdometerDisplay(
+                                    odometer = vehicle.currentOdometer,
+                                    unit = uiState.distanceUnit,
+                                    onEditClick = { showUpdateOdometerDialog = true },
+                                    modifier = Modifier.padding(bottom = 8.dp)
                                 )
-                                Text(
-                                    text = "Mnt: R$ %.0f | Comb: R$ %.0f".format(uiState.totalMaintenanceCost, uiState.totalFuelCost),
-                                    style = MaterialTheme.typography.bodySmall
+
+                                Card(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                    )
+                                ) {
+                                    Column(modifier = Modifier.padding(16.dp)) {
+                                        Text(text = "Gastos Totais", style = MaterialTheme.typography.labelSmall)
+                                        Text(
+                                            text = "R$ %.2f".format(uiState.totalMaintenanceCost + uiState.totalFuelCost),
+                                            style = MaterialTheme.typography.titleMedium
+                                        )
+                                        Text(
+                                            text = "Mnt: R$ %.0f | Comb: R$ %.0f".format(uiState.totalMaintenanceCost, uiState.totalFuelCost),
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                uiState.averageFuelConsumption?.let { avg ->
+                                    Card(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = CardDefaults.cardColors(
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                        ),
+                                        onClick = onNavigateToFuel
+                                    ) {
+                                        Column(modifier = Modifier.padding(16.dp)) {
+                                            Text(text = "Média Consumo", style = MaterialTheme.typography.labelSmall)
+                                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                                Text(
+                                                    text = "%.1f km/L".format(avg),
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                val (icon, color) = when (uiState.fuelConsumptionTrend) {
+                                                    FuelTrend.IMPROVING -> Icons.AutoMirrored.Rounded.TrendingUp to Color(0xFF4CAF50)
+                                                    FuelTrend.WORSENING -> Icons.AutoMirrored.Rounded.TrendingDown to MaterialTheme.colorScheme.error
+                                                    FuelTrend.STABLE -> Icons.AutoMirrored.Rounded.TrendingFlat to MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
+                                                }
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = null,
+                                                    tint = color,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.weight(1f))
+
+                                AdBannerView(
+                                    isProUser = uiState.isProUser,
+                                    adId = adUnitId,
+                                    modifier = Modifier.padding(vertical = 8.dp)
                                 )
                             }
-                        }
 
-                        uiState.averageFuelConsumption?.let { avg ->
+                            // Right Column: Maintenance List
+                            MaintenanceList(
+                                parts = uiState.parts,
+                                predictions = uiState.predictions,
+                                isAiUser = uiState.isAiUser,
+                                currentOdometer = vehicle.currentOdometer,
+                                unit = uiState.distanceUnit,
+                                onPerformMaintenance = { selectedPartForMaintenance = it },
+                                modifier = Modifier
+                                    .weight(0.6f)
+                                    .fillMaxHeight()
+                            )
+                        }
+                    } else {
+                        // Original Column Layout
+                        OdometerDisplay(
+                            odometer = vehicle.currentOdometer,
+                            unit = uiState.distanceUnit,
+                            onEditClick = { showUpdateOdometerDialog = true },
+                            modifier = Modifier.padding(16.dp)
+                        )
+
+                        // Resumo Financeiro e Consumo
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Card(
                                 modifier = Modifier.weight(1f),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                ),
-                                onClick = onNavigateToFuel
+                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onTertiaryContainer
+                                )
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Text(text = "Média Consumo", style = MaterialTheme.typography.labelSmall)
+                                    Text(text = "Gastos Totais", style = MaterialTheme.typography.labelSmall)
                                     Text(
-                                        text = "%.1f km/L".format(avg),
+                                        text = "R$ %.2f".format(uiState.totalMaintenanceCost + uiState.totalFuelCost),
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        text = "Ver histórico",
+                                        text = "Mnt: R$ %.0f | Comb: R$ %.0f".format(uiState.totalMaintenanceCost, uiState.totalFuelCost),
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
                             }
+
+                            uiState.averageFuelConsumption?.let { avg ->
+                                Card(
+                                    modifier = Modifier.weight(1f),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                    ),
+                                    onClick = onNavigateToFuel
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Text(text = "Média Consumo", style = MaterialTheme.typography.labelSmall)
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(
+                                                text = "%.1f km/L".format(avg),
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            val (icon, color) = when (uiState.fuelConsumptionTrend) {
+                                                FuelTrend.IMPROVING -> Icons.AutoMirrored.Rounded.TrendingUp to Color(0xFF4CAF50)
+                                                FuelTrend.WORSENING -> Icons.AutoMirrored.Rounded.TrendingDown to MaterialTheme.colorScheme.error
+                                                FuelTrend.STABLE -> Icons.AutoMirrored.Rounded.TrendingFlat to MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
+                                            }
+                                            Icon(
+                                                imageVector = icon,
+                                                contentDescription = null,
+                                                tint = color,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                        Text(
+                                            text = "Ver histórico",
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                }
+                            }
                         }
+
+                        AdBannerView(
+                            isProUser = uiState.isProUser,
+                            adId = adUnitId,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+
+                        MaintenanceList(
+                            parts = uiState.parts,
+                            predictions = uiState.predictions,
+                            isAiUser = uiState.isAiUser,
+                            currentOdometer = vehicle.currentOdometer,
+                            unit = uiState.distanceUnit,
+                            onPerformMaintenance = { selectedPartForMaintenance = it },
+                            modifier = Modifier.weight(1f)
+                        )
                     }
-
-                    AdBannerView(
-                        isProUser = uiState.isProUser,
-                        adId = adUnitId,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-
-                    MaintenanceList(
-                        parts = uiState.parts,
-                        predictions = uiState.predictions,
-                        isAiUser = uiState.isAiUser,
-                        currentOdometer = vehicle.currentOdometer,
-                        unit = uiState.distanceUnit,
-                        onPerformMaintenance = { selectedPartForMaintenance = it },
-                        modifier = Modifier.weight(1f)
-                    )
                 } ?: run {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(
@@ -279,16 +405,16 @@ internal fun HomeScreen(
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun HomePreview() {
-    val sampleVehicle = Vehicle(id = 1, name = "My Car", currentOdometer = 15000.0, isCurrent = true)
-    val sampleParts = listOf(
-        Part(id = 1, vehicleId = 1, name = "Oil Change", lifeSpanMileage = 5000.0, lastMaintenanceOdometer = 10500.0),
-        Part(id = 2, vehicleId = 1, name = "Tire Rotation", lifeSpanMileage = 10000.0, lastMaintenanceOdometer = 5000.0)
+    val sampleVehicle = VehicleUi(id = 1, name = "My Car", currentOdometer = 15000.0, isCurrent = true)
+    val sampleParts = kotlinx.collections.immutable.persistentListOf(
+        PartUi(id = 1, vehicleId = 1, name = "Oil Change", lifeSpanMileage = 5000.0, lastMaintenanceOdometer = 10500.0),
+        PartUi(id = 2, vehicleId = 1, name = "Tire Rotation", lifeSpanMileage = 10000.0, lastMaintenanceOdometer = 5000.0)
     )
     
     MyCarCompanionTheme {
         HomeScreen(
             uiState = HomeUiState(
-                vehicles = listOf(sampleVehicle),
+                vehicles = kotlinx.collections.immutable.persistentListOf(sampleVehicle),
                 currentVehicle = sampleVehicle,
                 parts = sampleParts,
                 distanceUnit = DistanceUnit.KM

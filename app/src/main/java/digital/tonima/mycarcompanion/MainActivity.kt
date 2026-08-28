@@ -6,10 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.core.util.Consumer
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
@@ -63,7 +66,8 @@ class MainActivity : ComponentActivity() {
                 isOnboardingCompleted?.let { completed ->
                     AppNavigation(
                         isOnboardingCompleted = completed,
-                        onFinish = { finish() }
+                        onFinish = { finish() },
+                        intent = intent
                     )
                 }
             }
@@ -89,11 +93,45 @@ fun NotificationPermissionEffect() {
 @Composable
 fun AppNavigation(
     isOnboardingCompleted: Boolean,
-    onFinish: () -> Unit
+    onFinish: () -> Unit,
+    intent: android.content.Intent
 ) {
     val startRoute = if (isOnboardingCompleted) Route.Home else Route.Onboarding
     val backStack = remember { mutableStateListOf<Route>(startRoute) }
-    
+    val context = LocalContext.current
+
+    DisposableEffect(context) {
+        val activity = context as? ComponentActivity
+        val listener = Consumer<android.content.Intent> { intent ->
+            if (isOnboardingCompleted) {
+                intent.getStringExtra("shortcut_route")?.let { route ->
+                    when (route) {
+                        "add_fuel" -> if (backStack.last() != Route.AddFuel) backStack.add(Route.AddFuel)
+                        "garage" -> if (backStack.last() != Route.Garage) backStack.add(Route.Garage)
+                    }
+                    intent.removeExtra("shortcut_route")
+                }
+            }
+        }
+        activity?.addOnNewIntentListener(listener)
+        onDispose {
+            activity?.removeOnNewIntentListener(listener)
+        }
+    }
+
+    // Handle initial shortcut
+    LaunchedEffect(intent) {
+        if (isOnboardingCompleted) {
+            intent.getStringExtra("shortcut_route")?.let { route ->
+                when (route) {
+                    "add_fuel" -> if (backStack.last() != Route.AddFuel) backStack.add(Route.AddFuel)
+                    "garage" -> if (backStack.last() != Route.Garage) backStack.add(Route.Garage)
+                }
+                intent.removeExtra("shortcut_route")
+            }
+        }
+    }
+
     NavDisplay(
         backStack = backStack,
         onBack = {
