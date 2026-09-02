@@ -1,4 +1,5 @@
 <img src="/images/banner.jpg" width="1024" height="500">
+
 # My Car Companion
 
 **My Car Companion** is a comprehensive Android application designed to help vehicle owners track maintenance based on mileage. It provides a specialized experience for managing multiple vehicles, automated mileage tracking, and predictive maintenance insights.
