@@ -22,6 +22,9 @@ interface FuelDao {
     @Query("SELECT SUM(totalCost) FROM fuel_records WHERE vehicleId = :vehicleId")
     fun getTotalFuelCostForVehicle(vehicleId: Long): Flow<Double?>
 
+    @Query("SELECT * FROM fuel_records WHERE id = :id")
+    fun getFuelRecord(id: Long): Flow<FuelEntity?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertFuelRecord(record: FuelEntity): Long
 

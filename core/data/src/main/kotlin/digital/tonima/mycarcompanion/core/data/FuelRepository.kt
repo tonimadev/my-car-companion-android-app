@@ -4,6 +4,7 @@ import digital.tonima.mycarcompanion.core.model.FuelRecord
 import kotlinx.coroutines.flow.Flow
 
 interface FuelRepository {
+    fun getFuelRecord(id: Long): Flow<FuelRecord?>
     fun getFuelRecordsForVehicle(vehicleId: Long): Flow<List<FuelRecord>>
     fun getLastFuelRecordForVehicle(vehicleId: Long): Flow<FuelRecord?>
     fun getPreviousFuelRecord(vehicleId: Long, currentDate: Long): Flow<FuelRecord?>

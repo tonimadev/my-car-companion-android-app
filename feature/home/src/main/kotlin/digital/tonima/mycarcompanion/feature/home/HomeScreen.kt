@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.TrendingDown
 import androidx.compose.material.icons.automirrored.rounded.TrendingFlat
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
@@ -53,14 +54,17 @@ import digital.tonima.mycarcompanion.core.designsystem.MyCarCompanionTheme
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
+import digital.tonima.mycarcompanion.core.designsystem.util.CurrencyUtils
 import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import kotlinx.coroutines.flow.Flow
+import kotlin.math.roundToInt
 
 @Composable
 fun HomeRoute(
     onNavigateToSettings: () -> Unit,
     onNavigateToFuel: () -> Unit,
+    onNavigateToMaintenanceHistory: () -> Unit,
     adUnitId: String,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -72,6 +76,7 @@ fun HomeRoute(
         onIntent = viewModel::onIntent,
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToFuel = onNavigateToFuel,
+        onNavigateToMaintenanceHistory = onNavigateToMaintenanceHistory,
         adUnitId = adUnitId
     )
 }
@@ -84,6 +89,7 @@ internal fun HomeScreen(
     onIntent: (HomeUiIntent) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToFuel: () -> Unit,
+    onNavigateToMaintenanceHistory: () -> Unit,
     adUnitId: String
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -107,6 +113,9 @@ internal fun HomeScreen(
                 HomeUiEffect.NavigateToFuel -> {
                     onNavigateToFuel()
                 }
+                HomeUiEffect.NavigateToMaintenanceHistory -> {
+                    onNavigateToMaintenanceHistory()
+                }
             }
         }
     )
@@ -116,6 +125,9 @@ internal fun HomeScreen(
             CenterAlignedTopAppBar(
                 title = { Text(stringResource(R.string.home_title)) },
                 actions = {
+                    IconButton(onClick = { onIntent(HomeUiIntent.NavigateToMaintenanceHistory) }) {
+                        Icon(Icons.Default.Build, contentDescription = "Manutenção")
+                    }
                     IconButton(onClick = { onIntent(HomeUiIntent.NavigateToFuel) }) {
                         Icon(Icons.Default.LocalGasStation, contentDescription = "Abastecimento")
                     }
@@ -176,11 +188,11 @@ internal fun HomeScreen(
                                     Column(modifier = Modifier.padding(16.dp)) {
                                         Text(text = "Gastos Totais", style = MaterialTheme.typography.labelSmall)
                                         Text(
-                                            text = "R$ %.2f".format(uiState.totalMaintenanceCost + uiState.totalFuelCost),
+                                            text = CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost + uiState.totalFuelCost),
                                             style = MaterialTheme.typography.titleMedium
                                         )
                                         Text(
-                                            text = "Mnt: R$ %.0f | Comb: R$ %.0f".format(uiState.totalMaintenanceCost, uiState.totalFuelCost),
+                                            text = "Mnt: ${CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost)} | Comb: ${CurrencyUtils.formatCurrency(uiState.totalFuelCost)}",
                                             style = MaterialTheme.typography.bodySmall
                                         )
                                     }
@@ -198,10 +210,10 @@ internal fun HomeScreen(
                                         onClick = onNavigateToFuel
                                     ) {
                                         Column(modifier = Modifier.padding(16.dp)) {
-                                            Text(text = "Média Consumo", style = MaterialTheme.typography.labelSmall)
+                                            Text(text = "Consumo", style = MaterialTheme.typography.labelSmall)
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Text(
-                                                    text = "%.1f km/L".format(avg),
+                                                    text = uiState.consumptionUnit.format(avg),
                                                     style = MaterialTheme.typography.titleMedium
                                                 )
                                                 Spacer(modifier = Modifier.width(4.dp))
@@ -215,6 +227,47 @@ internal fun HomeScreen(
                                                     contentDescription = null,
                                                     tint = color,
                                                     modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    uiState.costPerDistance?.let { costPerDist ->
+                                        Card(
+                                            modifier = Modifier.weight(1f),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            )
+                                        ) {
+                                            Column(modifier = Modifier.padding(12.dp)) {
+                                                Text(text = "Custo/${uiState.distanceUnit.name.lowercase()}", style = MaterialTheme.typography.labelSmall)
+                                                Text(
+                                                    text = CurrencyUtils.formatCurrency(costPerDist),
+                                                    style = MaterialTheme.typography.titleSmall
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    uiState.estimatedRange?.let { range ->
+                                        Card(
+                                            modifier = Modifier.weight(1f),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            )
+                                        ) {
+                                            Column(modifier = Modifier.padding(12.dp)) {
+                                                Text(text = "Autonomia", style = MaterialTheme.typography.labelSmall)
+                                                Text(
+                                                    text = "${range.roundToInt()} ${uiState.distanceUnit.name.lowercase()}",
+                                                    style = MaterialTheme.typography.titleSmall
                                                 )
                                             }
                                         }
@@ -269,11 +322,11 @@ internal fun HomeScreen(
                                 Column(modifier = Modifier.padding(12.dp)) {
                                     Text(text = "Gastos Totais", style = MaterialTheme.typography.labelSmall)
                                     Text(
-                                        text = "R$ %.2f".format(uiState.totalMaintenanceCost + uiState.totalFuelCost),
+                                        text = CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost + uiState.totalFuelCost),
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        text = "Mnt: R$ %.0f | Comb: R$ %.0f".format(uiState.totalMaintenanceCost, uiState.totalFuelCost),
+                                        text = "Mnt: ${CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost)} | Comb: ${CurrencyUtils.formatCurrency(uiState.totalFuelCost)}",
                                         style = MaterialTheme.typography.bodySmall
                                     )
                                 }
@@ -289,10 +342,10 @@ internal fun HomeScreen(
                                     onClick = onNavigateToFuel
                                 ) {
                                     Column(modifier = Modifier.padding(12.dp)) {
-                                        Text(text = "Média Consumo", style = MaterialTheme.typography.labelSmall)
+                                        Text(text = "Consumo", style = MaterialTheme.typography.labelSmall)
                                         Row(verticalAlignment = Alignment.CenterVertically) {
                                             Text(
-                                                text = "%.1f km/L".format(avg),
+                                                text = uiState.consumptionUnit.format(avg),
                                                 style = MaterialTheme.typography.titleMedium
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
@@ -311,6 +364,47 @@ internal fun HomeScreen(
                                         Text(
                                             text = "Ver histórico",
                                             style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            uiState.costPerDistance?.let { costPerDist ->
+                                Card(
+                                    modifier = Modifier.weight(1f),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    )
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Text(text = "Custo/${uiState.distanceUnit.name.lowercase()}", style = MaterialTheme.typography.labelSmall)
+                                        Text(
+                                            text = CurrencyUtils.formatCurrency(costPerDist),
+                                            style = MaterialTheme.typography.titleSmall
+                                        )
+                                    }
+                                }
+                            }
+
+                            uiState.estimatedRange?.let { range ->
+                                Card(
+                                    modifier = Modifier.weight(1f),
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    )
+                                ) {
+                                    Column(modifier = Modifier.padding(12.dp)) {
+                                        Text(text = "Autonomia", style = MaterialTheme.typography.labelSmall)
+                                        Text(
+                                            text = "${range.roundToInt()} ${uiState.distanceUnit.name.lowercase()}",
+                                            style = MaterialTheme.typography.titleSmall
                                         )
                                     }
                                 }
@@ -382,8 +476,8 @@ internal fun HomeScreen(
             part = part,
             currentOdometer = uiState.currentVehicle?.currentOdometer ?: 0.0,
             unit = uiState.distanceUnit,
-            onConfirm = { newOdometer, cost, notes ->
-                onIntent(HomeUiIntent.PerformMaintenance(part, newOdometer, cost, notes))
+            onConfirm = { newOdometer, cost, notes, date ->
+                onIntent(HomeUiIntent.PerformMaintenance(part, newOdometer, cost, notes, date))
                 selectedPartForMaintenance = null
             },
             onDismiss = { selectedPartForMaintenance = null }
@@ -424,6 +518,7 @@ fun HomePreview() {
             onIntent = {},
             onNavigateToSettings = {},
             onNavigateToFuel = {},
+            onNavigateToMaintenanceHistory = {},
             adUnitId = ""
         )
     }

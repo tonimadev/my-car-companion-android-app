@@ -154,13 +154,17 @@ fun GarageContent(
                     vehicle = editingVehicle,
                     unit = state.distanceUnit,
                     onDismiss = { showDialog = false },
-                    onConfirm = { name, odometer ->
+                    onConfirm = { name, odometer, tankCapacity ->
                         if (editingVehicle == null) {
-                            onIntent(GarageIntent.AddVehicle(name, odometer))
+                            onIntent(GarageIntent.AddVehicle(name, odometer, tankCapacity))
                         } else {
                             onIntent(
                                 GarageIntent.UpdateVehicle(
-                                    editingVehicle.copy(name = name, currentOdometer = odometer)
+                                    editingVehicle.copy(
+                                        name = name,
+                                        currentOdometer = odometer,
+                                        tankCapacity = tankCapacity
+                                    )
                                 )
                             )
                         }

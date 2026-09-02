@@ -2,6 +2,7 @@ package digital.tonima.mycarcompanion.core.designsystem.model
 
 import androidx.compose.runtime.Immutable
 import digital.tonima.mycarcompanion.core.model.FuelRecord
+import digital.tonima.mycarcompanion.core.model.MaintenanceRecord
 import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import kotlinx.collections.immutable.toImmutableList
@@ -12,6 +13,7 @@ data class VehicleUi(
     val id: Long,
     val name: String,
     val currentOdometer: Double,
+    val tankCapacity: Double? = null,
     val isCurrent: Boolean
 )
 
@@ -38,10 +40,22 @@ data class FuelRecordUi(
     val consumptionKmPerL: Double? = null
 )
 
+@Immutable
+data class MaintenanceRecordUi(
+    val id: Long,
+    val partId: Long,
+    val partName: String,
+    val date: Instant,
+    val odometerAtMaintenance: Double,
+    val cost: Double,
+    val notes: String
+)
+
 fun Vehicle.toUi() = VehicleUi(
     id = id,
     name = name,
     currentOdometer = currentOdometer,
+    tankCapacity = tankCapacity,
     isCurrent = isCurrent
 )
 
@@ -68,3 +82,15 @@ fun FuelRecord.toUi(consumption: Double? = null) = FuelRecordUi(
 
 fun List<Vehicle>.toUiModels() = map { it.toUi() }.toImmutableList()
 fun List<Part>.toPartUiModels() = map { it.toUi() }.toImmutableList()
+
+fun MaintenanceRecord.toUi(partName: String) = MaintenanceRecordUi(
+    id = id,
+    partId = partId,
+    partName = partName,
+    date = date,
+    odometerAtMaintenance = odometerAtMaintenance,
+    cost = cost,
+    notes = notes
+)
+
+fun List<Pair<MaintenanceRecord, String>>.toMaintenanceUiModels() = map { it.first.toUi(it.second) }.toImmutableList()

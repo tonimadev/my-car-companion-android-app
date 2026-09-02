@@ -31,22 +31,49 @@ class FuelTrackingViewModel @Inject constructor(
     private val _isSaving = MutableStateFlow(false)
     val isSaving: StateFlow<Boolean> = _isSaving
 
-    fun saveFuelRecord(liters: Double, totalCost: Double, fuelType: String) {
+    private val _existingRecord = MutableStateFlow<FuelRecord?>(null)
+    val existingRecord: StateFlow<FuelRecord?> = _existingRecord
+
+    fun loadRecord(recordId: Long) {
+        viewModelScope.launch {
+            fuelRepository.getFuelRecord(recordId).collect { record ->
+                _existingRecord.value = record
+            }
+        }
+    }
+
+    fun saveFuelRecord(
+        liters: Double,
+        totalCost: Double,
+        fuelType: String,
+        mileage: Double? = null,
+        date: Instant? = null,
+        id: Long = 0
+    ) {
         val vehicle = currentVehicle.value ?: return
         
         viewModelScope.launch {
             _isSaving.value = true
             
             val record = FuelRecord(
+                id = id,
                 vehicleId = vehicle.id,
-                date = Instant.fromEpochMilliseconds(System.currentTimeMillis()),
-                mileage = vehicle.currentOdometer,
+                date = date ?: Instant.fromEpochMilliseconds(System.currentTimeMillis()),
+                mileage = mileage ?: vehicle.currentOdometer,
                 liters = liters,
                 totalCost = totalCost,
                 fuelType = fuelType
             )
             
-            fuelRepository.insertFuelRecord(record)
+            if (id == 0L) {
+                fuelRepository.insertFuelRecord(record)
+                // If it's a new record and mileage is greater than current, update vehicle
+                if (mileage != null && mileage > vehicle.currentOdometer) {
+                    vehicleRepository.updateVehicle(vehicle.copy(currentOdometer = mileage))
+                }
+            } else {
+                fuelRepository.updateFuelRecord(record)
+            }
             _isSaving.value = false
         }
     }

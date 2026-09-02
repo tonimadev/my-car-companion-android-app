@@ -38,7 +38,7 @@ sealed interface GarageUiEffect {
 }
 
 sealed interface GarageIntent {
-    data class AddVehicle(val name: String, val currentOdometer: Double) : GarageIntent
+    data class AddVehicle(val name: String, val currentOdometer: Double, val tankCapacity: Double?) : GarageIntent
     data class UpdateVehicle(val vehicle: VehicleUi) : GarageIntent
     data class DeleteVehicle(val vehicle: VehicleUi) : GarageIntent
     data class SetCurrentVehicle(val id: Long) : GarageIntent
@@ -78,7 +78,7 @@ class GarageViewModel @Inject constructor(
 
     fun handleIntent(intent: GarageIntent) {
         when (intent) {
-            is GarageIntent.AddVehicle -> addVehicle(intent.name, intent.currentOdometer)
+            is GarageIntent.AddVehicle -> addVehicle(intent.name, intent.currentOdometer, intent.tankCapacity)
             is GarageIntent.UpdateVehicle -> updateVehicle(intent.vehicle)
             is GarageIntent.DeleteVehicle -> deleteVehicle(intent.vehicle)
             is GarageIntent.SetCurrentVehicle -> setCurrentVehicle(intent.id)
@@ -86,10 +86,16 @@ class GarageViewModel @Inject constructor(
         }
     }
 
-    private fun addVehicle(name: String, odometer: Double) {
+    private fun addVehicle(name: String, odometer: Double, tankCapacity: Double?) {
         viewModelScope.launch {
             try {
-                vehicleRepository.insertVehicle(Vehicle(name = name, currentOdometer = odometer))
+                vehicleRepository.insertVehicle(
+                    Vehicle(
+                        name = name,
+                        currentOdometer = odometer,
+                        tankCapacity = tankCapacity
+                    )
+                )
             } catch (e: Exception) {
                 triggerEffect(GarageUiEffect.ShowError(e.message ?: context.getString(R.string.error_add_vehicle)))
             }
@@ -104,6 +110,7 @@ class GarageViewModel @Inject constructor(
                         id = vehicle.id,
                         name = vehicle.name,
                         currentOdometer = vehicle.currentOdometer,
+                        tankCapacity = vehicle.tankCapacity,
                         isCurrent = vehicle.isCurrent
                     )
                 )
@@ -121,6 +128,7 @@ class GarageViewModel @Inject constructor(
                         id = vehicle.id,
                         name = vehicle.name,
                         currentOdometer = vehicle.currentOdometer,
+                        tankCapacity = vehicle.tankCapacity,
                         isCurrent = vehicle.isCurrent
                     )
                 )

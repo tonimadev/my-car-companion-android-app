@@ -12,6 +12,9 @@ import javax.inject.Inject
 class OfflineFirstFuelRepository @Inject constructor(
     private val fuelDao: FuelDao
 ) : FuelRepository {
+    override fun getFuelRecord(id: Long): Flow<FuelRecord?> =
+        fuelDao.getFuelRecord(id).map { it?.asExternalModel() }
+
     override fun getFuelRecordsForVehicle(vehicleId: Long): Flow<List<FuelRecord>> =
         fuelDao.getFuelRecordsForVehicle(vehicleId).map { entities ->
             entities.map { it.asExternalModel() }

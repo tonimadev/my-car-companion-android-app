@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,6 +17,7 @@ class DataStoreUserPreferencesRepository @Inject constructor(
 
     private object PreferencesKeys {
         val DISTANCE_UNIT = stringPreferencesKey("distance_unit")
+        val CONSUMPTION_UNIT = stringPreferencesKey("consumption_unit")
         val IS_ONBOARDING_COMPLETED = booleanPreferencesKey("is_onboarding_completed")
         val IS_PRO_USER = booleanPreferencesKey("is_pro_user")
         val IS_AI_USER = booleanPreferencesKey("is_ai_user")
@@ -29,6 +31,17 @@ class DataStoreUserPreferencesRepository @Inject constructor(
     override suspend fun setDistanceUnit(distanceUnit: DistanceUnit) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.DISTANCE_UNIT] = distanceUnit.name
+        }
+    }
+
+    override val consumptionUnit: Flow<ConsumptionUnit> = dataStore.data.map { preferences ->
+        val unitName = preferences[PreferencesKeys.CONSUMPTION_UNIT] ?: ConsumptionUnit.KM_L.name
+        ConsumptionUnit.valueOf(unitName)
+    }
+
+    override suspend fun setConsumptionUnit(consumptionUnit: ConsumptionUnit) {
+        dataStore.edit { preferences ->
+            preferences[PreferencesKeys.CONSUMPTION_UNIT] = consumptionUnit.name
         }
     }
 

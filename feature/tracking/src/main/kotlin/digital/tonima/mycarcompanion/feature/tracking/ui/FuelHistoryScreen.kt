@@ -1,5 +1,6 @@
 package digital.tonima.mycarcompanion.feature.tracking.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -7,6 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material3.*
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
@@ -25,6 +27,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
 import digital.tonima.mycarcompanion.core.designsystem.model.FuelRecordUi
+import digital.tonima.mycarcompanion.core.designsystem.util.CurrencyUtils
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -32,7 +35,7 @@ import java.util.*
 @Composable
 fun FuelHistoryScreen(
     onNavigateUp: () -> Unit,
-    onNavigateToAddFuel: () -> Unit,
+    onNavigateToAddFuel: (Long?) -> Unit,
     adUnitId: String,
     modifier: Modifier = Modifier,
     viewModel: FuelHistoryViewModel = hiltViewModel()
@@ -54,7 +57,7 @@ fun FuelHistoryScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = onNavigateToAddFuel,
+                onClick = { onNavigateToAddFuel(null) },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
                 text = { Text("Abastecer") }
             )
@@ -129,7 +132,7 @@ fun FuelHistoryScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "R$ %.2f".format(uiState.totalSpent),
+                                    text = CurrencyUtils.formatCurrency(uiState.totalSpent),
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -205,6 +208,7 @@ fun FuelHistoryScreen(
                                     ) {
                                         FuelRecordCard(
                                             item = item,
+                                            onEdit = { onNavigateToAddFuel(item.id) },
                                             onDelete = { viewModel.deleteRecord(item) }
                                         )
                                     }
@@ -269,7 +273,7 @@ fun FuelHistoryScreen(
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "R$ %.2f".format(uiState.totalSpent),
+                                    text = CurrencyUtils.formatCurrency(uiState.totalSpent),
                                     style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -343,6 +347,7 @@ fun FuelHistoryScreen(
                                 ) {
                                     FuelRecordCard(
                                         item = item,
+                                        onEdit = { onNavigateToAddFuel(item.id) },
                                         onDelete = { viewModel.deleteRecord(item) }
                                     )
                                 }
@@ -366,6 +371,7 @@ fun FuelHistoryScreen(
 @Composable
 fun FuelRecordCard(
     item: FuelRecordUi,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -373,7 +379,9 @@ fun FuelRecordCard(
     val formattedDate = formatter.format(Date(item.date.toEpochMilliseconds()))
 
     Card(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onEdit() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -396,7 +404,7 @@ fun FuelRecordCard(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${item.fuelType} - R$ %.2f".format(item.totalCost),
+                    text = "${item.fuelType} - ${CurrencyUtils.formatCurrency(item.totalCost)}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -418,6 +426,14 @@ fun FuelRecordCard(
                         label = { Text("Média: %.1f km/L".format(consumption)) }
                     )
                 }
+            }
+
+            IconButton(onClick = onEdit) {
+                Icon(
+                    Icons.Default.Edit,
+                    contentDescription = "Editar abastecimento",
+                    tint = MaterialTheme.colorScheme.primary
+                )
             }
 
             IconButton(onClick = onDelete) {

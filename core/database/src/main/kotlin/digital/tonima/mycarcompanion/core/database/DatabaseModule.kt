@@ -22,7 +22,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "my-car-companion-db"
         )
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
         .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
         .build()
     }
@@ -77,6 +77,12 @@ object DatabaseModule {
         override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
             db.execSQL("ALTER TABLE `parts` ADD COLUMN `lifeSpanMonths` INTEGER DEFAULT NULL")
             db.execSQL("ALTER TABLE `parts` ADD COLUMN `lastMaintenanceDate` INTEGER DEFAULT NULL")
+        }
+    }
+
+    private val MIGRATION_4_5 = object : androidx.room.migration.Migration(4, 5) {
+        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `vehicles` ADD COLUMN `tankCapacity` REAL DEFAULT NULL")
         }
     }
 

@@ -27,6 +27,19 @@ interface MaintenanceDao {
     """)
     fun getTotalMaintenanceCostForVehicle(vehicleId: Long): Flow<Double?>
 
+    @Query("""
+        SELECT maintenance_records.* FROM maintenance_records 
+        INNER JOIN parts ON maintenance_records.partId = parts.id 
+        WHERE parts.vehicleId = :vehicleId 
+        ORDER BY date DESC
+    """)
+    fun getMaintenanceRecordsWithPartForVehicle(vehicleId: Long): Flow<List<MaintenanceRecordWithPart>>
+
+    @Query("""
+        SELECT * FROM maintenance_records WHERE id = :id
+    """)
+    fun getMaintenanceRecord(id: Long): Flow<MaintenanceEntity?>
+
     @Insert
     suspend fun insertMaintenanceRecord(record: MaintenanceEntity): Long
 

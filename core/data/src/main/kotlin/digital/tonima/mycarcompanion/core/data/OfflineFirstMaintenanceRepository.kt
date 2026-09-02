@@ -11,6 +11,9 @@ import javax.inject.Inject
 class OfflineFirstMaintenanceRepository @Inject constructor(
     private val maintenanceDao: MaintenanceDao
 ) : MaintenanceRepository {
+    override fun getMaintenanceRecord(id: Long): Flow<MaintenanceRecord?> =
+        maintenanceDao.getMaintenanceRecord(id).map { it?.asExternalModel() }
+
     override fun getMaintenanceRecordsForPart(partId: Long): Flow<List<MaintenanceRecord>> =
         maintenanceDao.getMaintenanceRecordsForPart(partId).map { entities ->
             entities.map { it.asExternalModel() }
@@ -19,6 +22,11 @@ class OfflineFirstMaintenanceRepository @Inject constructor(
     override fun getMaintenanceRecordsForVehicle(vehicleId: Long): Flow<List<MaintenanceRecord>> =
         maintenanceDao.getMaintenanceRecordsForVehicle(vehicleId).map { entities ->
             entities.map { it.asExternalModel() }
+        }
+
+    override fun getMaintenanceRecordsWithPartForVehicle(vehicleId: Long): Flow<List<Pair<MaintenanceRecord, String>>> =
+        maintenanceDao.getMaintenanceRecordsWithPartForVehicle(vehicleId).map { entities ->
+            entities.map { it.record.asExternalModel() to it.part.name }
         }
 
     override fun getTotalMaintenanceCostForVehicle(vehicleId: Long): Flow<Double?> =
