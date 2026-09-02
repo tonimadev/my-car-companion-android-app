@@ -1,3 +1,4 @@
+<img src="/images/banner.jpg" width="1024" height="500">
 # My Car Companion
 
 **My Car Companion** is a comprehensive Android application designed to help vehicle owners track maintenance based on mileage. It provides a specialized experience for managing multiple vehicles, automated mileage tracking, and predictive maintenance insights.
@@ -6,6 +7,9 @@
 
 Maintaining a vehicle can be complex. **My Car Companion** simplifies this by monitoring your vehicle's health through a tiered mileage engine and proactive notifications. Built with modern Android technologies, it offers a seamless experience across all form factors.
 
+## 🚀 Download
+
+<a href='https://play.google.com/store/apps/details?id=digital.tonima.mycarcompanion' target="_blank" rel="noopener noreferrer"><img alt='Get it on Google Play' src='https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png' width='200'/></a>
 ## ✨ Core Features
 
 *   **Garage & Vehicle Management:** Support for multiple vehicles with detailed specifications.
