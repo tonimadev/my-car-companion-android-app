@@ -99,6 +99,8 @@ dependencies {
     implementation(libs.androidx.startup)
     implementation(libs.material)
     implementation(libs.kotlinx.collections.immutable)
+    implementation(libs.androidx.car.app)
+    implementation(libs.androidx.car.app.projected)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)
