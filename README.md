@@ -14,8 +14,10 @@ Maintaining a vehicle can be complex. **My Car Companion** simplifies this by mo
 ## ✨ Core Features
 
 *   **Garage & Vehicle Management:** Support for multiple vehicles with detailed specifications.
+*   **Android Auto Support:**
+    *   **Automated Tracking:** Seamless mileage logging when connected to the vehicle.
+    *   **Car Projection UI:** A specialized dashboard for head units, allowing users to browse their garage and check part maintenance status while in the car.
 *   **Tiered Mileage Engine:** 
-    *   **Android Auto Integration:** Automated tracking when connected to your car.
     *   **GPS Foreground Service:** Precise tracking for active trips.
     *   **Manual Entry:** Simple input for legacy tracking or corrections.
 *   **MVI-driven Predictive Maintenance Dashboard:** A data-driven view of upcoming service needs based on historical usage.
