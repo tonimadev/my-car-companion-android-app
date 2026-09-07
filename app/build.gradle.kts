@@ -19,8 +19,8 @@ android {
         applicationId = "digital.tonima.mycarcompanion"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 11
-        versionName = "1.10"
+        versionCode = 12
+        versionName = "1.11"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -101,7 +101,6 @@ dependencies {
     implementation(libs.kotlinx.collections.immutable)
     implementation(libs.androidx.car.app)
     implementation(libs.androidx.car.app.projected)
-    implementation(libs.androidx.car.app.automotive)
 
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.crashlytics)

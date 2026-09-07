@@ -3,6 +3,7 @@ package digital.tonima.mycarcompanion.car
 import androidx.car.app.CarContext
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
+import androidx.car.app.model.Header
 import androidx.car.app.model.ItemList
 import androidx.car.app.model.ListTemplate
 import androidx.car.app.model.Row
@@ -62,8 +63,12 @@ class PartListScreen(
 
         return ListTemplate.Builder()
             .setSingleList(listBuilder.build())
-            .setTitle("Peças - $vehicleName")
-            .setHeaderAction(Action.BACK)
+            .setHeader(
+                Header.Builder()
+                    .setTitle("Peças - $vehicleName")
+                    .setStartHeaderAction(Action.BACK)
+                    .build()
+            )
             .build()
     }
 }

@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-09-07T16:12:49.127860180Z">
+        <DropdownSelection timestamp="2026-09-07T16:59:22.757440771Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/home/anthoni/.android/avd/Automotive_Portrait.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/home/anthoni/.android/avd/Android_auto_playstore_landscape.avd" />
             </handle>
           </Target>
         </DropdownSelection>
