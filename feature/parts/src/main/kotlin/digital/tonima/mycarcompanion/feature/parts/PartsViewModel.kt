@@ -89,7 +89,7 @@ class PartsViewModel @AssistedInject constructor(
                 _uiState.update {
                     it.copy(
                         vehicle = vehicle?.toUi(),
-                        parts = parts.toPartUiModels(),
+                        parts = parts.toPartUiModels(vehicle?.currentOdometer ?: 0.0),
                         distanceUnit = unit,
                         isProUser = isPro,
                         isLoading = false

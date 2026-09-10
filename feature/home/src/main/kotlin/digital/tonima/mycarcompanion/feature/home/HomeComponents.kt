@@ -32,11 +32,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
+import digital.tonima.mycarcompanion.core.designsystem.component.IsometricProgressBar
 import digital.tonima.mycarcompanion.core.designsystem.model.MaintenanceRecordUi
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.designsystem.util.CurrencyUtils
 import digital.tonima.mycarcompanion.core.designsystem.util.formatToShortDate
+import digital.tonima.mycarcompanion.core.designsystem.util.isometricDepth
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
@@ -57,7 +60,9 @@ fun VehicleSelector(
 
     SecondaryScrollableTabRow(
         selectedTabIndex = selectedIndex,
-        modifier = modifier,
+        modifier = modifier
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .isometricDepth(depth = 4.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
         containerColor = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.primary,
         edgePadding = 16.dp,
@@ -98,18 +103,15 @@ fun OdometerDisplay(
     modifier: Modifier = Modifier
 ) {
     val haptic = LocalHapticFeedback.current
-    Card(
+    IsometricCard(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-        )
+        containerColor = MaterialTheme.colorScheme.primaryContainer,
+        depthColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
-                    .padding(24.dp)
+                    .padding(8.dp) // Reduced padding as IsometricCard has internal padding
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -143,7 +145,6 @@ fun OdometerDisplay(
                 },
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(8.dp)
             ) {
                 Icon(
                     Icons.Rounded.Edit,
@@ -264,16 +265,12 @@ fun MaintenanceItem(
         else -> MaterialTheme.colorScheme.primary
     }
 
-    ElevatedCard(
+    IsometricCard(
         modifier = modifier.fillMaxWidth(),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-        )
+        containerColor = MaterialTheme.colorScheme.surface,
+        depthColor = color.copy(alpha = 0.2f)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
+        Column {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -322,14 +319,11 @@ fun MaintenanceItem(
                 }
             }
             Spacer(modifier = Modifier.height(12.dp))
-            LinearProgressIndicator(
-                progress = { 1f - animatedProgress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp),
+            IsometricProgressBar(
+                progress = 1f - animatedProgress,
                 color = color,
-                trackColor = color.copy(alpha = 0.2f),
-                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
+                trackColor = color.copy(alpha = 0.15f),
+                modifier = Modifier.fillMaxWidth()
             )
         }
     }

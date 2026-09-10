@@ -15,7 +15,6 @@ import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -40,8 +39,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
+import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCarView
+import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
+import digital.tonima.mycarcompanion.core.designsystem.model.MaintenanceStatus
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
+import digital.tonima.mycarcompanion.core.designsystem.util.isometricDepth
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
@@ -115,6 +118,13 @@ fun PartsContent(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp)
                 ) {
+                    item {
+                        IsometricCarView(
+                            parts = state.parts,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+
                     items(state.parts, key = { it.id }) { part ->
                         PartItem(
                             part = part,
@@ -145,6 +155,7 @@ fun PartsContent(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
+                    .isometricDepth(depth = 4.dp, cornerRadius = 16.dp)
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_part))
             }
@@ -185,20 +196,26 @@ fun PartItem(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Card(
+    val statusColor = when (part.status) {
+        MaintenanceStatus.CRITICAL -> MaterialTheme.colorScheme.error
+        MaintenanceStatus.WARNING -> MaterialTheme.colorScheme.tertiary
+        MaintenanceStatus.OK -> MaterialTheme.colorScheme.primary
+    }
+
+    IsometricCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 4.dp),
+        depthColor = statusColor.copy(alpha = 0.2f)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Rounded.Build,
                 contentDescription = null,
                 modifier = Modifier.padding(end = 16.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = statusColor
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = part.name, style = MaterialTheme.typography.titleMedium)

@@ -59,6 +59,7 @@ data class HomeUiState(
     val consumptionUnit: ConsumptionUnit = ConsumptionUnit.KM_L,
     val isProUser: Boolean = false,
     val isAiUser: Boolean = false,
+    val showFinancialData: Boolean = false,
     val isLoading: Boolean = false,
     val effect: HomeUiEffect? = null
 )
@@ -80,6 +81,7 @@ sealed interface HomeUiIntent {
     data object NavigateToSettings : HomeUiIntent
     data object NavigateToFuel : HomeUiIntent
     data object NavigateToMaintenanceHistory : HomeUiIntent
+    data object ToggleFinancialData : HomeUiIntent
     data object ConsumeEffect : HomeUiIntent
 }
 
@@ -177,7 +179,7 @@ class HomeViewModel @Inject constructor(
                     it.copy(
                         vehicles = vehicles.toUiModels(),
                         currentVehicle = currentVehicle?.toUi(),
-                        parts = sortedParts.toPartUiModels(),
+                        parts = sortedParts.toPartUiModels(currentVehicle?.currentOdometer ?: 0.0),
                         predictions = predictions,
                         totalMaintenanceCost = uiData.totalMaintCost,
                         totalFuelCost = uiData.totalFuelCost,
@@ -215,6 +217,7 @@ class HomeViewModel @Inject constructor(
             HomeUiIntent.NavigateToSettings -> triggerEffect(HomeUiEffect.NavigateToSettings)
             HomeUiIntent.NavigateToFuel -> triggerEffect(HomeUiEffect.NavigateToFuel)
             HomeUiIntent.NavigateToMaintenanceHistory -> triggerEffect(HomeUiEffect.NavigateToMaintenanceHistory)
+            HomeUiIntent.ToggleFinancialData -> _uiState.update { it.copy(showFinancialData = !it.showFinancialData) }
             HomeUiIntent.ConsumeEffect -> consumeEffect()
         }
     }

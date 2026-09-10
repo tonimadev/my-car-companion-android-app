@@ -17,7 +17,6 @@ import androidx.compose.material.icons.rounded.DirectionsCar
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Star
 import androidx.compose.material.icons.rounded.StarOutline
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -42,8 +41,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
+import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCarView
+import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
+import kotlinx.collections.immutable.persistentListOf
 import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
+import digital.tonima.mycarcompanion.core.designsystem.util.isometricDepth
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
@@ -113,6 +116,13 @@ fun GarageContent(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp)
                 ) {
+                    item {
+                        IsometricCarView(
+                            parts = persistentListOf(),
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+                    
                     items(state.vehicles, key = { it.id }) { vehicle ->
                         VehicleItem(
                             vehicle = vehicle,
@@ -145,6 +155,7 @@ fun GarageContent(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .padding(16.dp)
+                    .isometricDepth(depth = 4.dp, cornerRadius = 16.dp)
             ) {
                 Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add_vehicle))
             }
@@ -185,21 +196,22 @@ fun VehicleItem(
     onSetCurrent: () -> Unit,
     onOpenParts: () -> Unit
 ) {
-    Card(
+    IsometricCard(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
-            .clickable { onOpenParts() }
+            .padding(vertical = 4.dp)
+            .clickable { onOpenParts() },
+        depthColor = if (vehicle.isCurrent) MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) 
+                    else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.2f)
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Rounded.DirectionsCar,
                 contentDescription = null,
                 modifier = Modifier.padding(end = 16.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = if (vehicle.isCurrent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = vehicle.name, style = MaterialTheme.typography.titleMedium)

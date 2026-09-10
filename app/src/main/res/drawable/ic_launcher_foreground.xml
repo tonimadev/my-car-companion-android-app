@@ -5,39 +5,46 @@
     android:viewportWidth="108"
     android:viewportHeight="108">
 
-    <!-- Car Body matching exact silhouette -->
-    <!-- Car silhouette with spoiler, sloping roof, front fender, bumper -->
+    <!-- Shadow -->
+    <path
+        android:fillColor="#000000"
+        android:fillAlpha="0.15"
+        android:pathData="M20,65 Q20,75 54,82 Q88,75 88,65 Q88,55 54,58 Q20,55 20,65" />
+
+    <!-- Tires -->
+    <!-- Rear Tire -->
+    <path android:fillColor="#111827" android:pathData="M32,68 L42,74 L42,80 L32,74 Z" />
+    <path android:fillColor="#000000" android:pathData="M42,74 L52,68 L52,74 L42,80 Z" />
+    <!-- Front Tire -->
+    <path android:fillColor="#111827" android:pathData="M58,78 L68,84 L68,90 L58,84 Z" />
+    <path android:fillColor="#000000" android:pathData="M68,84 L78,78 L78,84 L68,90 Z" />
+
+    <!-- Chassis -->
+    <!-- Left Face -->
+    <path android:fillColor="#0B4F6C" android:pathData="M25,58 L54,75 L54,63 L25,46 Z" />
+    <!-- Front Right Face -->
+    <path android:fillColor="#012A36" android:pathData="M54,75 L95,51 L95,39 L54,63 Z" />
+    <!-- Top Face -->
+    <path android:fillColor="#1F7A8C" android:pathData="M25,46 L54,63 L95,39 L66,22 Z" />
+
+    <!-- Cabin -->
+    <!-- Left Face -->
+    <path android:fillColor="#0EA5E9" android:pathData="M43,43 L58,52 L58,43 L43,34 Z" />
+    <!-- Front Right Face -->
+    <path android:fillColor="#0284C7" android:pathData="M58,52 L82,38 L82,29 L58,43 Z" />
+    <!-- Top Face -->
+    <path android:fillColor="#38BDF8" android:pathData="M43,34 L58,43 L82,29 L67,20 Z" />
+
+    <!-- Headlights -->
+    <path android:fillColor="#FDE68A" android:pathData="M88,49 L91,51 L91,46 L88,44 Z" />
+    <path android:fillColor="#FDE68A" android:pathData="M78,55 L81,57 L81,52 L78,50 Z" />
+
+    <!-- Badge (Wrench in Circle) -->
     <path
         android:fillColor="#FFFFFF"
-        android:pathData="M24,57 C24,53 26,49.5 30,48 C34,46.5 44,45 47,44 L54,39 C59,35.5 69,35.5 78,39 C83,41 87,43.5 90,44.5 L91,40 L93,40 L90,46 L91,52 C91,54 89,56 86,56 L83,56 C83,52.5 80,49.5 76,49.5 C72,49.5 69,52.5 69,56 L43,56 C43,52.5 40,49.5 36,49.5 C32,49.5 29,52.5 29,56 L24,56 C23,56 22,55.5 22,54.5 L22,53 C22,52 23,51 24,51 Z" />
-
-    <!-- Front & Rear Window Cutouts -->
+        android:pathData="M75,75 A18,18 0 1,0 111,75 A18,18 0 1,0 75,75" />
     <path
-        android:fillColor="#0B3046"
-        android:pathData="M52,43.5 L58.5,43.5 L58.5,39 C55.5,39.5 53.5,41 52,43.5 Z" />
-    <path
-        android:fillColor="#0B3046"
-        android:pathData="M60.5,43.5 L77,43.5 C73,40.5 67,39 60.5,39 Z" />
-
-    <!-- Rear Wheel -->
-    <path
-        android:fillColor="#1E293B"
-        android:pathData="M36,49.5 A6.5,6.5 0 1,0 36,62.5 A6.5,6.5 0 1,0 36,49.5 Z" />
-    <path
-        android:fillColor="#38BDF8"
-        android:pathData="M36,53 A3,3 0 1,0 36,59 A3,3 0 1,0 36,53 Z" />
-
-    <!-- Front Wheel -->
-    <path
-        android:fillColor="#1E293B"
-        android:pathData="M76,49.5 A6.5,6.5 0 1,0 76,62.5 A6.5,6.5 0 1,0 76,49.5 Z" />
-    <path
-        android:fillColor="#38BDF8"
-        android:pathData="M76,53 A3,3 0 1,0 76,59 A3,3 0 1,0 76,53 Z" />
-
-    <!-- Sleek Maintenance Wrench positioned dynamically in gold accent -->
-    <path
-        android:fillColor="#FBBF24"
-        android:pathData="M66,22 C64.5,20.5 62.5,20.8 61,22.3 L57,26.3 L59.7,29 L62.5,26.2 C62.9,25.8 63.5,25.8 63.9,26.2 C64.3,26.6 64.3,27.2 63.9,27.6 L61.1,30.4 L63.8,33.1 L67.8,29.1 C69.3,27.6 69.6,25.6 68.1,24.1 L66,22 Z M56,27.3 L40,43.3 C39.2,44.1 39.2,45.4 40,46.2 L41.8,48 C42.6,48.8 43.9,48.8 44.7,48 L60.7,32 L56,27.3 Z" />
+        android:fillColor="#111827"
+        android:pathData="M97.5,75.7 C96.5,74.7 96.5,73 97.5,72 L100.5,69 L98.5,67 L96.5,69 C95.5,70 93.8,70 92.8,69 L91,67.2 C90,66.2 90,64.5 91,63.5 L94,60.5 L91,57.5 L88.2,60.3 C86.2,58.3 83,58.3 81,60.3 L79.5,61.8 L92.2,74.5 L97.5,75.7 Z M88.5,66.5 L73.5,81.5 C72.8,82.2 72.8,83.4 73.5,84.1 L75.1,85.7 C75.8,86.4 77,86.4 77.7,85.7 L92.7,70.7 L88.5,66.5 Z" />
 
 </vector>

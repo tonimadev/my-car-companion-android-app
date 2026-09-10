@@ -9,12 +9,18 @@ import kotlinx.collections.immutable.toImmutableList
 import kotlin.time.Instant
 
 @Immutable
+enum class MaintenanceStatus {
+    OK, WARNING, CRITICAL
+}
+
+@Immutable
 data class VehicleUi(
     val id: Long,
     val name: String,
     val currentOdometer: Double,
     val tankCapacity: Double? = null,
-    val isCurrent: Boolean
+    val isCurrent: Boolean,
+    val overallStatus: MaintenanceStatus = MaintenanceStatus.OK
 )
 
 @Immutable
@@ -25,7 +31,8 @@ data class PartUi(
     val lifeSpanMileage: Double,
     val lastMaintenanceOdometer: Double,
     val lifeSpanMonths: Int? = null,
-    val lastMaintenanceDate: Instant? = null
+    val lastMaintenanceDate: Instant? = null,
+    val status: MaintenanceStatus = MaintenanceStatus.OK
 )
 
 @Immutable
@@ -56,18 +63,28 @@ fun Vehicle.toUi() = VehicleUi(
     name = name,
     currentOdometer = currentOdometer,
     tankCapacity = tankCapacity,
-    isCurrent = isCurrent
+    isCurrent = isCurrent,
+    overallStatus = MaintenanceStatus.OK
 )
 
-fun Part.toUi() = PartUi(
-    id = id,
-    vehicleId = vehicleId,
-    name = name,
-    lifeSpanMileage = lifeSpanMileage,
-    lastMaintenanceOdometer = lastMaintenanceOdometer,
-    lifeSpanMonths = lifeSpanMonths,
-    lastMaintenanceDate = lastMaintenanceDate
-)
+fun Part.toUi(currentOdometer: Double = 0.0): PartUi {
+    val distanceSinceMaintenance = currentOdometer - lastMaintenanceOdometer
+    val status = when {
+        distanceSinceMaintenance >= lifeSpanMileage -> MaintenanceStatus.CRITICAL
+        distanceSinceMaintenance >= lifeSpanMileage * 0.9 -> MaintenanceStatus.WARNING
+        else -> MaintenanceStatus.OK
+    }
+    return PartUi(
+        id = id,
+        vehicleId = vehicleId,
+        name = name,
+        lifeSpanMileage = lifeSpanMileage,
+        lastMaintenanceOdometer = lastMaintenanceOdometer,
+        lifeSpanMonths = lifeSpanMonths,
+        lastMaintenanceDate = lastMaintenanceDate,
+        status = status
+    )
+}
 
 fun FuelRecord.toUi(consumption: Double? = null) = FuelRecordUi(
     id = id,
@@ -81,7 +98,7 @@ fun FuelRecord.toUi(consumption: Double? = null) = FuelRecordUi(
 )
 
 fun List<Vehicle>.toUiModels() = map { it.toUi() }.toImmutableList()
-fun List<Part>.toPartUiModels() = map { it.toUi() }.toImmutableList()
+fun List<Part>.toPartUiModels(currentOdometer: Double = 0.0) = map { it.toUi(currentOdometer) }.toImmutableList()
 
 fun MaintenanceRecord.toUi(partName: String) = MaintenanceRecordUi(
     id = id,
