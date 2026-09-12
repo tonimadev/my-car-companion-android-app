@@ -1,17 +1,92 @@
 package digital.tonima.mycarcompanion.core.designsystem.util
 
+import android.graphics.BlurMaskFilter
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+fun Modifier.neonGlow(
+    color: Color,
+    radius: Dp = 12.dp
+): Modifier = this.graphicsLayer(clip = false).drawBehind {
+    drawIntoCanvas { canvas ->
+        val r = radius.toPx()
+        val paint = Paint().apply {
+            this.color = color
+        }
+        val frameworkPaint = paint.asFrameworkPaint()
+        frameworkPaint.maskFilter = BlurMaskFilter(r, BlurMaskFilter.Blur.NORMAL)
+        
+        val w = size.width
+        val h = size.height
+        // Draw a slightly larger rect to make the glow more visible around edges
+        canvas.drawRect(Rect(-r/2, -r/2, w + r/2, h + r/2), paint)
+    }
+}
+
+fun Modifier.pulsatingNeonGlow(
+    color: Color,
+    radius: Dp = 12.dp
+): Modifier = this.composed {
+    val infiniteTransition = rememberInfiniteTransition(label = "neon_glow")
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 0.2f,
+        targetValue = 0.8f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "glow_alpha"
+    )
+
+    this.neonGlow(color = color.copy(alpha = alpha), radius = radius)
+}
+
+fun Modifier.isometricPress(
+    interactionSource: MutableInteractionSource,
+    depth: Dp = 6.dp
+): Modifier = this.composed {
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = tween(100),
+        label = "press_scale"
+    )
+    val pressTranslationY by animateFloatAsState(
+        targetValue = if (isPressed) depth.value * 0.5f else 0f,
+        animationSpec = tween(100),
+        label = "press_translation"
+    )
+
+    this.graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+        translationY = pressTranslationY
+    }
+}
+
 fun Modifier.isometricDepth(
-    depth: Dp = 4.dp,
-    color: Color = Color.Black.copy(alpha = 0.2f),
-    cornerRadius: Dp = 8.dp
+    depth: Dp = 8.dp, // Increased default depth
+    color: Color = Color.Black.copy(alpha = 0.4f),
+    cornerRadius: Dp = 12.dp
 ): Modifier = this.drawBehind {
     val d = depth.toPx()
     val w = size.width

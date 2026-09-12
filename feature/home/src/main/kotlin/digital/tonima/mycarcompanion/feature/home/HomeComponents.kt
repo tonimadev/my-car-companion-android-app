@@ -2,11 +2,15 @@ package digital.tonima.mycarcompanion.feature.home
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -25,10 +29,14 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -58,21 +66,27 @@ fun VehicleSelector(
     val selectedIndex = vehicles.indexOfFirst { it.id == selectedVehicle?.id }.coerceAtLeast(0)
     val haptic = LocalHapticFeedback.current
 
-    SecondaryScrollableTabRow(
-        selectedTabIndex = selectedIndex,
+    Box(
         modifier = modifier
             .padding(horizontal = 16.dp, vertical = 8.dp)
-            .isometricDepth(depth = 4.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
-        containerColor = MaterialTheme.colorScheme.surface,
-        contentColor = MaterialTheme.colorScheme.primary,
-        edgePadding = 16.dp,
-        indicator = {
-            TabRowDefaults.SecondaryIndicator(
-                Modifier.tabIndicatorOffset(selectedTabIndex = selectedIndex)
-            )
-        },
-        divider = {},
-        tabs = {
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.5f))
+            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+            .isometricDepth(depth = 2.dp, color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f))
+    ) {
+        SecondaryScrollableTabRow(
+            selectedTabIndex = selectedIndex,
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.primary,
+            edgePadding = 16.dp,
+            indicator = {
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(selectedTabIndex = selectedIndex),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            },
+            divider = {},
+            tabs = {
             vehicles.forEachIndexed { index, vehicle ->
                 Tab(
                     selected = selectedIndex == index,
@@ -94,6 +108,7 @@ fun VehicleSelector(
         }
     )
 }
+}
 
 @Composable
 fun OdometerDisplay(
@@ -106,36 +121,66 @@ fun OdometerDisplay(
     IsometricCard(
         modifier = modifier.fillMaxWidth(),
         containerColor = MaterialTheme.colorScheme.primaryContainer,
-        depthColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+        depthColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
+        glowColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
-                    .padding(8.dp) // Reduced padding as IsometricCard has internal padding
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = stringResource(R.string.current_odometer),
-                    style = MaterialTheme.typography.labelLarge
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    verticalAlignment = Alignment.Bottom
+                Surface(
+                    color = Color.Black.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 4.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
                 ) {
-                    Text(
-                        text = unit.fromKm(odometer).roundToInt().toString(),
-                        style = MaterialTheme.typography.displayLarge.copy(
-                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                        ),
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = unit.name.lowercase(),
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
+                    Box(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        // Scanline effect
+                        Canvas(modifier = Modifier.matchParentSize()) {
+                            var y = 0f
+                            while (y < size.height) {
+                                drawLine(
+                                    color = Color.White.copy(alpha = 0.05f),
+                                    start = Offset(0f, y),
+                                    end = Offset(size.width, y),
+                                    strokeWidth = 1f
+                                )
+                                y += 4f
+                            }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.Bottom
+                        ) {
+                            Text(
+                                text = unit.fromKm(odometer).roundToInt().toString(),
+                                style = MaterialTheme.typography.displayLarge.copy(
+                                    fontFamily = FontFamily.Monospace,
+                                    shadow = Shadow(
+                                        color = MaterialTheme.colorScheme.primary,
+                                        blurRadius = 20f
+                                    )
+                                ),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = unit.name.lowercase(),
+                                style = MaterialTheme.typography.headlineSmall,
+                                modifier = Modifier.padding(bottom = 12.dp),
+                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
                 }
             }
             IconButton(
@@ -268,7 +313,8 @@ fun MaintenanceItem(
     IsometricCard(
         modifier = modifier.fillMaxWidth(),
         containerColor = MaterialTheme.colorScheme.surface,
-        depthColor = color.copy(alpha = 0.2f)
+        depthColor = color.copy(alpha = 0.4f),
+        glowColor = if (remaining < 500) color.copy(alpha = 0.8f) else null
     ) {
         Column {
             Row(

@@ -1,7 +1,6 @@
 package digital.tonima.mycarcompanion.core.designsystem
 
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -46,8 +45,8 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun MyCarCompanionTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    darkTheme: Boolean = true, // Forced for "Striking" effect
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

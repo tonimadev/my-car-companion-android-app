@@ -1,7 +1,6 @@
 package digital.tonima.mycarcompanion.feature.home
 
 import android.content.Intent
-import androidx.core.net.toUri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,8 +25,6 @@ import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +35,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -47,25 +45,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.window.core.layout.WindowSizeClass
+import androidx.core.net.toUri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.window.core.layout.WindowSizeClass
 import digital.tonima.mycarcompanion.core.designsystem.MyCarCompanionTheme
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
+import digital.tonima.mycarcompanion.core.designsystem.component.GarageBackground
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCarView
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
-import kotlinx.collections.immutable.persistentListOf
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.designsystem.util.CurrencyUtils
 import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
 
@@ -132,7 +133,22 @@ internal fun HomeScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(stringResource(R.string.home_title)) },
+                title = { 
+                    Text(
+                        text = stringResource(R.string.home_title),
+                        style = MaterialTheme.typography.headlineLarge.copy(
+                            fontFamily = FontFamily.Monospace,
+                            shadow = Shadow(
+                                color = MaterialTheme.colorScheme.primary,
+                                blurRadius = 15f
+                            )
+                        ),
+                        color = MaterialTheme.colorScheme.primary
+                    ) 
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
+                ),
                 actions = {
                     IconButton(onClick = { onIntent(HomeUiIntent.ToggleFinancialData) }) {
                         Icon(
@@ -155,16 +171,19 @@ internal fun HomeScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize()
     ) { innerPadding ->
-        Column(
+        GarageBackground(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            if (uiState.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
-            } else {
+            Column(
+                modifier = Modifier.fillMaxSize()
+            ) {
+                if (uiState.isLoading) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
                 VehicleSelector(
                     vehicles = uiState.vehicles,
                     selectedVehicle = uiState.currentVehicle,
@@ -573,6 +592,7 @@ internal fun HomeScreen(
             }
         }
     }
+    }
 
     selectedPartForMaintenance?.let { part ->
         MaintenanceDialog(
@@ -604,7 +624,7 @@ internal fun HomeScreen(
 @Composable
 fun HomePreview() {
     val sampleVehicle = VehicleUi(id = 1, name = "My Car", currentOdometer = 15000.0, isCurrent = true)
-    val sampleParts = kotlinx.collections.immutable.persistentListOf(
+    val sampleParts = persistentListOf(
         PartUi(id = 1, vehicleId = 1, name = "Oil Change", lifeSpanMileage = 5000.0, lastMaintenanceOdometer = 10500.0),
         PartUi(id = 2, vehicleId = 1, name = "Tire Rotation", lifeSpanMileage = 10000.0, lastMaintenanceOdometer = 5000.0)
     )
@@ -612,7 +632,7 @@ fun HomePreview() {
     MyCarCompanionTheme {
         HomeScreen(
             uiState = HomeUiState(
-                vehicles = kotlinx.collections.immutable.persistentListOf(sampleVehicle),
+                vehicles = persistentListOf(sampleVehicle),
                 currentVehicle = sampleVehicle,
                 parts = sampleParts,
                 distanceUnit = DistanceUnit.KM
