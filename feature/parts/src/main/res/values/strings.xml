@@ -16,4 +16,9 @@
     <string name="error_add_part">Failed to add part</string>
     <string name="error_update_part">Failed to update part</string>
     <string name="error_delete_part">Failed to delete part</string>
+    <string name="delete_part_title">Delete part?</string>
+    <string name="delete_part_message">Are you sure you want to delete \"%s\"? This action cannot be undone.</string>
+    <string name="wear_used">%1$d%% worn</string>
+    <string name="wear_remaining">%1$d %2$s remaining</string>
+    <string name="wear_overdue">%1$d %2$s overdue</string>
 </resources>

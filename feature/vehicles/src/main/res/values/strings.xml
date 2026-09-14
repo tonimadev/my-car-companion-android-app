@@ -14,4 +14,6 @@
     <string name="error_delete_vehicle">Failed to delete vehicle</string>
     <string name="error_set_current_vehicle">Failed to set current vehicle</string>
     <string name="default_parts_added_note">Standard maintenance items will be added automatically.</string>
+    <string name="delete_vehicle_title">Delete vehicle?</string>
+    <string name="delete_vehicle_message">Are you sure you want to delete \"%s\"? All its parts and maintenance history will be removed. This action cannot be undone.</string>
 </resources>

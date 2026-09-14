@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
@@ -87,7 +88,7 @@ fun Modifier.isometricDepth(
     depth: Dp = 8.dp, // Increased default depth
     color: Color = Color.Black.copy(alpha = 0.4f),
     cornerRadius: Dp = 12.dp
-): Modifier = this.drawBehind {
+): Modifier = this.drawWithCache {
     val d = depth.toPx()
     val w = size.width
     val h = size.height
@@ -126,7 +127,6 @@ fun Modifier.isometricDepth(
         )
         close()
     }
-    drawPath(rightPath, color)
 
     // Bottom side depth (with bottom-left and bottom-right rounding)
     val bottomPath = Path().apply {
@@ -157,5 +157,9 @@ fun Modifier.isometricDepth(
         )
         close()
     }
-    drawPath(bottomPath, color.copy(alpha = color.alpha * 0.8f))
+
+    onDrawBehind {
+        drawPath(rightPath, color)
+        drawPath(bottomPath, color.copy(alpha = color.alpha * 0.8f))
+    }
 }

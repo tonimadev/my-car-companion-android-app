@@ -85,10 +85,15 @@ sealed interface HomeUiIntent {
     data object ConsumeEffect : HomeUiIntent
 }
 
+@Immutable
 sealed interface HomeUiEffect {
+    @Immutable
     data class ShowError(val message: String) : HomeUiEffect
+    @Immutable
     data object NavigateToSettings : HomeUiEffect
+    @Immutable
     data object NavigateToFuel : HomeUiEffect
+    @Immutable
     data object NavigateToMaintenanceHistory : HomeUiEffect
 }
 

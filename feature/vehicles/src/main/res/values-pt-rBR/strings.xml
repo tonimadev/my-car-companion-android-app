@@ -14,4 +14,6 @@
     <string name="error_delete_vehicle">Falha ao excluir veículo</string>
     <string name="error_set_current_vehicle">Falha ao definir veículo atual</string>
     <string name="default_parts_added_note">Itens de manutenção padrão serão adicionados automaticamente.</string>
+    <string name="delete_vehicle_title">Excluir veículo?</string>
+    <string name="delete_vehicle_message">Tem certeza de que deseja excluir \"%s\"? Todas as peças e o histórico de manutenção serão removidos. Esta ação não pode ser desfeita.</string>
 </resources>

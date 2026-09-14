@@ -16,4 +16,9 @@
     <string name="error_add_part">Falha ao adicionar peça</string>
     <string name="error_update_part">Falha ao atualizar peça</string>
     <string name="error_delete_part">Falha ao excluir peça</string>
+    <string name="delete_part_title">Excluir peça?</string>
+    <string name="delete_part_message">Tem certeza de que deseja excluir \"%s\"? Esta ação não pode ser desfeita.</string>
+    <string name="wear_used">%1$d%% desgastado</string>
+    <string name="wear_remaining">Faltam %1$d %2$s</string>
+    <string name="wear_overdue">Atrasado em %1$d %2$s</string>
 </resources>

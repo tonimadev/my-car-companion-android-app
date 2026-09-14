@@ -15,13 +15,13 @@ import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
 import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
 import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
 import digital.tonima.mycarcompanion.feature.parts.PartsContent
 import digital.tonima.mycarcompanion.feature.parts.PartsIntent
 import digital.tonima.mycarcompanion.feature.parts.PartsViewModel
@@ -40,6 +40,7 @@ fun GarageAdaptiveScreen(
 ) {
     val garageViewModel: GarageViewModel = hiltViewModel()
     val garageState by garageViewModel.state.collectAsStateWithLifecycle()
+    val garageEffect by garageViewModel.effect.collectAsStateWithLifecycle(initialValue = null)
     val navigator = rememberListDetailPaneScaffoldNavigator<Long>()
     val coroutineScope = rememberCoroutineScope()
 
@@ -83,11 +84,9 @@ fun GarageAdaptiveScreen(
             directive = navigator.scaffoldDirective,
             value = navigator.scaffoldValue,
             listPane = {
-                LaunchedUiEffectHandler(
-                    effectFlow = garageViewModel.effect,
-                    onConsumeEffect = { garageViewModel.handleIntent(GarageIntent.ConsumeEffect) },
-                    onEffect = { effect ->
-                        when (effect) {
+                LaunchedEffect(garageEffect) {
+                    if (garageEffect != null) {
+                        when (val effect = garageEffect) {
                             is GarageUiEffect.NavigateToParts -> {
                                 coroutineScope.launch {
                                     navigator.navigateTo(ListDetailPaneScaffoldRole.Detail, effect.vehicleId)
@@ -95,12 +94,13 @@ fun GarageAdaptiveScreen(
                             }
                             else -> {}
                         }
+                        garageViewModel.handleIntent(GarageIntent.ConsumeEffect)
                     }
-                )
+                }
 
                 GarageContent(
                     state = garageState,
-                    effectFlow = garageViewModel.effect,
+                    effect = garageEffect,
                     onIntent = garageViewModel::handleIntent,
                     onOpenParts = { id ->
                         garageViewModel.onNavigateToParts(id)
@@ -116,16 +116,17 @@ fun GarageAdaptiveScreen(
                         creationCallback = { factory -> factory.create(vehicleId) }
                     )
                     val partsState by partsViewModel.state.collectAsStateWithLifecycle()
+                    val partsEffect by partsViewModel.effect.collectAsStateWithLifecycle(initialValue = null)
 
-                    LaunchedUiEffectHandler(
-                        effectFlow = partsViewModel.effect,
-                        onConsumeEffect = { partsViewModel.handleIntent(PartsIntent.ConsumeEffect) },
-                        onEffect = { _ -> } // Currently only ShowError which is handled in PartsContent
-                    )
+                    LaunchedEffect(partsEffect) {
+                        if (partsEffect != null) {
+                            partsViewModel.handleIntent(PartsIntent.ConsumeEffect)
+                        }
+                    }
 
                     PartsContent(
                         state = partsState,
-                        effectFlow = partsViewModel.effect,
+                        effect = partsEffect,
                         onIntent = partsViewModel::handleIntent,
                         onBack = {
                             coroutineScope.launch {

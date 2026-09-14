@@ -1,6 +1,7 @@
 package digital.tonima.mycarcompanion.feature.vehicles
 
 import android.content.Context
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@Immutable
 data class GarageState(
     val vehicles: ImmutableList<VehicleUi> = persistentListOf(),
     val distanceUnit: DistanceUnit = DistanceUnit.KM,
@@ -32,8 +34,11 @@ data class GarageState(
     val effect: GarageUiEffect? = null
 )
 
+@Immutable
 sealed interface GarageUiEffect {
+    @Immutable
     data class NavigateToParts(val vehicleId: Long) : GarageUiEffect
+    @Immutable
     data class ShowError(val message: String) : GarageUiEffect
 }
 

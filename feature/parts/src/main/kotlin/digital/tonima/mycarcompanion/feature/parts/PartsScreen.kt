@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +29,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,14 +42,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
+import digital.tonima.mycarcompanion.core.designsystem.component.ConfirmDeleteDialog
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCarView
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
+import digital.tonima.mycarcompanion.core.designsystem.component.IsometricProgressBar
 import digital.tonima.mycarcompanion.core.designsystem.model.MaintenanceStatus
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
-import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
 import digital.tonima.mycarcompanion.core.designsystem.util.isometricDepth
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
-import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
 
 @Composable
@@ -56,10 +59,11 @@ fun PartsScreen(
     viewModel: PartsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val effect by viewModel.effect.collectAsStateWithLifecycle(initialValue = null)
 
     PartsContent(
         state = state,
-        effectFlow = viewModel.effect,
+        effect = effect,
         onIntent = viewModel::handleIntent,
         onBack = onBack,
         adUnitId = adUnitId
@@ -70,7 +74,7 @@ fun PartsScreen(
 @Composable
 fun PartsContent(
     state: PartsState,
-    effectFlow: Flow<PartsUiEffect?>,
+    effect: PartsUiEffect?,
     onIntent: (PartsIntent) -> Unit,
     onBack: () -> Unit,
     adUnitId: String,
@@ -79,22 +83,25 @@ fun PartsContent(
     val snackbarHostState = remember { SnackbarHostState() }
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var editingPartId by rememberSaveable { mutableStateOf<Long?>(null) }
-    
+    var partPendingDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
+
     val editingPart = remember(editingPartId, state.parts) {
         state.parts.find { it.id == editingPartId }
     }
+    val partPendingDelete = remember(partPendingDeleteId, state.parts) {
+        state.parts.find { it.id == partPendingDeleteId }
+    }
 
-    LaunchedUiEffectHandler(
-        effectFlow = effectFlow,
-        onConsumeEffect = { onIntent(PartsIntent.ConsumeEffect) },
-        onEffect = { effect ->
+    LaunchedEffect(effect) {
+        if (effect != null) {
             when (effect) {
                 is PartsUiEffect.ShowError -> {
                     snackbarHostState.showSnackbar(effect.message)
                 }
             }
+            onIntent(PartsIntent.ConsumeEffect)
         }
-    )
+    }
 
     Scaffold(
         topBar = {
@@ -129,11 +136,12 @@ fun PartsContent(
                         PartItem(
                             part = part,
                             unit = state.distanceUnit,
+                            currentOdometer = state.vehicle?.currentOdometer ?: part.lastMaintenanceOdometer,
                             onEdit = {
                                 editingPartId = part.id
                                 showDialog = true
                             },
-                            onDelete = { onIntent(PartsIntent.DeletePart(part)) }
+                            onDelete = { partPendingDeleteId = part.id }
                         )
                     }
 
@@ -185,6 +193,20 @@ fun PartsContent(
                     }
                 )
             }
+
+            partPendingDelete?.let { part ->
+                ConfirmDeleteDialog(
+                    title = stringResource(R.string.delete_part_title),
+                    message = stringResource(R.string.delete_part_message, part.name),
+                    confirmText = stringResource(R.string.delete),
+                    cancelText = stringResource(R.string.cancel),
+                    onConfirm = {
+                        onIntent(PartsIntent.DeletePart(part))
+                        partPendingDeleteId = null
+                    },
+                    onDismiss = { partPendingDeleteId = null }
+                )
+            }
         }
     }
 }
@@ -193,6 +215,7 @@ fun PartsContent(
 fun PartItem(
     part: PartUi,
     unit: DistanceUnit,
+    currentOdometer: Double,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -202,11 +225,16 @@ fun PartItem(
         MaintenanceStatus.OK -> MaterialTheme.colorScheme.primary
     }
 
+    val remaining = (part.lastMaintenanceOdometer + part.lifeSpanMileage) - currentOdometer
+    val wornFraction = (1f - (remaining / part.lifeSpanMileage).toFloat()).coerceIn(0f, 1f)
+    val remainingInUnit = unit.fromKm(remaining)
+
     IsometricCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp),
-        depthColor = statusColor.copy(alpha = 0.2f)
+        depthColor = statusColor.copy(alpha = 0.2f),
+        glowColor = if (part.status == MaintenanceStatus.CRITICAL) statusColor.copy(alpha = 0.8f) else null
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
@@ -242,5 +270,22 @@ fun PartItem(
                 Icon(Icons.Rounded.Delete, contentDescription = stringResource(R.string.delete))
             }
         }
+        Spacer(modifier = Modifier.height(12.dp))
+        IsometricProgressBar(
+            progress = wornFraction,
+            color = statusColor,
+            trackColor = statusColor.copy(alpha = 0.15f),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.wear_used, (wornFraction * 100).roundToInt()) + " · " +
+                if (remaining >= 0)
+                    stringResource(R.string.wear_remaining, remainingInUnit.roundToInt(), unit.name.lowercase())
+                else
+                    stringResource(R.string.wear_overdue, (-remainingInUnit).roundToInt(), unit.name.lowercase()),
+            style = MaterialTheme.typography.bodySmall,
+            color = statusColor
+        )
     }
 }

@@ -1,6 +1,7 @@
 package digital.tonima.mycarcompanion.feature.parts
 
 import android.content.Context
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.assisted.Assisted
@@ -17,6 +18,7 @@ import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.designsystem.model.toPartUiModels
 import digital.tonima.mycarcompanion.core.designsystem.model.toUi
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
+import digital.tonima.mycarcompanion.core.model.DistanceUnit.KM
 import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import kotlinx.collections.immutable.ImmutableList
@@ -30,16 +32,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlin.time.Instant
 
+@Immutable
 data class PartsState(
     val vehicle: VehicleUi? = null,
     val parts: ImmutableList<PartUi> = persistentListOf(),
-    val distanceUnit: DistanceUnit = DistanceUnit.KM,
+    val distanceUnit: DistanceUnit = KM,
     val isProUser: Boolean = false,
     val isLoading: Boolean = true,
     val effect: PartsUiEffect? = null
 )
 
+@Immutable
 sealed interface PartsUiEffect {
+    @Immutable
     data class ShowError(val message: String) : PartsUiEffect
 }
 

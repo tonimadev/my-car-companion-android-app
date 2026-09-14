@@ -29,6 +29,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,14 +42,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.AdBannerView
+import digital.tonima.mycarcompanion.core.designsystem.component.ConfirmDeleteDialog
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCarView
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import kotlinx.collections.immutable.persistentListOf
-import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
 import digital.tonima.mycarcompanion.core.designsystem.util.isometricDepth
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
-import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
 
 @Composable
@@ -58,10 +58,11 @@ fun GarageScreen(
     viewModel: GarageViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val effect by viewModel.effect.collectAsStateWithLifecycle(initialValue = null)
 
     GarageContent(
         state = state,
-        effectFlow = viewModel.effect,
+        effect = effect,
         onIntent = viewModel::handleIntent,
         onOpenParts = onNavigateToParts,
         adUnitId = adUnitId
@@ -72,7 +73,7 @@ fun GarageScreen(
 @Composable
 fun GarageContent(
     state: GarageState,
-    effectFlow: Flow<GarageUiEffect?>,
+    effect: GarageUiEffect?,
     onIntent: (GarageIntent) -> Unit,
     onOpenParts: (Long) -> Unit,
     adUnitId: String,
@@ -81,15 +82,17 @@ fun GarageContent(
     val snackbarHostState = remember { SnackbarHostState() }
     var showDialog by rememberSaveable { mutableStateOf(false) }
     var editingVehicleId by rememberSaveable { mutableStateOf<Long?>(null) }
-    
+    var vehiclePendingDeleteId by rememberSaveable { mutableStateOf<Long?>(null) }
+
     val editingVehicle = remember(editingVehicleId, state.vehicles) {
         state.vehicles.find { it.id == editingVehicleId }
     }
+    val vehiclePendingDelete = remember(vehiclePendingDeleteId, state.vehicles) {
+        state.vehicles.find { it.id == vehiclePendingDeleteId }
+    }
 
-    LaunchedUiEffectHandler(
-        effectFlow = effectFlow,
-        onConsumeEffect = { onIntent(GarageIntent.ConsumeEffect) },
-        onEffect = { effect ->
+    LaunchedEffect(effect) {
+        if (effect != null) {
             when (effect) {
                 is GarageUiEffect.NavigateToParts -> {
                     onOpenParts(effect.vehicleId)
@@ -98,8 +101,9 @@ fun GarageContent(
                     snackbarHostState.showSnackbar(effect.message)
                 }
             }
+            onIntent(GarageIntent.ConsumeEffect)
         }
-    )
+    }
 
     Scaffold(
         topBar = {
@@ -131,7 +135,7 @@ fun GarageContent(
                                 editingVehicleId = vehicle.id
                                 showDialog = true
                             },
-                            onDelete = { onIntent(GarageIntent.DeleteVehicle(vehicle)) },
+                            onDelete = { vehiclePendingDeleteId = vehicle.id },
                             onSetCurrent = { onIntent(GarageIntent.SetCurrentVehicle(vehicle.id)) },
                             onOpenParts = { onOpenParts(vehicle.id) }
                         )
@@ -181,6 +185,20 @@ fun GarageContent(
                         }
                         showDialog = false
                     }
+                )
+            }
+
+            vehiclePendingDelete?.let { vehicle ->
+                ConfirmDeleteDialog(
+                    title = stringResource(R.string.delete_vehicle_title),
+                    message = stringResource(R.string.delete_vehicle_message, vehicle.name),
+                    confirmText = stringResource(R.string.delete),
+                    cancelText = stringResource(R.string.cancel),
+                    onConfirm = {
+                        onIntent(GarageIntent.DeleteVehicle(vehicle))
+                        vehiclePendingDeleteId = null
+                    },
+                    onDismiss = { vehiclePendingDeleteId = null }
                 )
             }
         }

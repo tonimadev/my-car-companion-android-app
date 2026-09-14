@@ -38,6 +38,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,10 +65,8 @@ import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.designsystem.util.CurrencyUtils
-import digital.tonima.mycarcompanion.core.designsystem.util.LaunchedUiEffectHandler
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.flow.Flow
 import kotlin.math.roundToInt
 
 @Composable
@@ -79,10 +78,11 @@ fun HomeRoute(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val effect by viewModel.effect.collectAsStateWithLifecycle(initialValue = null)
 
     HomeScreen(
         uiState = uiState,
-        effectFlow = viewModel.effect,
+        effect = effect,
         onIntent = viewModel::onIntent,
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToFuel = onNavigateToFuel,
@@ -95,7 +95,7 @@ fun HomeRoute(
 @Composable
 internal fun HomeScreen(
     uiState: HomeUiState,
-    effectFlow: Flow<HomeUiEffect?>,
+    effect: HomeUiEffect?,
     onIntent: (HomeUiIntent) -> Unit,
     onNavigateToSettings: () -> Unit,
     onNavigateToFuel: () -> Unit,
@@ -109,10 +109,8 @@ internal fun HomeScreen(
     val adaptiveInfo = currentWindowAdaptiveInfoV2()
     val useTwoColumns = adaptiveInfo.windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
-    LaunchedUiEffectHandler(
-        effectFlow = effectFlow,
-        onConsumeEffect = { onIntent(HomeUiIntent.ConsumeEffect) },
-        onEffect = { effect ->
+    LaunchedEffect(effect) {
+        if (effect != null) {
             when (effect) {
                 is HomeUiEffect.ShowError -> {
                     snackbarHostState.showSnackbar(effect.message)
@@ -127,8 +125,9 @@ internal fun HomeScreen(
                     onNavigateToMaintenanceHistory()
                 }
             }
+            onIntent(HomeUiIntent.ConsumeEffect)
         }
-    )
+    }
 
     Scaffold(
         topBar = {
@@ -363,51 +362,6 @@ internal fun HomeScreen(
                                     adId = adUnitId,
                                     modifier = Modifier.padding(vertical = 8.dp)
                                 )
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    IsometricCard(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clickable {
-                                                val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=posto+de+gasolina".toUri())
-                                                context.startActivity(intent)
-                                            },
-                                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                                        depthColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Icon(Icons.Default.LocalGasStation, contentDescription = null)
-                                            Text("Encontrar Postos", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
-                                        }
-                                    }
-
-                                    IsometricCard(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clickable {
-                                                val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=oficina+mecanica".toUri())
-                                                context.startActivity(intent)
-                                            },
-                                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                        depthColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalAlignment = Alignment.CenterHorizontally
-                                        ) {
-                                            Icon(Icons.Default.Build, contentDescription = null)
-                                            Text("Encontrar Oficinas", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
-                                        }
-                                    }
-                                }
                             }
 
                             // Right Column: Maintenance List
@@ -637,7 +591,7 @@ fun HomePreview() {
                 parts = sampleParts,
                 distanceUnit = DistanceUnit.KM
             ),
-            effectFlow = kotlinx.coroutines.flow.flowOf(null),
+            effect = null,
             onIntent = {},
             onNavigateToSettings = {},
             onNavigateToFuel = {},
