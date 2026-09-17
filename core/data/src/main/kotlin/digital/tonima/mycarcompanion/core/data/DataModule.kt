@@ -5,6 +5,11 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
+import com.google.firebase.Firebase
+import com.google.firebase.ai.GenerativeModel
+import com.google.firebase.ai.ai
+import com.google.firebase.ai.type.GenerativeBackend
+import com.google.firebase.ai.type.content
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -53,6 +58,11 @@ interface DataModule {
         provider: DefaultProUserProvider
     ): ProUserProvider
 
+    @Binds
+    fun bindsCarAiRepository(
+        repository: GeminiCarAiRepository
+    ): CarAiRepository
+
     companion object {
         @Provides
         @Singleton
@@ -62,6 +72,16 @@ interface DataModule {
             return PreferenceDataStoreFactory.create(
                 produceFile = { context.preferencesDataStoreFile("user_preferences") }
             )
+        }
+
+        @Provides
+        @Singleton
+        fun provideGenerativeModel(): GenerativeModel {
+            return Firebase.ai(backend = GenerativeBackend.googleAI())
+                .generativeModel(
+                    modelName = AiConfig.GEMINI_MODEL,
+                    systemInstruction = content { text(AiConfig.SYSTEM_INSTRUCTION) }
+                )
         }
     }
 }

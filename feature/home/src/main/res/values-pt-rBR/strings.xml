@@ -40,4 +40,24 @@
     <string name="onboarding_slide3_desc">Escolha sua unidade de medida preferida e cadastre seu primeiro veículo para começar.</string>
     <string name="vehicle_name_hint">Nome do Veículo (ex: Honda Civic)</string>
     <string name="initial_odometer_hint">Odômetro Atual</string>
+
+    <!-- Strings do Assistente IA -->
+    <string name="ai_insight_title">Insight de Manutenção IA</string>
+    <string name="ai_insight_upgrade_description">Assine o Assistente IA para receber um resumo inteligente das próximas manutenções e do seu consumo.</string>
+    <string name="ai_subscribe_button">Assinar Assistente IA</string>
+    <string name="ai_insight_idle_description">Gere um resumo com IA sobre as próximas manutenções e o consumo do seu veículo.</string>
+    <string name="ai_insight_generate_button">Gerar Insight IA</string>
+    <string name="ai_insight_loading">Gerando insight…</string>
+    <string name="ai_insight_regenerate_button">Gerar novamente</string>
+    <string name="ai_insight_error">Não foi possível gerar o insight agora. Tente novamente.</string>
+    <string name="ai_insight_retry_button">Tentar novamente</string>
+    <string name="diagnostic_chat_title">Diagnóstico IA</string>
+    <string name="diagnostic_chat_upgrade_title">Desbloqueie o Diagnóstico IA</string>
+    <string name="diagnostic_chat_upgrade_description">Descreva um sintoma do seu carro e receba possíveis causas, urgência e o próximo passo recomendado.</string>
+    <string name="diagnostic_chat_disclaimer">Sugestões geradas por IA. Não substituem a avaliação de um mecânico qualificado.</string>
+    <string name="diagnostic_chat_empty_hint">Descreva o sintoma do seu carro (ex: \"barulho ao frear\", \"luz de óleo acesa\").</string>
+    <string name="diagnostic_chat_thinking">Pensando…</string>
+    <string name="diagnostic_chat_input_placeholder">Descreva o sintoma…</string>
+    <string name="diagnostic_chat_send">Enviar</string>
+    <string name="diagnostic_chat_error">Não foi possível obter uma resposta agora. Tente novamente.</string>
 </resources>

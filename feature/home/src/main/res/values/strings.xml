@@ -41,4 +41,24 @@
     <string name="onboarding_slide3_desc">Choose your preferred unit and add your first vehicle to get started.</string>
     <string name="vehicle_name_hint">Vehicle Name (e.g. Honda Civic)</string>
     <string name="initial_odometer_hint">Current Odometer Reading</string>
+
+    <!-- AI Assistant Strings -->
+    <string name="ai_insight_title">AI Maintenance Insight</string>
+    <string name="ai_insight_upgrade_description">Subscribe to the AI Assistant to get a smart summary of your upcoming maintenance and fuel consumption.</string>
+    <string name="ai_subscribe_button">Subscribe to AI Assistant</string>
+    <string name="ai_insight_idle_description">Generate an AI summary about upcoming maintenance and your vehicle\'s fuel consumption.</string>
+    <string name="ai_insight_generate_button">Generate AI Insight</string>
+    <string name="ai_insight_loading">Generating insight…</string>
+    <string name="ai_insight_regenerate_button">Generate again</string>
+    <string name="ai_insight_error">Unable to generate the insight right now. Please try again.</string>
+    <string name="ai_insight_retry_button">Try again</string>
+    <string name="diagnostic_chat_title">AI Diagnosis</string>
+    <string name="diagnostic_chat_upgrade_title">Unlock AI Diagnosis</string>
+    <string name="diagnostic_chat_upgrade_description">Describe a symptom of your car and get possible causes, urgency level, and the recommended next step.</string>
+    <string name="diagnostic_chat_disclaimer">AI-generated suggestions. They do not replace the evaluation of a qualified mechanic.</string>
+    <string name="diagnostic_chat_empty_hint">Describe your car\'s symptom (e.g. \"noise when braking\", \"oil light on\").</string>
+    <string name="diagnostic_chat_thinking">Thinking…</string>
+    <string name="diagnostic_chat_input_placeholder">Describe the symptom…</string>
+    <string name="diagnostic_chat_send">Send</string>
+    <string name="diagnostic_chat_error">Unable to get a response right now. Please try again.</string>
 </resources>

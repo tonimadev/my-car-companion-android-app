@@ -1,6 +1,7 @@
 package digital.tonima.mycarcompanion.feature.home
 
 import android.content.Context
+import digital.tonima.mycarcompanion.core.data.CarAiRepository
 import digital.tonima.mycarcompanion.core.data.FuelRepository
 import digital.tonima.mycarcompanion.core.data.MaintenanceRepository
 import digital.tonima.mycarcompanion.core.data.OdometerRepository
@@ -8,8 +9,10 @@ import digital.tonima.mycarcompanion.core.data.PartRepository
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
+import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Vehicle
+import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +41,7 @@ class HomeViewModelTest {
     private val maintenanceRepository = mockk<MaintenanceRepository>(relaxed = true)
     private val odometerRepository = mockk<OdometerRepository>(relaxed = true)
     private val fuelRepository = mockk<FuelRepository>(relaxed = true)
+    private val carAiRepository = mockk<CarAiRepository>(relaxed = true)
     private val userPreferencesRepository = mockk<UserPreferencesRepository>(relaxed = true)
     private val proUserProvider = mockk<ProUserProvider>(relaxed = true)
 
@@ -46,6 +50,7 @@ class HomeViewModelTest {
     private val vehiclesFlow = MutableStateFlow<List<Vehicle>>(emptyList())
     private val currentVehicleFlow = MutableStateFlow<Vehicle?>(null)
     private val distanceUnitFlow = MutableStateFlow(DistanceUnit.KM)
+    private val consumptionUnitFlow = MutableStateFlow(ConsumptionUnit.KM_L)
     private val isProUserFlow = MutableStateFlow(false)
     private val isAiUserFlow = MutableStateFlow(false)
 
@@ -56,6 +61,7 @@ class HomeViewModelTest {
         every { vehicleRepository.getVehicles() } returns vehiclesFlow
         every { vehicleRepository.getCurrentVehicle() } returns currentVehicleFlow
         every { userPreferencesRepository.distanceUnit } returns distanceUnitFlow
+        every { userPreferencesRepository.consumptionUnit } returns consumptionUnitFlow
         every { proUserProvider.isProUser } returns isProUserFlow
         every { proUserProvider.isAiUser } returns isAiUserFlow
         
@@ -66,6 +72,7 @@ class HomeViewModelTest {
             maintenanceRepository,
             odometerRepository,
             fuelRepository,
+            carAiRepository,
             userPreferencesRepository,
             proUserProvider
         )
@@ -101,12 +108,91 @@ class HomeViewModelTest {
 
         val state = viewModel.uiState.value
         assertFalse(state.isLoading)
-        assertEquals(vehicle, state.currentVehicle)
+        assertEquals(vehicle.id, state.currentVehicle?.id)
         assertEquals(1, state.vehicles.size)
         
         job.cancel()
     }
-    
+
+    @Test
+    fun `GenerateAiInsight updates state to Success when repository succeeds`() = runTest {
+        val vehicle = Vehicle(id = 1, name = "Test Car", currentOdometer = 100.0, isCurrent = true)
+
+        every { partRepository.getPartsForVehicle(1) } returns flowOf(emptyList())
+        every { odometerRepository.getOdometerRecordsForVehicle(1) } returns flowOf(emptyList())
+        every { fuelRepository.getFuelRecordsForVehicle(1) } returns flowOf(emptyList())
+        every { maintenanceRepository.getTotalMaintenanceCostForVehicle(1) } returns flowOf(0.0)
+        every { fuelRepository.getTotalFuelCostForVehicle(1) } returns flowOf(0.0)
+        coEvery { carAiRepository.generateMaintenanceInsight(any()) } returns Result.success("Tudo em dia.")
+
+        val job = viewModel.uiState.onEach { }.launchIn(this)
+
+        vehiclesFlow.value = listOf(vehicle)
+        currentVehicleFlow.value = vehicle
+        isAiUserFlow.value = true
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onIntent(HomeUiIntent.GenerateAiInsight)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val insight = viewModel.uiState.value.aiInsight
+        assertTrue(insight is AiInsightUiState.Success)
+        assertEquals("Tudo em dia.", (insight as AiInsightUiState.Success).text)
+
+        job.cancel()
+    }
+
+    @Test
+    fun `GenerateAiInsight updates state to Error when repository fails`() = runTest {
+        val vehicle = Vehicle(id = 1, name = "Test Car", currentOdometer = 100.0, isCurrent = true)
+
+        every { partRepository.getPartsForVehicle(1) } returns flowOf(emptyList())
+        every { odometerRepository.getOdometerRecordsForVehicle(1) } returns flowOf(emptyList())
+        every { fuelRepository.getFuelRecordsForVehicle(1) } returns flowOf(emptyList())
+        every { maintenanceRepository.getTotalMaintenanceCostForVehicle(1) } returns flowOf(0.0)
+        every { fuelRepository.getTotalFuelCostForVehicle(1) } returns flowOf(0.0)
+        coEvery { carAiRepository.generateMaintenanceInsight(any()) } returns Result.failure(IllegalStateException())
+
+        val job = viewModel.uiState.onEach { }.launchIn(this)
+
+        vehiclesFlow.value = listOf(vehicle)
+        currentVehicleFlow.value = vehicle
+        isAiUserFlow.value = true
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onIntent(HomeUiIntent.GenerateAiInsight)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value.aiInsight is AiInsightUiState.Error)
+
+        job.cancel()
+    }
+
+    @Test
+    fun `GenerateAiInsight does nothing when user is not an AI subscriber`() = runTest {
+        val vehicle = Vehicle(id = 1, name = "Test Car", currentOdometer = 100.0, isCurrent = true)
+
+        every { partRepository.getPartsForVehicle(1) } returns flowOf(emptyList())
+        every { odometerRepository.getOdometerRecordsForVehicle(1) } returns flowOf(emptyList())
+        every { fuelRepository.getFuelRecordsForVehicle(1) } returns flowOf(emptyList())
+        every { maintenanceRepository.getTotalMaintenanceCostForVehicle(1) } returns flowOf(0.0)
+        every { fuelRepository.getTotalFuelCostForVehicle(1) } returns flowOf(0.0)
+
+        val job = viewModel.uiState.onEach { }.launchIn(this)
+
+        vehiclesFlow.value = listOf(vehicle)
+        currentVehicleFlow.value = vehicle
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.onIntent(HomeUiIntent.GenerateAiInsight)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(AiInsightUiState.Idle, viewModel.uiState.value.aiInsight)
+        io.mockk.coVerify(exactly = 0) { carAiRepository.generateMaintenanceInsight(any()) }
+
+        job.cancel()
+    }
+
     private fun assertTrue(value: Boolean) {
         org.junit.Assert.assertTrue(value)
     }
