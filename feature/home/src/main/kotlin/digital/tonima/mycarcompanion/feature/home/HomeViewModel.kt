@@ -1,11 +1,13 @@
 package digital.tonima.mycarcompanion.feature.home
 
+import android.app.Activity
 import android.content.Context
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import digital.tonima.mycarcompanion.core.data.CarAiRepository
 import digital.tonima.mycarcompanion.core.data.FuelRepository
 import digital.tonima.mycarcompanion.core.data.MaintenanceRepository
 import digital.tonima.mycarcompanion.core.data.OdometerRepository
@@ -13,6 +15,7 @@ import digital.tonima.mycarcompanion.core.data.PartRepository
 import digital.tonima.mycarcompanion.core.data.PredictionEngine
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
+import digital.tonima.mycarcompanion.core.data.VehicleAiContext
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
@@ -61,11 +64,20 @@ data class HomeUiState(
     val isAiUser: Boolean = false,
     val showFinancialData: Boolean = false,
     val isLoading: Boolean = false,
+    val aiInsight: AiInsightUiState = AiInsightUiState.Idle,
     val effect: HomeUiEffect? = null
 )
 
 enum class FuelTrend {
     IMPROVING, WORSENING, STABLE
+}
+
+@Immutable
+sealed interface AiInsightUiState {
+    @Immutable data object Idle : AiInsightUiState
+    @Immutable data object Loading : AiInsightUiState
+    @Immutable data class Success(val text: String) : AiInsightUiState
+    @Immutable data object Error : AiInsightUiState
 }
 
 sealed interface HomeUiIntent {
@@ -81,7 +93,9 @@ sealed interface HomeUiIntent {
     data object NavigateToSettings : HomeUiIntent
     data object NavigateToFuel : HomeUiIntent
     data object NavigateToMaintenanceHistory : HomeUiIntent
+    data object NavigateToDiagnosticChat : HomeUiIntent
     data object ToggleFinancialData : HomeUiIntent
+    data object GenerateAiInsight : HomeUiIntent
     data object ConsumeEffect : HomeUiIntent
 }
 
@@ -95,6 +109,8 @@ sealed interface HomeUiEffect {
     data object NavigateToFuel : HomeUiEffect
     @Immutable
     data object NavigateToMaintenanceHistory : HomeUiEffect
+    @Immutable
+    data object NavigateToDiagnosticChat : HomeUiEffect
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -106,8 +122,9 @@ class HomeViewModel @Inject constructor(
     private val maintenanceRepository: MaintenanceRepository,
     private val odometerRepository: OdometerRepository,
     private val fuelRepository: FuelRepository,
+    private val carAiRepository: CarAiRepository,
     userPreferencesRepository: UserPreferencesRepository,
-    proUserProvider: ProUserProvider
+    private val proUserProvider: ProUserProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
@@ -181,6 +198,7 @@ class HomeViewModel @Inject constructor(
                 } else FuelTrend.STABLE
 
                 _uiState.update {
+                    val vehicleChanged = currentVehicle?.id != it.currentVehicle?.id
                     it.copy(
                         vehicles = vehicles.toUiModels(),
                         currentVehicle = currentVehicle?.toUi(),
@@ -196,6 +214,7 @@ class HomeViewModel @Inject constructor(
                         consumptionUnit = consumptionUnit,
                         isProUser = isPro,
                         isAiUser = isAi,
+                        aiInsight = if (vehicleChanged) AiInsightUiState.Idle else it.aiInsight,
                         isLoading = false
                     )
                 }
@@ -222,8 +241,61 @@ class HomeViewModel @Inject constructor(
             HomeUiIntent.NavigateToSettings -> triggerEffect(HomeUiEffect.NavigateToSettings)
             HomeUiIntent.NavigateToFuel -> triggerEffect(HomeUiEffect.NavigateToFuel)
             HomeUiIntent.NavigateToMaintenanceHistory -> triggerEffect(HomeUiEffect.NavigateToMaintenanceHistory)
+            HomeUiIntent.NavigateToDiagnosticChat -> triggerEffect(HomeUiEffect.NavigateToDiagnosticChat)
             HomeUiIntent.ToggleFinancialData -> _uiState.update { it.copy(showFinancialData = !it.showFinancialData) }
+            HomeUiIntent.GenerateAiInsight -> generateAiInsight()
             HomeUiIntent.ConsumeEffect -> consumeEffect()
+        }
+    }
+
+    fun subscribeAi(activity: Activity) {
+        proUserProvider.launchSubscribeAi(activity)
+    }
+
+    private fun generateAiInsight() {
+        val state = uiState.value
+        val vehicle = state.currentVehicle ?: return
+        if (!state.isAiUser || state.aiInsight is AiInsightUiState.Loading) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(aiInsight = AiInsightUiState.Loading) }
+
+            val context = VehicleAiContext.build(
+                vehicle = Vehicle(
+                    id = vehicle.id,
+                    name = vehicle.name,
+                    currentOdometer = vehicle.currentOdometer,
+                    tankCapacity = vehicle.tankCapacity,
+                    isCurrent = vehicle.isCurrent
+                ),
+                parts = state.parts.map { part ->
+                    Part(
+                        id = part.id,
+                        vehicleId = part.vehicleId,
+                        name = part.name,
+                        lifeSpanMileage = part.lifeSpanMileage,
+                        lastMaintenanceOdometer = part.lastMaintenanceOdometer,
+                        lifeSpanMonths = part.lifeSpanMonths,
+                        lastMaintenanceDate = part.lastMaintenanceDate
+                    )
+                },
+                predictions = state.predictions,
+                distanceUnit = state.distanceUnit,
+                averageFuelConsumption = state.averageFuelConsumption,
+                fuelTrendLabel = when (state.fuelConsumptionTrend) {
+                    FuelTrend.IMPROVING -> "melhorando"
+                    FuelTrend.WORSENING -> "piorando"
+                    FuelTrend.STABLE -> "estável"
+                }
+            )
+
+            carAiRepository.generateMaintenanceInsight(context)
+                .onSuccess { text ->
+                    _uiState.update { it.copy(aiInsight = AiInsightUiState.Success(text)) }
+                }
+                .onFailure {
+                    _uiState.update { it.copy(aiInsight = AiInsightUiState.Error) }
+                }
         }
     }
 

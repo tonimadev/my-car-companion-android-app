@@ -11,6 +11,10 @@ import androidx.work.WorkManager
 import digital.tonima.mycarcompanion.core.notifications.MaintenanceWorker
 import dagger.hilt.android.HiltAndroidApp
 import com.google.android.gms.ads.MobileAds
+import com.google.firebase.Firebase
+import com.google.firebase.appcheck.appCheck
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -26,6 +30,13 @@ class MyCarCompanionApplication : Application(), Configuration.Provider {
             
     override fun onCreate() {
         super.onCreate()
+        Firebase.appCheck.installAppCheckProviderFactory(
+            if (BuildConfig.DEBUG) {
+                DebugAppCheckProviderFactory.getInstance()
+            } else {
+                PlayIntegrityAppCheckProviderFactory.getInstance()
+            }
+        )
         MobileAds.initialize(this) { status ->
             android.util.Log.d("AdMob", "MobileAds initialized: $status")
         }

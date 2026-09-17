@@ -8,12 +8,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.BatteryFull
 import androidx.compose.material.icons.rounded.Build
 import androidx.compose.material.icons.rounded.Check
@@ -42,6 +44,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricProgressBar
+import digital.tonima.mycarcompanion.core.designsystem.component.ProUpgradeCard
 import digital.tonima.mycarcompanion.core.designsystem.model.MaintenanceRecordUi
 import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
@@ -200,7 +203,161 @@ fun OdometerDisplay(
     }
 }
 
+@Composable
+fun AiInsightCard(
+    isAiUser: Boolean,
+    insightState: AiInsightUiState,
+    onGenerateClick: () -> Unit,
+    onUpgradeClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (!isAiUser) {
+        ProUpgradeCard(
+            onUpgradeClick = onUpgradeClick,
+            modifier = modifier,
+            title = stringResource(R.string.ai_insight_title),
+            description = stringResource(R.string.ai_insight_upgrade_description),
+            buttonText = stringResource(R.string.ai_subscribe_button)
+        )
+        return
+    }
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Rounded.AutoAwesome,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = stringResource(R.string.ai_insight_title),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+
+            when (insightState) {
+                is AiInsightUiState.Idle -> {
+                    Text(
+                        text = stringResource(R.string.ai_insight_idle_description),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onGenerateClick) {
+                        Text(stringResource(R.string.ai_insight_generate_button))
+                    }
+                }
+                is AiInsightUiState.Loading -> {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(stringResource(R.string.ai_insight_loading), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+                is AiInsightUiState.Success -> {
+                    Text(text = insightState.text, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onGenerateClick) {
+                        Text(stringResource(R.string.ai_insight_regenerate_button))
+                    }
+                }
+                is AiInsightUiState.Error -> {
+                    Text(
+                        text = stringResource(R.string.ai_insight_error),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = onGenerateClick) {
+                        Text(stringResource(R.string.ai_insight_retry_button))
+                    }
+                }
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalFoundationApi::class)
+fun LazyListScope.maintenanceItems(
+    parts: ImmutableList<PartUi>,
+    predictions: ImmutableMap<Long, Long?>,
+    isAiUser: Boolean,
+    currentOdometer: Double,
+    unit: DistanceUnit,
+    onPerformMaintenance: (PartUi) -> Unit,
+    headerModifier: Modifier = Modifier.padding(horizontal = 16.dp)
+) {
+    item {
+        Text(
+            text = stringResource(R.string.upcoming_maintenance),
+            style = MaterialTheme.typography.titleLarge,
+            modifier = headerModifier.padding(bottom = 8.dp)
+        )
+    }
+    items(parts, key = { it.id }) { part ->
+        val dismissState = rememberSwipeToDismissBoxState()
+
+        LaunchedEffect(dismissState.currentValue) {
+            if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) {
+                onPerformMaintenance(part)
+                dismissState.snapTo(SwipeToDismissBoxValue.Settled)
+            }
+        }
+
+        SwipeToDismissBox(
+            state = dismissState,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            backgroundContent = {
+                val backgroundColor = when (dismissState.dismissDirection) {
+                    SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50)
+                    else -> Color.Transparent
+                }
+                Surface(
+                    color = backgroundColor,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 20.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        if (dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
+                            Icon(
+                                Icons.Rounded.Check,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                        }
+                    }
+                }
+            },
+            enableDismissFromEndToStart = false
+        ) {
+            MaintenanceItem(
+                part = part,
+                prediction = if (isAiUser) predictions[part.id] else null,
+                currentOdometer = currentOdometer,
+                unit = unit,
+                onPerformMaintenance = { onPerformMaintenance(part) },
+                modifier = Modifier.animateItem()
+            )
+        }
+    }
+}
+
 @Composable
 fun MaintenanceList(
     parts: ImmutableList<PartUi>,
@@ -213,65 +370,18 @@ fun MaintenanceList(
 ) {
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        item {
-            Text(
-                text = stringResource(R.string.upcoming_maintenance),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-        items(parts, key = { it.id }) { part ->
-            val dismissState = rememberSwipeToDismissBoxState()
-
-            LaunchedEffect(dismissState.currentValue) {
-                if (dismissState.currentValue == SwipeToDismissBoxValue.StartToEnd) {
-                    onPerformMaintenance(part)
-                    dismissState.snapTo(SwipeToDismissBoxValue.Settled)
-                }
-            }
-
-            SwipeToDismissBox(
-                state = dismissState,
-                backgroundContent = {
-                    val backgroundColor = when (dismissState.dismissDirection) {
-                        SwipeToDismissBoxValue.StartToEnd -> Color(0xFF4CAF50)
-                        else -> Color.Transparent
-                    }
-                    Surface(
-                        color = backgroundColor,
-                        modifier = Modifier.fillMaxSize()
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 20.dp),
-                            contentAlignment = Alignment.CenterStart
-                        ) {
-                            if (dismissState.dismissDirection == SwipeToDismissBoxValue.StartToEnd) {
-                                Icon(
-                                    Icons.Rounded.Check,
-                                    contentDescription = null,
-                                    tint = Color.White
-                                )
-                            }
-                        }
-                    }
-                },
-                enableDismissFromEndToStart = false
-            ) {
-                MaintenanceItem(
-                    part = part,
-                    prediction = if (isAiUser) predictions[part.id] else null,
-                    currentOdometer = currentOdometer,
-                    unit = unit,
-                    onPerformMaintenance = { onPerformMaintenance(part) },
-                    modifier = Modifier.animateItem()
-                )
-            }
-        }
+        maintenanceItems(
+            parts = parts,
+            predictions = predictions,
+            isAiUser = isAiUser,
+            currentOdometer = currentOdometer,
+            unit = unit,
+            onPerformMaintenance = onPerformMaintenance,
+            headerModifier = Modifier.padding(start = 16.dp, top = 16.dp, end = 16.dp)
+        )
+        item { Spacer(modifier = Modifier.height(4.dp)) }
     }
 }
 

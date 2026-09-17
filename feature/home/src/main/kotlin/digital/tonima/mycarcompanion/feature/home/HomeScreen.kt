@@ -1,5 +1,6 @@
 package digital.tonima.mycarcompanion.feature.home
 
+import android.app.Activity
 import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,12 +16,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.TrendingDown
 import androidx.compose.material.icons.automirrored.rounded.TrendingFlat
 import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.LocalGasStation
+import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -51,6 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -66,6 +70,7 @@ import digital.tonima.mycarcompanion.core.designsystem.model.PartUi
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.designsystem.util.CurrencyUtils
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlin.math.roundToInt
 
@@ -74,6 +79,7 @@ fun HomeRoute(
     onNavigateToSettings: () -> Unit,
     onNavigateToFuel: () -> Unit,
     onNavigateToMaintenanceHistory: () -> Unit,
+    onNavigateToDiagnosticChat: () -> Unit,
     adUnitId: String,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -87,6 +93,8 @@ fun HomeRoute(
         onNavigateToSettings = onNavigateToSettings,
         onNavigateToFuel = onNavigateToFuel,
         onNavigateToMaintenanceHistory = onNavigateToMaintenanceHistory,
+        onNavigateToDiagnosticChat = onNavigateToDiagnosticChat,
+        onSubscribeAiClick = viewModel::subscribeAi,
         adUnitId = adUnitId
     )
 }
@@ -100,6 +108,8 @@ internal fun HomeScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToFuel: () -> Unit,
     onNavigateToMaintenanceHistory: () -> Unit,
+    onNavigateToDiagnosticChat: () -> Unit = {},
+    onSubscribeAiClick: (Activity) -> Unit = {},
     adUnitId: String
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -124,6 +134,9 @@ internal fun HomeScreen(
                 HomeUiEffect.NavigateToMaintenanceHistory -> {
                     onNavigateToMaintenanceHistory()
                 }
+                HomeUiEffect.NavigateToDiagnosticChat -> {
+                    onNavigateToDiagnosticChat()
+                }
             }
             onIntent(HomeUiIntent.ConsumeEffect)
         }
@@ -132,18 +145,20 @@ internal fun HomeScreen(
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { 
+                title = {
                     Text(
                         text = stringResource(R.string.home_title),
-                        style = MaterialTheme.typography.headlineLarge.copy(
+                        style = MaterialTheme.typography.titleMedium.copy(
                             fontFamily = FontFamily.Monospace,
                             shadow = Shadow(
                                 color = MaterialTheme.colorScheme.primary,
                                 blurRadius = 15f
                             )
                         ),
-                        color = MaterialTheme.colorScheme.primary
-                    ) 
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f)
@@ -154,6 +169,9 @@ internal fun HomeScreen(
                             imageVector = if (uiState.showFinancialData) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
                             contentDescription = "Alternar dados financeiros"
                         )
+                    }
+                    IconButton(onClick = { onIntent(HomeUiIntent.NavigateToDiagnosticChat) }) {
+                        Icon(Icons.Rounded.AutoAwesome, contentDescription = stringResource(R.string.diagnostic_chat_title))
                     }
                     IconButton(onClick = { onIntent(HomeUiIntent.NavigateToMaintenanceHistory) }) {
                         Icon(Icons.Default.Build, contentDescription = "Manutenção")
@@ -190,59 +208,14 @@ internal fun HomeScreen(
                 )
 
                 uiState.currentVehicle?.let { vehicle ->
-                    IsometricCarView(
-                        parts = uiState.parts,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
-
-                    // Botões de busca (Postos e Oficinas)
-                    val context = LocalContext.current
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        IsometricCard(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable {
-                                    val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=posto+de+gasolina".toUri())
-                                    context.startActivity(intent)
-                                },
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            depthColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Icon(Icons.Default.LocalGasStation, contentDescription = null)
-                                Text("Encontrar Postos", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
-                            }
-                        }
-
-                        IsometricCard(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clickable {
-                                    val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=oficina+mecanica".toUri())
-                                    context.startActivity(intent)
-                                },
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            depthColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
-                        ) {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Icon(Icons.Default.Build, contentDescription = null)
-                                Text("Encontrar Oficinas", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
-                            }
-                        }
-                    }
-                    
                     if (useTwoColumns) {
+                        HomeHeroSection(
+                            parts = uiState.parts,
+                            isAiUser = uiState.isAiUser,
+                            aiInsight = uiState.aiInsight,
+                            onGenerateAiInsightClick = { onIntent(HomeUiIntent.GenerateAiInsight) },
+                            onSubscribeAiClick = onSubscribeAiClick
+                        )
                         Row(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -378,132 +351,155 @@ internal fun HomeScreen(
                             )
                         }
                     } else {
-                        // Original Column Layout
-                        OdometerDisplay(
-                            odometer = vehicle.currentOdometer,
-                            unit = uiState.distanceUnit,
-                            onEditClick = { showUpdateOdometerDialog = true },
-                            modifier = Modifier.padding(16.dp)
-                        )
-
-                        // Resumo Financeiro e Consumo
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            if (uiState.showFinancialData) {
-                                IsometricCard(
-                                    modifier = Modifier.weight(1f),
-                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    depthColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f)
-                                ) {
-                                    Column {
-                                        Text(text = "Gastos Totais", style = MaterialTheme.typography.labelSmall)
-                                        Text(
-                                            text = CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost + uiState.totalFuelCost),
-                                            style = MaterialTheme.typography.titleMedium
-                                        )
-                                        Text(
-                                            text = "Mnt: ${CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost)} | Comb: ${CurrencyUtils.formatCurrency(uiState.totalFuelCost)}",
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-                                }
+                        // Single scrollable list: header content plus the maintenance
+                        // list share one LazyColumn so the whole screen scrolls together
+                        // and the parts list is never squeezed out of view.
+                        LazyColumn(modifier = Modifier.weight(1f)) {
+                            item {
+                                HomeHeroSection(
+                                    parts = uiState.parts,
+                                    isAiUser = uiState.isAiUser,
+                                    aiInsight = uiState.aiInsight,
+                                    onGenerateAiInsightClick = { onIntent(HomeUiIntent.GenerateAiInsight) },
+                                    onSubscribeAiClick = onSubscribeAiClick
+                                )
                             }
 
-                            uiState.averageFuelConsumption?.let { avg ->
-                                IsometricCard(
-                                    modifier = Modifier.weight(1f),
-                                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                                    depthColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+                            item {
+                                OdometerDisplay(
+                                    odometer = vehicle.currentOdometer,
+                                    unit = uiState.distanceUnit,
+                                    onEditClick = { showUpdateOdometerDialog = true },
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+
+                            item {
+                                // Resumo Financeiro e Consumo
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Column(modifier = Modifier.clickable { onNavigateToFuel() }) {
-                                        Text(text = "Consumo", style = MaterialTheme.typography.labelSmall)
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Text(
-                                                text = uiState.consumptionUnit.format(avg),
-                                                style = MaterialTheme.typography.titleMedium
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            val (icon, color) = when (uiState.fuelConsumptionTrend) {
-                                                FuelTrend.IMPROVING -> Icons.AutoMirrored.Rounded.TrendingUp to Color(0xFF4CAF50)
-                                                FuelTrend.WORSENING -> Icons.AutoMirrored.Rounded.TrendingDown to MaterialTheme.colorScheme.error
-                                                FuelTrend.STABLE -> Icons.AutoMirrored.Rounded.TrendingFlat to MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
+                                    if (uiState.showFinancialData) {
+                                        IsometricCard(
+                                            modifier = Modifier.weight(1f),
+                                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                                            depthColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f)
+                                        ) {
+                                            Column {
+                                                Text(text = "Gastos Totais", style = MaterialTheme.typography.labelSmall)
+                                                Text(
+                                                    text = CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost + uiState.totalFuelCost),
+                                                    style = MaterialTheme.typography.titleMedium
+                                                )
+                                                Text(
+                                                    text = "Mnt: ${CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost)} | Comb: ${CurrencyUtils.formatCurrency(uiState.totalFuelCost)}",
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
                                             }
-                                            Icon(
-                                                imageVector = icon,
-                                                contentDescription = null,
-                                                tint = color,
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                        Text(
-                                            text = "Ver histórico",
-                                            style = MaterialTheme.typography.bodySmall
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        if (uiState.showFinancialData) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                uiState.costPerDistance?.let { costPerDist ->
-                                    IsometricCard(
-                                        modifier = Modifier.weight(1f),
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        depthColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                                    ) {
-                                        Column {
-                                            Text(text = "Custo/${uiState.distanceUnit.name.lowercase()}", style = MaterialTheme.typography.labelSmall)
-                                            Text(
-                                                text = CurrencyUtils.formatCurrency(costPerDist),
-                                                style = MaterialTheme.typography.titleSmall
-                                            )
                                         }
                                     }
-                                }
 
-                                uiState.estimatedRange?.let { range ->
-                                    IsometricCard(
-                                        modifier = Modifier.weight(1f),
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        depthColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
-                                    ) {
-                                        Column {
-                                            Text(text = "Autonomia", style = MaterialTheme.typography.labelSmall)
-                                            Text(
-                                                text = "${range.roundToInt()} ${uiState.distanceUnit.name.lowercase()}",
-                                                style = MaterialTheme.typography.titleSmall
-                                            )
+                                    uiState.averageFuelConsumption?.let { avg ->
+                                        IsometricCard(
+                                            modifier = Modifier.weight(1f),
+                                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                            depthColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+                                        ) {
+                                            Column(modifier = Modifier.clickable { onNavigateToFuel() }) {
+                                                Text(text = "Consumo", style = MaterialTheme.typography.labelSmall)
+                                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                                    Text(
+                                                        text = uiState.consumptionUnit.format(avg),
+                                                        style = MaterialTheme.typography.titleMedium
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                    val (icon, color) = when (uiState.fuelConsumptionTrend) {
+                                                        FuelTrend.IMPROVING -> Icons.AutoMirrored.Rounded.TrendingUp to Color(0xFF4CAF50)
+                                                        FuelTrend.WORSENING -> Icons.AutoMirrored.Rounded.TrendingDown to MaterialTheme.colorScheme.error
+                                                        FuelTrend.STABLE -> Icons.AutoMirrored.Rounded.TrendingFlat to MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.6f)
+                                                    }
+                                                    Icon(
+                                                        imageVector = icon,
+                                                        contentDescription = null,
+                                                        tint = color,
+                                                        modifier = Modifier.size(20.dp)
+                                                    )
+                                                }
+                                                Text(
+                                                    text = "Ver histórico",
+                                                    style = MaterialTheme.typography.bodySmall
+                                                )
+                                            }
                                         }
                                     }
                                 }
                             }
+
+                            if (uiState.showFinancialData) {
+                                item {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 16.dp, vertical = 4.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        uiState.costPerDistance?.let { costPerDist ->
+                                            IsometricCard(
+                                                modifier = Modifier.weight(1f),
+                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                depthColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                                            ) {
+                                                Column {
+                                                    Text(text = "Custo/${uiState.distanceUnit.name.lowercase()}", style = MaterialTheme.typography.labelSmall)
+                                                    Text(
+                                                        text = CurrencyUtils.formatCurrency(costPerDist),
+                                                        style = MaterialTheme.typography.titleSmall
+                                                    )
+                                                }
+                                            }
+                                        }
+
+                                        uiState.estimatedRange?.let { range ->
+                                            IsometricCard(
+                                                modifier = Modifier.weight(1f),
+                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                depthColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
+                                            ) {
+                                                Column {
+                                                    Text(text = "Autonomia", style = MaterialTheme.typography.labelSmall)
+                                                    Text(
+                                                        text = "${range.roundToInt()} ${uiState.distanceUnit.name.lowercase()}",
+                                                        style = MaterialTheme.typography.titleSmall
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            item {
+                                AdBannerView(
+                                    isProUser = uiState.isProUser,
+                                    adId = adUnitId,
+                                    modifier = Modifier.padding(vertical = 8.dp)
+                                )
+                            }
+
+                            maintenanceItems(
+                                parts = uiState.parts,
+                                predictions = uiState.predictions,
+                                isAiUser = uiState.isAiUser,
+                                currentOdometer = vehicle.currentOdometer,
+                                unit = uiState.distanceUnit,
+                                onPerformMaintenance = { selectedPartForMaintenance = it }
+                            )
+
+                            item { Spacer(modifier = Modifier.height(16.dp)) }
                         }
-
-                        AdBannerView(
-                            isProUser = uiState.isProUser,
-                            adId = adUnitId,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-
-                        MaintenanceList(
-                            parts = uiState.parts,
-                            predictions = uiState.predictions,
-                            isAiUser = uiState.isAiUser,
-                            currentOdometer = vehicle.currentOdometer,
-                            unit = uiState.distanceUnit,
-                            onPerformMaintenance = { selectedPartForMaintenance = it },
-                            modifier = Modifier.weight(1f)
-                        )
                     }
                 } ?: run {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -599,4 +595,76 @@ fun HomePreview() {
             adUnitId = ""
         )
     }
+}
+
+@Composable
+private fun HomeHeroSection(
+    parts: ImmutableList<PartUi>,
+    isAiUser: Boolean,
+    aiInsight: AiInsightUiState,
+    onGenerateAiInsightClick: () -> Unit,
+    onSubscribeAiClick: (Activity) -> Unit
+) {
+    val context = LocalContext.current
+
+    IsometricCarView(
+        parts = parts,
+        modifier = Modifier.padding(top = 8.dp)
+    )
+
+    // Botões de busca (Postos e Oficinas)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        IsometricCard(
+            modifier = Modifier
+                .weight(1f)
+                .clickable {
+                    val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=posto+de+gasolina".toUri())
+                    context.startActivity(intent)
+                },
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            depthColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(Icons.Default.LocalGasStation, contentDescription = null)
+                Text("Encontrar Postos", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+            }
+        }
+
+        IsometricCard(
+            modifier = Modifier
+                .weight(1f)
+                .clickable {
+                    val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=oficina+mecanica".toUri())
+                    context.startActivity(intent)
+                },
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            depthColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(Icons.Default.Build, contentDescription = null)
+                Text("Encontrar Oficinas", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+            }
+        }
+    }
+
+    AiInsightCard(
+        isAiUser = isAiUser,
+        insightState = aiInsight,
+        onGenerateClick = onGenerateAiInsightClick,
+        onUpgradeClick = {
+            (context as? Activity)?.let { onSubscribeAiClick(it) }
+        },
+        modifier = Modifier.fillMaxWidth()
+    )
 }

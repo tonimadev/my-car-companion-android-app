@@ -17,6 +17,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
@@ -35,7 +39,10 @@ dependencies {
     
     implementation(libs.androidx.appfunctions)
     ksp(libs.androidx.appfunctions.compiler)
-    
+
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.ai)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)

@@ -28,6 +28,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.designsystem.MyCarCompanionTheme
 import digital.tonima.mycarcompanion.feature.home.HomeRoute
+import digital.tonima.mycarcompanion.feature.home.assistant.DiagnosticChatRoute
 import digital.tonima.mycarcompanion.feature.home.onboarding.OnboardingRoute
 import digital.tonima.mycarcompanion.feature.parts.PartsScreen
 import digital.tonima.mycarcompanion.feature.parts.PartsViewModel
@@ -46,6 +47,7 @@ sealed interface Route : NavKey {
     @Serializable data object FuelHistory : Route
     @Serializable data object MaintenanceHistory : Route
     @Serializable data class AddFuel(val recordId: Long? = null) : Route
+    @Serializable data object DiagnosticChat : Route
 }
 
 @AndroidEntryPoint
@@ -161,7 +163,17 @@ fun AppNavigation(
                     onNavigateToSettings = { backStack.add(Route.Settings) },
                     onNavigateToFuel = { backStack.add(Route.FuelHistory) },
                     onNavigateToMaintenanceHistory = { backStack.add(Route.MaintenanceHistory) },
+                    onNavigateToDiagnosticChat = { backStack.add(Route.DiagnosticChat) },
                     adUnitId = BuildConfig.ADMOB_BANNER_HOME_ID
+                )
+                Route.DiagnosticChat -> DiagnosticChatRoute(
+                    onBack = {
+                        if (backStack.size > 1) {
+                            backStack.removeAt(backStack.lastIndex)
+                        } else {
+                            onFinish()
+                        }
+                    }
                 )
                 Route.Garage -> GarageAdaptiveScreen(
                     onBack = {
