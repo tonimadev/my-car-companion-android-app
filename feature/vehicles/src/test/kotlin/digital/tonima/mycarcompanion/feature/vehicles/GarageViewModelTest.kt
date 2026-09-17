@@ -4,6 +4,7 @@ import android.content.Context
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
+import digital.tonima.mycarcompanion.core.designsystem.model.toUi
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import io.mockk.every
@@ -11,7 +12,6 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -75,7 +75,7 @@ class GarageViewModelTest {
         val state = viewModel.state.value
         assertFalse(state.isLoading)
         assertEquals(1, state.vehicles.size)
-        assertEquals(vehicle, state.vehicles[0])
+        assertEquals(vehicle.toUi(), state.vehicles[0])
         
         job.cancel()
     }
