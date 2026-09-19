@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.TrendingDown
 import androidx.compose.material.icons.automirrored.rounded.TrendingFlat
@@ -209,26 +211,28 @@ internal fun HomeScreen(
 
                 uiState.currentVehicle?.let { vehicle ->
                     if (useTwoColumns) {
-                        HomeHeroSection(
-                            parts = uiState.parts,
-                            isAiUser = uiState.isAiUser,
-                            aiInsight = uiState.aiInsight,
-                            onGenerateAiInsightClick = { onIntent(HomeUiIntent.GenerateAiInsight) },
-                            onSubscribeAiClick = onSubscribeAiClick
-                        )
                         Row(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(horizontal = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Left Column: Stats & Odometer
+                            // Left Column: Compact overview (hero, odometer, stats)
                             Column(
                                 modifier = Modifier
                                     .weight(0.4f)
                                     .fillMaxHeight()
+                                    .verticalScroll(rememberScrollState())
                                     .padding(vertical = 8.dp)
                             ) {
+                                HomeHeroSection(
+                                    parts = uiState.parts,
+                                    isAiUser = uiState.isAiUser,
+                                    aiInsight = uiState.aiInsight,
+                                    onGenerateAiInsightClick = { onIntent(HomeUiIntent.GenerateAiInsight) },
+                                    onSubscribeAiClick = onSubscribeAiClick
+                                )
+
                                 OdometerDisplay(
                                     odometer = vehicle.currentOdometer,
                                     unit = uiState.distanceUnit,
@@ -328,7 +332,7 @@ internal fun HomeScreen(
                                     }
                                 }
 
-                                Spacer(modifier = Modifier.weight(1f))
+                                Spacer(modifier = Modifier.height(8.dp))
 
                                 AdBannerView(
                                     isProUser = uiState.isProUser,
