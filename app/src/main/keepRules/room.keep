@@ -1,0 +1,7 @@
+# Room 2.7+ instantiates the generated *_Impl class via reflection (Class.forName) instead of a
+# direct static reference, so R8 has no compile-time edge to it. The consumer rule shipped inside
+# room-runtime.aar only keeps "* extends RoomDatabase { <init>(); }", which was already the cause of
+# one Play Store rejection (see commit 96179f4) after a Room 2.8 pre-release regression. Keep the
+# generated impl explicitly instead of relying solely on the transitive AAR rule.
+-keep class digital.tonima.mycarcompanion.core.database.AppDatabase_Impl { *; }
+-keep class * extends androidx.room.RoomDatabase { *; }
