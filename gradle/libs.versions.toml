@@ -36,7 +36,6 @@ converterMoshi = "3.0.0"
 kotlinxCoroutinesAndroid = "1.11.0"
 kotlinxCoroutinesCore = "1.11.0"
 accompanistPermissions = "0.37.3"
-playServicesLocation = "21.4.0"
 playServicesAdsApi = "25.5.0"
 billingKtx = "9.1.0"
 cameraCamera2 = "1.6.2"
@@ -102,7 +101,6 @@ converter-moshi = { group = "com.squareup.retrofit2", name = "converter-moshi", 
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "kotlinxCoroutinesAndroid" }
 kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinxCoroutinesCore" }
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanistPermissions" }
-play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 play-services-ads-api = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAdsApi" }
 billing-ktx = { group = "com.android.billingclient", name = "billing-ktx", version.ref = "billingKtx" }
 androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "cameraCamera2" }

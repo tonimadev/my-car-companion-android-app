@@ -44,7 +44,6 @@ dependencies {
     implementation(libs.androidx.compose.adaptive.layout)
     implementation(libs.hilt.navigation.compose)
     implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.play.services.location)
     implementation(libs.androidx.car.app)
     implementation(libs.androidx.car.app.projected)
     implementation(libs.kotlinx.collections.immutable)
