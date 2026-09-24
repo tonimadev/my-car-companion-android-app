@@ -96,4 +96,5 @@
     <string name="consumption_km_l">Kilometers per liter (km/L)</string>
     <string name="consumption_l_100km">Liters per 100 km (L/100km)</string>
     <string name="consumption_mpg">Miles per gallon (MPG, US)</string>
+    <string name="no_map_app">Couldn\'t find an app to open maps.</string>
 </resources>

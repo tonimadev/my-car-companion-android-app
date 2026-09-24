@@ -95,4 +95,5 @@
     <string name="consumption_km_l">Quilômetros por litro (km/L)</string>
     <string name="consumption_l_100km">Litros por 100 km (L/100km)</string>
     <string name="consumption_mpg">Milhas por galão (MPG, EUA)</string>
+    <string name="no_map_app">Nenhum app encontrado para abrir mapas.</string>
 </resources>

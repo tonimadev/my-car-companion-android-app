@@ -2,7 +2,6 @@ package digital.tonima.mycarcompanion.feature.home
 
 import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
 import android.app.Activity
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -60,8 +59,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
-import android.net.Uri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
@@ -639,8 +636,7 @@ private fun HomeHeroSection(
             modifier = Modifier
                 .weight(1f)
                 .clickable {
-                    val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=${Uri.encode(gasStationQuery)}".toUri())
-                    context.startActivity(intent)
+                    openMapSearch(context, gasStationQuery)
                 },
             containerColor = MaterialTheme.colorScheme.primaryContainer,
             depthColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
@@ -658,8 +654,7 @@ private fun HomeHeroSection(
             modifier = Modifier
                 .weight(1f)
                 .clickable {
-                    val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=${Uri.encode(mechanicQuery)}".toUri())
-                    context.startActivity(intent)
+                    openMapSearch(context, mechanicQuery)
                 },
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             depthColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
