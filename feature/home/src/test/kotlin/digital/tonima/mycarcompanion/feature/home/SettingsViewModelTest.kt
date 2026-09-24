@@ -3,6 +3,7 @@ package digital.tonima.mycarcompanion.feature.home
 import android.app.Activity
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
+import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import io.mockk.coVerify
 import io.mockk.every
@@ -34,6 +35,7 @@ class SettingsViewModelTest {
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         every { userPreferencesRepository.distanceUnit } returns MutableStateFlow(DistanceUnit.MILES)
+        every { userPreferencesRepository.consumptionUnit } returns MutableStateFlow(ConsumptionUnit.L_100KM)
         every { proUserProvider.isProUser } returns MutableStateFlow(true)
         every { proUserProvider.isAiUser } returns MutableStateFlow(true)
         viewModel = SettingsViewModel(userPreferencesRepository, proUserProvider)
@@ -49,17 +51,21 @@ class SettingsViewModelTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.distanceUnit.collect {} }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.isProUser.collect {} }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.isAiUser.collect {} }
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.consumptionUnit.collect {} }
 
         assertEquals(DistanceUnit.MILES, viewModel.distanceUnit.value)
+        assertEquals(ConsumptionUnit.L_100KM, viewModel.consumptionUnit.value)
         assertTrue(viewModel.isProUser.value)
         assertTrue(viewModel.isAiUser.value)
     }
 
     @Test
-    fun `setDistanceUnit persists preference`() = runTest {
+    fun `unit setters persist preferences`() = runTest {
         viewModel.setDistanceUnit(DistanceUnit.KM)
+        viewModel.setConsumptionUnit(ConsumptionUnit.MPG)
 
         coVerify { userPreferencesRepository.setDistanceUnit(DistanceUnit.KM) }
+        coVerify { userPreferencesRepository.setConsumptionUnit(ConsumptionUnit.MPG) }
     }
 
     @Test

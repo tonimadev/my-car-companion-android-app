@@ -1,5 +1,6 @@
 package digital.tonima.mycarcompanion.feature.vehicles
 
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,7 +34,7 @@ fun VehicleEditDialog(
     var name by rememberSaveable { mutableStateOf(vehicle?.name ?: "") }
     val initialOdometer = vehicle?.currentOdometer?.let { unit.fromKm(it).roundToInt().toString() } ?: ""
     var odometerStr by rememberSaveable { mutableStateOf(initialOdometer) }
-    var tankCapacityStr by rememberSaveable { mutableStateOf(vehicle?.tankCapacity?.toString() ?: "") }
+    var tankCapacityStr by rememberSaveable { mutableStateOf(vehicle?.tankCapacity?.let { NumberUtils.formatDecimalInput(it) } ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -60,7 +61,7 @@ fun VehicleEditDialog(
                 TextField(
                     value = tankCapacityStr,
                     onValueChange = { tankCapacityStr = it },
-                    label = { Text("Capacidade do Tanque (Litros)") },
+                    label = { Text(stringResource(R.string.tank_capacity_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -78,11 +79,11 @@ fun VehicleEditDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val odometerInUnit = odometerStr.toDoubleOrNull() ?: 0.0
-                    val tankCap = tankCapacityStr.replace(",", ".").toDoubleOrNull()
+                    val odometerInUnit = NumberUtils.parseDecimal(odometerStr) ?: 0.0
+                    val tankCap = NumberUtils.parseDecimal(tankCapacityStr)
                     onConfirm(name, unit.toKm(odometerInUnit), tankCap)
                 },
-                enabled = name.isNotBlank() && odometerStr.toDoubleOrNull() != null
+                enabled = name.isNotBlank() && NumberUtils.parseDecimal(odometerStr) != null
             ) {
                 Text(stringResource(R.string.confirm))
             }

@@ -43,6 +43,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -50,10 +51,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import digital.tonima.mycarcompanion.core.designsystem.component.GarageBackground
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
 import digital.tonima.mycarcompanion.core.designsystem.util.CurrencyUtils
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
 import digital.tonima.mycarcompanion.core.designsystem.util.formatToShortDate
+import digital.tonima.mycarcompanion.feature.tracking.R
+import kotlin.math.roundToLong
 import kotlin.time.Instant
-
-private val fuelTypeOptions = listOf("Gasolina", "Etanol", "Diesel", "GNV")
+import digital.tonima.mycarcompanion.core.data.R as DataR
+import digital.tonima.mycarcompanion.core.designsystem.R as DesignR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +70,14 @@ fun AddFuelRecordScreen(
     val currentVehicle by viewModel.currentVehicle.collectAsStateWithLifecycle()
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val existingRecord by viewModel.existingRecord.collectAsStateWithLifecycle()
+    val distanceUnit by viewModel.distanceUnit.collectAsStateWithLifecycle()
+
+    val fuelTypeOptions = listOf(
+        stringResource(DataR.string.fuel_type_gasoline),
+        stringResource(DataR.string.fuel_type_ethanol),
+        stringResource(DataR.string.fuel_type_diesel),
+        stringResource(DataR.string.fuel_type_cng)
+    )
 
     var litersText by remember { mutableStateOf("") }
     var totalCostText by remember { mutableStateOf("") }
@@ -85,11 +97,11 @@ fun AddFuelRecordScreen(
         }
     }
 
-    LaunchedEffect(existingRecord) {
+    LaunchedEffect(existingRecord, distanceUnit) {
         existingRecord?.let { record ->
-            litersText = record.liters.toString()
-            totalCostText = record.totalCost.toString()
-            mileageText = record.mileage.toInt().toString()
+            litersText = NumberUtils.formatDecimalInput(record.liters)
+            totalCostText = NumberUtils.formatDecimalInput(record.totalCost)
+            mileageText = distanceUnit.fromKm(record.mileage).roundToLong().toString()
             fuelDate = record.date
             if (record.fuelType in fuelTypeOptions) {
                 fuelType = record.fuelType
@@ -99,31 +111,33 @@ fun AddFuelRecordScreen(
                 customFuelTypeText = record.fuelType
             }
             if (record.liters > 0) {
-                pricePerLiterText = "%.2f".format(record.totalCost / record.liters).replace(",", ".")
+                pricePerLiterText = NumberUtils.formatDecimalInput(record.totalCost / record.liters)
             }
         }
     }
 
-    LaunchedEffect(currentVehicle) {
-        if (recordId == null && mileageText.isEmpty()) {
-            mileageText = currentVehicle?.currentOdometer?.toInt()?.toString() ?: ""
+    // Prefill with the vehicle odometer in the user's unit, unless the user already typed something.
+    var prefilledMileageText by remember { mutableStateOf("") }
+    LaunchedEffect(currentVehicle, distanceUnit) {
+        if (recordId == null && mileageText == prefilledMileageText) {
+            prefilledMileageText = currentVehicle?.let { distanceUnit.fromKm(it.currentOdometer).roundToLong().toString() } ?: ""
+            mileageText = prefilledMileageText
         }
     }
 
     val calculateLiters = { total: String, price: String ->
-        val totalVal = total.replace(",", ".").toDoubleOrNull() ?: 0.0
-        val priceVal = price.replace(",", ".").toDoubleOrNull() ?: 0.0
+        val totalVal = NumberUtils.parseDecimal(total) ?: 0.0
+        val priceVal = NumberUtils.parseDecimal(price) ?: 0.0
         if (totalVal > 0.0 && priceVal > 0.0) {
-            val liters = totalVal / priceVal
-            litersText = "%.2f".format(liters).replace(",", ".")
+            litersText = NumberUtils.formatDecimalInput(totalVal / priceVal)
         }
     }
 
     val currencySymbol = remember { CurrencyUtils.getCurrencySymbol() }
     val effectiveFuelType = if (isCustomFuelType) customFuelTypeText else fuelType
     val canSave = !isSaving && litersText.isNotBlank() && totalCostText.isNotBlank() &&
-        (litersText.replace(",", ".").toDoubleOrNull() ?: 0.0) > 0.0 &&
-        (totalCostText.replace(",", ".").toDoubleOrNull() ?: 0.0) > 0.0 &&
+        (NumberUtils.parseDecimal(litersText) ?: 0.0) > 0.0 &&
+        (NumberUtils.parseDecimal(totalCostText) ?: 0.0) > 0.0 &&
         effectiveFuelType.isNotBlank()
 
     if (showDatePicker) {
@@ -139,12 +153,12 @@ fun AddFuelRecordScreen(
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(DesignR.string.action_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar")
+                    Text(stringResource(DesignR.string.action_cancel))
                 }
             }
         ) {
@@ -155,10 +169,10 @@ fun AddFuelRecordScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (recordId == null) "Novo Abastecimento" else "Editar Abastecimento") },
+                title = { Text(stringResource(if (recordId == null) R.string.fuel_new_title else R.string.fuel_edit_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(DesignR.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -204,11 +218,11 @@ fun AddFuelRecordScreen(
                     depthColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                 ) {
                     Column {
-                        SectionLabel("Quilometragem")
+                        SectionLabel(stringResource(R.string.fuel_section_mileage))
                         OutlinedTextField(
                             value = mileageText,
                             onValueChange = { mileageText = it },
-                            label = { Text("Quilometragem (km)") },
+                            label = { Text(stringResource(R.string.fuel_mileage_label, distanceUnit.symbol)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
@@ -223,7 +237,7 @@ fun AddFuelRecordScreen(
                     glowColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
                 ) {
                     Column {
-                        SectionLabel("Combustível")
+                        SectionLabel(stringResource(R.string.fuel_section_fuel))
 
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             items(fuelTypeOptions) { option ->
@@ -240,7 +254,7 @@ fun AddFuelRecordScreen(
                                 FilterChip(
                                     selected = isCustomFuelType,
                                     onClick = { isCustomFuelType = true },
-                                    label = { Text("Outro") }
+                                    label = { Text(stringResource(R.string.fuel_type_other)) }
                                 )
                             }
                         }
@@ -250,7 +264,7 @@ fun AddFuelRecordScreen(
                             OutlinedTextField(
                                 value = customFuelTypeText,
                                 onValueChange = { customFuelTypeText = it },
-                                label = { Text("Qual combustível?") },
+                                label = { Text(stringResource(R.string.fuel_type_custom_label)) },
                                 singleLine = true,
                                 modifier = Modifier.fillMaxWidth()
                             )
@@ -264,7 +278,7 @@ fun AddFuelRecordScreen(
                                 totalCostText = it
                                 calculateLiters(it, pricePerLiterText)
                             },
-                            label = { Text("Valor Total ($currencySymbol)") },
+                            label = { Text(stringResource(R.string.fuel_total_cost_label, currencySymbol)) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth()
@@ -279,7 +293,7 @@ fun AddFuelRecordScreen(
                                     pricePerLiterText = it
                                     calculateLiters(totalCostText, it)
                                 },
-                                label = { Text("Preço/Litro") },
+                                label = { Text(stringResource(R.string.fuel_price_per_liter_label)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 singleLine = true,
                                 modifier = Modifier.weight(1f)
@@ -287,7 +301,7 @@ fun AddFuelRecordScreen(
                             OutlinedTextField(
                                 value = litersText,
                                 onValueChange = { litersText = it },
-                                label = { Text("Litros") },
+                                label = { Text(stringResource(DesignR.string.unit_liters)) },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 singleLine = true,
                                 modifier = Modifier.weight(1f)
@@ -301,22 +315,22 @@ fun AddFuelRecordScreen(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(Icons.Rounded.CalendarMonth, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                            Text("Data: ${fuelDate.formatToShortDate()}")
+                            Text(stringResource(DesignR.string.label_date, fuelDate.formatToShortDate()))
                         }
                     }
                 }
 
                 Button(
                     onClick = {
-                        val liters = litersText.replace(",", ".").toDoubleOrNull() ?: 0.0
-                        val totalCost = totalCostText.replace(",", ".").toDoubleOrNull() ?: 0.0
-                        val mileage = mileageText.toDoubleOrNull()
+                        val liters = NumberUtils.parseDecimal(litersText) ?: 0.0
+                        val totalCost = NumberUtils.parseDecimal(totalCostText) ?: 0.0
+                        val mileageKm = NumberUtils.parseDecimal(mileageText)?.let { distanceUnit.toKm(it) }
                         if (liters > 0.0 && totalCost > 0.0) {
                             viewModel.saveFuelRecord(
                                 liters = liters,
                                 totalCost = totalCost,
                                 fuelType = effectiveFuelType.ifBlank { fuelTypeOptions.first() },
-                                mileage = mileage,
+                                mileageKm = mileageKm,
                                 date = fuelDate,
                                 id = recordId ?: 0L
                             )
@@ -332,7 +346,7 @@ fun AddFuelRecordScreen(
                         CircularProgressIndicator(modifier = Modifier.height(24.dp))
                     } else {
                         Icon(Icons.Rounded.LocalGasStation, contentDescription = null, modifier = Modifier.padding(end = 8.dp))
-                        Text(if (recordId == null) "Salvar Abastecimento" else "Atualizar Abastecimento")
+                        Text(stringResource(if (recordId == null) R.string.fuel_save else R.string.fuel_update))
                     }
                 }
             }

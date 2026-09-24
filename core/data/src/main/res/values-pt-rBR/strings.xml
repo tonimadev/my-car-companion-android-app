@@ -10,4 +10,8 @@
     <string name="part_brake_pads">Pastilhas de Freio</string>
     <string name="part_brake_fluid">Fluido de Freio</string>
     <string name="part_coolant">Líquido de Arrefecimento</string>
+    <string name="fuel_type_gasoline">Gasolina</string>
+    <string name="fuel_type_ethanol">Etanol</string>
+    <string name="fuel_type_diesel">Diesel</string>
+    <string name="fuel_type_cng">GNV</string>
 </resources>

@@ -1,5 +1,7 @@
 package digital.tonima.mycarcompanion.feature.home
 
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
+import digital.tonima.mycarcompanion.core.designsystem.R as DesignR
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -177,7 +179,7 @@ fun OdometerDisplay(
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = unit.name.lowercase(),
+                                text = unit.symbol,
                                 style = MaterialTheme.typography.headlineSmall,
                                 modifier = Modifier.padding(bottom = 12.dp),
                                 color = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
@@ -449,8 +451,8 @@ fun MaintenanceItem(
                     val remainingInUnit = unit.fromKm(remaining)
                     Text(
                         text = if (remaining > 0) 
-                            stringResource(R.string.due_in, remainingInUnit.roundToInt(), unit.name.lowercase())
-                            else stringResource(R.string.overdue_by, (-remainingInUnit).roundToInt(), unit.name.lowercase()),
+                            stringResource(R.string.due_in, remainingInUnit.roundToInt(), unit.symbol)
+                            else stringResource(R.string.overdue_by, (-remainingInUnit).roundToInt(), unit.symbol),
                         style = MaterialTheme.typography.bodyMedium,
                         color = color
                     )
@@ -504,7 +506,7 @@ fun MaintenanceDialog(
     }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    val isError = odometerText.toDoubleOrNull()?.let { it < currentOdometerInUnit } ?: true
+    val isError = NumberUtils.parseDecimal(odometerText)?.let { it < currentOdometerInUnit } ?: true
     val currencySymbol = remember { CurrencyUtils.getCurrencySymbol() }
 
     if (showDatePicker) {
@@ -520,12 +522,12 @@ fun MaintenanceDialog(
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(DesignR.string.action_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar")
+                    Text(stringResource(DesignR.string.action_cancel))
                 }
             }
         ) {
@@ -558,7 +560,7 @@ fun MaintenanceDialog(
                 OutlinedTextField(
                     value = costText,
                     onValueChange = { costText = it },
-                    label = { Text("Custo total ($currencySymbol)") },
+                    label = { Text(stringResource(R.string.maintenance_total_cost_label, currencySymbol)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -567,7 +569,7 @@ fun MaintenanceDialog(
                 OutlinedTextField(
                     value = notesText,
                     onValueChange = { notesText = it },
-                    label = { Text("Observações / Mecânica (opcional)") },
+                    label = { Text(stringResource(R.string.maintenance_notes_optional_label)) },
                     singleLine = false,
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth()
@@ -577,7 +579,7 @@ fun MaintenanceDialog(
                     onClick = { showDatePicker = true },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Data: ${maintenanceDate.formatToShortDate()}")
+                    Text(stringResource(DesignR.string.label_date, maintenanceDate.formatToShortDate()))
                 }
             }
         },
@@ -585,8 +587,8 @@ fun MaintenanceDialog(
             Button(
                 onClick = { 
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    odometerText.toDoubleOrNull()?.let { odo ->
-                        val cost = costText.toDoubleOrNull() ?: 0.0
+                    NumberUtils.parseDecimal(odometerText)?.let { odo ->
+                        val cost = NumberUtils.parseDecimal(costText) ?: 0.0
                         onConfirm(unit.toKm(odo), cost, notesText, maintenanceDate) 
                     } 
                 },
@@ -613,12 +615,12 @@ fun EditMaintenanceDialog(
 ) {
     val haptic = LocalHapticFeedback.current
     var odometerText by rememberSaveable { mutableStateOf(unit.fromKm(record.odometerAtMaintenance).toInt().toString()) }
-    var costText by rememberSaveable { mutableStateOf(record.cost.toString()) }
+    var costText by rememberSaveable { mutableStateOf(NumberUtils.formatDecimalInput(record.cost)) }
     var notesText by rememberSaveable { mutableStateOf(record.notes) }
     var maintenanceDate by remember { mutableStateOf(record.date) }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    val isError = odometerText.toDoubleOrNull() == null
+    val isError = NumberUtils.parseDecimal(odometerText) == null
     val currencySymbol = remember { CurrencyUtils.getCurrencySymbol() }
 
     if (showDatePicker) {
@@ -629,17 +631,17 @@ fun EditMaintenanceDialog(
                 TextButton(onClick = {
                     datePickerState.selectedDateMillis?.let { maintenanceDate = Instant.fromEpochMilliseconds(it) }
                     showDatePicker = false
-                }) { Text("OK") }
+                }) { Text(stringResource(DesignR.string.action_ok)) }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) { Text("Cancelar") }
+                TextButton(onClick = { showDatePicker = false }) { Text(stringResource(DesignR.string.action_cancel)) }
             }
         ) { DatePicker(state = datePickerState) }
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(text = "Editar Manutenção: ${record.partName}") },
+        title = { Text(text = stringResource(R.string.maintenance_edit_title, record.partName)) },
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 OutlinedTextField(
@@ -655,7 +657,7 @@ fun EditMaintenanceDialog(
                 OutlinedTextField(
                     value = costText,
                     onValueChange = { costText = it },
-                    label = { Text("Custo total ($currencySymbol)") },
+                    label = { Text(stringResource(R.string.maintenance_total_cost_label, currencySymbol)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -664,7 +666,7 @@ fun EditMaintenanceDialog(
                 OutlinedTextField(
                     value = notesText,
                     onValueChange = { notesText = it },
-                    label = { Text("Observações") },
+                    label = { Text(stringResource(R.string.maintenance_notes_label)) },
                     singleLine = false,
                     maxLines = 3,
                     modifier = Modifier.fillMaxWidth()
@@ -674,7 +676,7 @@ fun EditMaintenanceDialog(
                     onClick = { showDatePicker = true },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Data: ${maintenanceDate.formatToShortDate()}")
+                    Text(stringResource(DesignR.string.label_date, maintenanceDate.formatToShortDate()))
                 }
             }
         },
@@ -682,8 +684,8 @@ fun EditMaintenanceDialog(
             Button(
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    val odo = odometerText.toDoubleOrNull() ?: 0.0
-                    val cost = costText.toDoubleOrNull() ?: 0.0
+                    val odo = NumberUtils.parseDecimal(odometerText) ?: 0.0
+                    val cost = NumberUtils.parseDecimal(costText) ?: 0.0
                     onConfirm(unit.toKm(odo), cost, notesText, maintenanceDate)
                 },
                 enabled = !isError
@@ -705,7 +707,7 @@ fun UpdateOdometerDialog(
     val haptic = LocalHapticFeedback.current
     val currentOdometerInUnit = unit.fromKm(currentOdometer)
     var odometerText by rememberSaveable { mutableStateOf(currentOdometerInUnit.roundToInt().toString()) }
-    val isValid = odometerText.toDoubleOrNull() != null
+    val isValid = NumberUtils.parseDecimal(odometerText) != null
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -727,7 +729,7 @@ fun UpdateOdometerDialog(
             Button(
                 onClick = {
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                    odometerText.toDoubleOrNull()?.let {
+                    NumberUtils.parseDecimal(odometerText)?.let {
                         onConfirm(unit.toKm(it))
                     }
                 },

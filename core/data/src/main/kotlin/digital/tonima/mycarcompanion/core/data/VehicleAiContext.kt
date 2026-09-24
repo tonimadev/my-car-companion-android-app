@@ -1,5 +1,6 @@
 package digital.tonima.mycarcompanion.core.data
 
+import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
@@ -8,7 +9,8 @@ import kotlin.time.Instant
 
 /**
  * Builds the plain-text vehicle summary sent to the AI as context, shared by the diagnostic
- * chat and the maintenance insight prompt.
+ * chat and the maintenance insight prompt. The summary is written in English for the model and
+ * states the user's language and units, so the answer can follow them.
  */
 object VehicleAiContext {
 
@@ -17,14 +19,16 @@ object VehicleAiContext {
         parts: List<Part>,
         predictions: Map<Long, Long?>,
         distanceUnit: DistanceUnit,
+        consumptionUnit: ConsumptionUnit = ConsumptionUnit.KM_L,
         averageFuelConsumption: Double? = null,
         fuelTrendLabel: String? = null,
+        userLocale: Locale = Locale.getDefault(),
     ): String {
-        val unit = if (distanceUnit == DistanceUnit.KM) "km" else "milhas"
+        val unit = distanceUnit.symbol
         val odometer = distanceUnit.fromKm(vehicle.currentOdometer)
 
         val partsSection = if (parts.isEmpty()) {
-            "Nenhuma peça cadastrada."
+            "No parts registered."
         } else {
             parts.joinToString("\n") { part ->
                 val remaining = (part.lastMaintenanceOdometer + part.lifeSpanMileage) - vehicle.currentOdometer
@@ -33,27 +37,30 @@ object VehicleAiContext {
                     Instant.fromEpochMilliseconds(epochMillis).toString().substringBefore("T")
                 }
                 buildString {
-                    append("- ${part.name}: faltam aproximadamente ${remainingInUnit.toLong()} $unit")
-                    if (predictedDate != null) append(" (previsão: $predictedDate)")
+                    append("- ${part.name}: about ${remainingInUnit.toLong()} $unit remaining")
+                    if (predictedDate != null) append(" (predicted: $predictedDate)")
                 }
             }
         }
 
         val consumptionSection = if (averageFuelConsumption != null) {
-            "Consumo médio: ${String.format(Locale.US, "%.1f", averageFuelConsumption)} km/l" +
-                (fuelTrendLabel?.let { " (tendência: $it)" } ?: "")
+            "Average consumption: ${consumptionUnit.format(averageFuelConsumption, Locale.US)}" +
+                (fuelTrendLabel?.let { " (trend: $it)" } ?: "")
         } else {
-            "Sem histórico de consumo suficiente."
+            "Not enough fuel history."
         }
 
         return """
-            Veículo: ${vehicle.name}
-            Odômetro atual: ${odometer.toLong()} $unit
+            User language: ${userLocale.getDisplayName(Locale.ENGLISH)} (${userLocale.toLanguageTag()})
+            User units: distance in $unit, fuel economy in ${consumptionUnit.symbol}
 
-            Peças e próximas manutenções:
+            Vehicle: ${vehicle.name}
+            Current odometer: ${odometer.toLong()} $unit
+
+            Parts and upcoming maintenance:
             $partsSection
 
-            Combustível:
+            Fuel:
             $consumptionSection
         """.trimIndent()
     }

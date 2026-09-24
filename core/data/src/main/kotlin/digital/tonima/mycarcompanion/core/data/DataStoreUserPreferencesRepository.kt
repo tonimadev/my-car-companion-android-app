@@ -9,6 +9,7 @@ import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.Locale
 import javax.inject.Inject
 
 class DataStoreUserPreferencesRepository @Inject constructor(
@@ -24,8 +25,8 @@ class DataStoreUserPreferencesRepository @Inject constructor(
     }
 
     override val distanceUnit: Flow<DistanceUnit> = dataStore.data.map { preferences ->
-        val unitName = preferences[PreferencesKeys.DISTANCE_UNIT] ?: DistanceUnit.KM.name
-        DistanceUnit.valueOf(unitName)
+        preferences[PreferencesKeys.DISTANCE_UNIT]?.let { DistanceUnit.valueOf(it) }
+            ?: DistanceUnit.defaultForRegion(Locale.getDefault().country)
     }
 
     override suspend fun setDistanceUnit(distanceUnit: DistanceUnit) {
@@ -35,8 +36,8 @@ class DataStoreUserPreferencesRepository @Inject constructor(
     }
 
     override val consumptionUnit: Flow<ConsumptionUnit> = dataStore.data.map { preferences ->
-        val unitName = preferences[PreferencesKeys.CONSUMPTION_UNIT] ?: ConsumptionUnit.KM_L.name
-        ConsumptionUnit.valueOf(unitName)
+        preferences[PreferencesKeys.CONSUMPTION_UNIT]?.let { ConsumptionUnit.valueOf(it) }
+            ?: ConsumptionUnit.defaultForRegion(Locale.getDefault().country)
     }
 
     override suspend fun setConsumptionUnit(consumptionUnit: ConsumptionUnit) {

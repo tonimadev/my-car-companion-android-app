@@ -8,8 +8,7 @@ object CurrencyUtils {
     fun getCurrencySymbol(locale: Locale = Locale.getDefault()): String {
         return try {
             val numberFormat = NumberFormat.getCurrencyInstance(locale)
-            val currency = numberFormat.currency
-            currency?.symbol ?: Currency.getInstance(locale).symbol
+            (numberFormat.currency ?: Currency.getInstance(locale)).getSymbol(locale)
         } catch (_: Exception) {
             "$"
         }

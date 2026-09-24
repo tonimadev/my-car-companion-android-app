@@ -21,4 +21,16 @@
     <string name="wear_used">%1$d%% desgastado</string>
     <string name="wear_remaining">Faltam %1$d %2$s</string>
     <string name="wear_overdue">Atrasado em %1$d %2$s</string>
+    <string name="suggestion_oil_change">Troca de Óleo</string>
+    <string name="suggestion_air_filter">Filtro de Ar</string>
+    <string name="suggestion_tires">Pneus</string>
+    <string name="suggestions_label">Sugestões:</string>
+    <string name="suggestion_oil_chip">Óleo</string>
+    <string name="suggestion_air_filter_chip">Filtro Ar</string>
+    <string name="lifespan_months_label">Validade em meses (opcional)</string>
+    <string name="last_maintenance_date_label">Data da última manutenção: %1$s</string>
+    <plurals name="interval_months">
+        <item quantity="one">Intervalo: %d mês</item>
+        <item quantity="other">Intervalo: %d meses</item>
+    </plurals>
 </resources>

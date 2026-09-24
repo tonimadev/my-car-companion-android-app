@@ -10,7 +10,6 @@ class CurrencyUtilsTest {
 
     private lateinit var originalLocale: Locale
 
-    // Currency.symbol is rendered for the JVM default locale, so pin it.
     @Before
     fun setUp() {
         originalLocale = Locale.getDefault()
@@ -26,6 +25,13 @@ class CurrencyUtilsTest {
     fun `currency symbol follows locale`() {
         assertEquals("$", CurrencyUtils.getCurrencySymbol(Locale.US))
         assertEquals("R$", CurrencyUtils.getCurrencySymbol(Locale.forLanguageTag("pt-BR")))
+        assertEquals("€", CurrencyUtils.getCurrencySymbol(Locale.GERMANY))
+    }
+
+    @Test
+    fun `currency symbol does not depend on default locale`() {
+        Locale.setDefault(Locale.forLanguageTag("pt-BR"))
+        assertEquals("$", CurrencyUtils.getCurrencySymbol(Locale.US))
     }
 
     @Test

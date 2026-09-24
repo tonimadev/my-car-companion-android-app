@@ -1,5 +1,6 @@
 package digital.tonima.mycarcompanion.feature.home.onboarding
 
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -110,7 +111,7 @@ internal fun OnboardingScreen(
                     onInitialOdometerChange = { initialOdometer = it },
                     isCompleting = isCompleting,
                     onComplete = {
-                        val odo = initialOdometer.toDoubleOrNull()
+                        val odo = NumberUtils.parseDecimal(initialOdometer)
                         onCompleteOnboarding(
                             vehicleName.ifBlank { null },
                             odo

@@ -52,6 +52,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
+import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.feature.tracking.service.MileageTrackingService
 import kotlinx.coroutines.flow.SharingStarted
@@ -68,6 +69,9 @@ class SettingsViewModel @Inject constructor(
     val distanceUnit: StateFlow<DistanceUnit> = userPreferencesRepository.distanceUnit
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DistanceUnit.KM)
 
+    val consumptionUnit: StateFlow<ConsumptionUnit> = userPreferencesRepository.consumptionUnit
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ConsumptionUnit.KM_L)
+
     val isProUser: StateFlow<Boolean> = proUserProvider.isProUser
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
@@ -77,6 +81,12 @@ class SettingsViewModel @Inject constructor(
     fun setDistanceUnit(unit: DistanceUnit) {
         viewModelScope.launch {
             userPreferencesRepository.setDistanceUnit(unit)
+        }
+    }
+
+    fun setConsumptionUnit(unit: ConsumptionUnit) {
+        viewModelScope.launch {
+            userPreferencesRepository.setConsumptionUnit(unit)
         }
     }
 
@@ -104,6 +114,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val distanceUnit by viewModel.distanceUnit.collectAsStateWithLifecycle()
+    val consumptionUnit by viewModel.consumptionUnit.collectAsStateWithLifecycle()
     val isProUser by viewModel.isProUser.collectAsStateWithLifecycle()
     val isAiUser by viewModel.isAiUser.collectAsStateWithLifecycle()
     var isTrackingEnabled by remember { mutableStateOf(false) }
@@ -140,15 +151,15 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Text(
-                text = "Planos e Assinatura",
+                text = stringResource(R.string.settings_plans_section),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(16.dp)
             )
 
             if (!isAiUser) {
                 ListItem(
-                    headlineContent = { Text("Assinar Assistente IA") },
-                    supportingContent = { Text("Diagnósticos com IA, predições avançadas e remoção total de anúncios.") },
+                    headlineContent = { Text(stringResource(R.string.settings_subscribe_ai)) },
+                    supportingContent = { Text(stringResource(R.string.settings_subscribe_ai_description)) },
                     leadingContent = { Icon(Icons.Rounded.AutoAwesome, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                     modifier = Modifier.selectable(
                         selected = false,
@@ -160,16 +171,16 @@ fun SettingsScreen(
                 )
             } else {
                 ListItem(
-                    headlineContent = { Text("Plano Pro IA Ativo") },
-                    supportingContent = { Text("Sua assinatura do Assistente IA está ativa.") },
+                    headlineContent = { Text(stringResource(R.string.settings_ai_active)) },
+                    supportingContent = { Text(stringResource(R.string.settings_ai_active_description)) },
                     leadingContent = { Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 )
             }
 
             if (!isProUser) {
                 ListItem(
-                    headlineContent = { Text("Remover Anúncios") },
-                    supportingContent = { Text("Compra única para desfrutar do aplicativo sem anúncios.") },
+                    headlineContent = { Text(stringResource(R.string.settings_remove_ads)) },
+                    supportingContent = { Text(stringResource(R.string.settings_remove_ads_description)) },
                     leadingContent = { Icon(Icons.Rounded.Block, contentDescription = null) },
                     modifier = Modifier.selectable(
                         selected = false,
@@ -181,15 +192,15 @@ fun SettingsScreen(
                 )
             } else if (!isAiUser) {
                 ListItem(
-                    headlineContent = { Text("Remoção de Anúncios Ativa") },
-                    supportingContent = { Text("Você possui a versão sem anúncios.") },
+                    headlineContent = { Text(stringResource(R.string.settings_ads_removed)) },
+                    supportingContent = { Text(stringResource(R.string.settings_ads_removed_description)) },
                     leadingContent = { Icon(Icons.Rounded.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
                 )
             }
 
             ListItem(
-                headlineContent = { Text("Restaurar Compras") },
-                supportingContent = { Text("Sincronizar compras e assinaturas com sua conta da Play Store.") },
+                headlineContent = { Text(stringResource(R.string.settings_restore_purchases)) },
+                supportingContent = { Text(stringResource(R.string.settings_restore_purchases_description)) },
                 leadingContent = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
                 modifier = Modifier.selectable(selected = false, onClick = { viewModel.refreshPurchases() })
             )
@@ -197,15 +208,15 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
             Text(
-                text = "Rastreamento e GPS",
+                text = stringResource(R.string.settings_tracking_section),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(16.dp)
             )
 
             ListItem(
-                headlineContent = { Text("Rastreamento Automático por GPS") },
+                headlineContent = { Text(stringResource(R.string.settings_gps_tracking)) },
                 supportingContent = { 
-                    Text("Atualiza o hodômetro em tempo real durante suas viagens usando GPS em primeiro plano.") 
+                    Text(stringResource(R.string.settings_gps_tracking_description)) 
                 },
                 leadingContent = { Icon(Icons.Rounded.GpsFixed, contentDescription = null) },
                 trailingContent = {
@@ -276,6 +287,28 @@ fun SettingsScreen(
                 onClick = { viewModel.setDistanceUnit(DistanceUnit.MILES) }
             )
             
+            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            Text(
+                text = stringResource(R.string.consumption_unit),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(16.dp)
+            )
+
+            ConsumptionUnit.entries.forEach { unit ->
+                UnitOption(
+                    text = stringResource(
+                        when (unit) {
+                            ConsumptionUnit.KM_L -> R.string.consumption_km_l
+                            ConsumptionUnit.L_100KM -> R.string.consumption_l_100km
+                            ConsumptionUnit.MPG -> R.string.consumption_mpg
+                        }
+                    ),
+                    selected = consumptionUnit == unit,
+                    onClick = { viewModel.setConsumptionUnit(unit) }
+                )
+            }
+
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
         }
     }

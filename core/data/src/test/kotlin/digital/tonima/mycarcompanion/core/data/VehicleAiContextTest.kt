@@ -1,10 +1,12 @@
 package digital.tonima.mycarcompanion.core.data
 
+import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class VehicleAiContextTest {
 
@@ -40,7 +42,7 @@ class VehicleAiContextTest {
         )
 
         // 45000 + 10000 - 50000 = 5000 km remaining
-        assertTrue(context.contains("Óleo do motor: faltam aproximadamente 5000 km"))
+        assertTrue(context.contains("Óleo do motor: about 5000 km remaining"))
     }
 
     @Test
@@ -53,7 +55,7 @@ class VehicleAiContextTest {
             distanceUnit = DistanceUnit.KM
         )
 
-        assertTrue(context.contains("faltam aproximadamente 0 km"))
+        assertTrue(context.contains("about 0 km remaining"))
     }
 
     @Test
@@ -65,7 +67,7 @@ class VehicleAiContextTest {
             distanceUnit = DistanceUnit.KM
         )
 
-        assertTrue(context.contains("Nenhuma peça cadastrada."))
+        assertTrue(context.contains("No parts registered."))
     }
 
     @Test
@@ -76,11 +78,11 @@ class VehicleAiContextTest {
             predictions = emptyMap(),
             distanceUnit = DistanceUnit.KM,
             averageFuelConsumption = 12.5,
-            fuelTrendLabel = "melhorando"
+            fuelTrendLabel = "improving"
         )
 
-        assertTrue(context.contains("12.5 km/l"))
-        assertTrue(context.contains("melhorando"))
+        assertTrue(context.contains("12.5 km/L"))
+        assertTrue(context.contains("improving"))
     }
 
     @Test
@@ -92,6 +94,24 @@ class VehicleAiContextTest {
             distanceUnit = DistanceUnit.KM
         )
 
-        assertTrue(context.contains("Sem histórico de consumo suficiente."))
+        assertTrue(context.contains("Not enough fuel history."))
+    }
+
+    @Test
+    fun `build states user language and preferred units`() {
+        val context = VehicleAiContext.build(
+            vehicle = vehicle,
+            parts = listOf(part),
+            predictions = emptyMap(),
+            distanceUnit = DistanceUnit.MILES,
+            consumptionUnit = ConsumptionUnit.MPG,
+            averageFuelConsumption = 10.0,
+            userLocale = Locale.forLanguageTag("pt-BR")
+        )
+
+        assertTrue(context.contains("User language: Portuguese (Brazil) (pt-BR)"))
+        assertTrue(context.contains("User units: distance in mi, fuel economy in MPG"))
+        assertTrue(context.contains("Current odometer: 31068 mi"))
+        assertTrue(context.contains("Average consumption: 23.5 MPG"))
     }
 }

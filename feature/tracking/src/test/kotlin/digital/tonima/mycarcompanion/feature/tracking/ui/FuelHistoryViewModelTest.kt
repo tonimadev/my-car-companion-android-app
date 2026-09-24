@@ -2,7 +2,10 @@ package digital.tonima.mycarcompanion.feature.tracking.ui
 
 import digital.tonima.mycarcompanion.core.data.FuelRepository
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
+import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
+import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
+import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.FuelRecord
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import io.mockk.coEvery
@@ -32,6 +35,7 @@ class FuelHistoryViewModelTest {
     private val fuelRepository = mockk<FuelRepository>(relaxed = true)
     private val vehicleRepository = mockk<VehicleRepository>(relaxed = true)
     private val proUserProvider = mockk<ProUserProvider>(relaxed = true)
+    private val userPreferencesRepository = mockk<UserPreferencesRepository>()
 
     private lateinit var viewModel: FuelHistoryViewModel
 
@@ -47,7 +51,10 @@ class FuelHistoryViewModelTest {
         every { fuelRepository.getFuelRecordsForVehicle(any()) } returns fuelRecordsFlow
         every { proUserProvider.isProUser } returns isProUserFlow
         
-        viewModel = FuelHistoryViewModel(fuelRepository, vehicleRepository, proUserProvider)
+        every { userPreferencesRepository.distanceUnit } returns flowOf(DistanceUnit.MILES)
+        every { userPreferencesRepository.consumptionUnit } returns flowOf(ConsumptionUnit.MPG)
+
+        viewModel = FuelHistoryViewModel(fuelRepository, vehicleRepository, proUserProvider, userPreferencesRepository)
     }
 
     @After
@@ -81,6 +88,8 @@ class FuelHistoryViewModelTest {
         assertEquals(1, state.items.size)
         assertEquals(10.0, state.averageConsumption)
         assertEquals(50.0, state.totalSpent, 0.1)
+        assertEquals(DistanceUnit.MILES, state.distanceUnit)
+        assertEquals(ConsumptionUnit.MPG, state.consumptionUnit)
         
         job.cancel()
     }

@@ -7,4 +7,16 @@
     <string name="shortcut_add_fuel_long">Adicionar Registro de Abastecimento</string>
     <string name="shortcut_garage">Garagem</string>
     <string name="shortcut_garage_long">Gerenciar Veículos</string>
+    <string name="car_gas_stations_title">Postos de Combustível</string>
+    <string name="car_gas_stations_text">Encontrar postos próximos</string>
+    <string name="car_gas_stations_query">posto de gasolina</string>
+    <string name="car_mechanics_title">Oficinas Mecânicas</string>
+    <string name="car_mechanics_text">Encontrar manutenção próxima</string>
+    <string name="car_mechanics_query">oficina mecânica</string>
+    <string name="car_no_vehicles_title">Nenhum veículo encontrado</string>
+    <string name="car_no_vehicles_text">Cadastre um veículo no celular</string>
+    <string name="car_odometer">Odômetro: %1$s %2$s</string>
+    <string name="car_no_parts">Nenhuma peça cadastrada para este veículo</string>
+    <string name="car_part_lifespan">Vida útil: %1$s %2$s</string>
+    <string name="car_parts_title">Peças - %1$s</string>
 </resources>

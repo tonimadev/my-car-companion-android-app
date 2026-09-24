@@ -1,7 +1,9 @@
 package digital.tonima.mycarcompanion.feature.tracking.ui
 
 import digital.tonima.mycarcompanion.core.data.FuelRepository
+import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
+import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.FuelRecord
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import io.mockk.coVerify
@@ -29,6 +31,7 @@ class FuelTrackingViewModelTest {
 
     private val fuelRepository = mockk<FuelRepository>(relaxed = true)
     private val vehicleRepository = mockk<VehicleRepository>(relaxed = true)
+    private val userPreferencesRepository = mockk<UserPreferencesRepository>()
     private val currentVehicleFlow = MutableStateFlow<Vehicle?>(null)
 
     private val vehicle = Vehicle(id = 1, name = "Civic", currentOdometer = 1000.0, isCurrent = true)
@@ -40,7 +43,8 @@ class FuelTrackingViewModelTest {
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         every { vehicleRepository.getCurrentVehicle() } returns currentVehicleFlow
-        viewModel = FuelTrackingViewModel(fuelRepository, vehicleRepository)
+        every { userPreferencesRepository.distanceUnit } returns flowOf(DistanceUnit.MILES)
+        viewModel = FuelTrackingViewModel(fuelRepository, vehicleRepository, userPreferencesRepository)
     }
 
     @After
@@ -66,7 +70,7 @@ class FuelTrackingViewModelTest {
     fun `new record with higher mileage updates vehicle odometer`() = runTest {
         observeVehicle(vehicle)
 
-        viewModel.saveFuelRecord(liters = 40.0, totalCost = 200.0, fuelType = "Gas", mileage = 1500.0, date = date)
+        viewModel.saveFuelRecord(liters = 40.0, totalCost = 200.0, fuelType = "Gas", mileageKm = 1500.0, date = date)
 
         coVerify {
             fuelRepository.insertFuelRecord(FuelRecord(vehicleId = 1, date = date, mileage = 1500.0, liters = 40.0, totalCost = 200.0, fuelType = "Gas"))
@@ -89,7 +93,7 @@ class FuelTrackingViewModelTest {
     fun `new record with lower mileage keeps vehicle unchanged`() = runTest {
         observeVehicle(vehicle)
 
-        viewModel.saveFuelRecord(liters = 40.0, totalCost = 200.0, fuelType = "Gas", mileage = 900.0, date = date)
+        viewModel.saveFuelRecord(liters = 40.0, totalCost = 200.0, fuelType = "Gas", mileageKm = 900.0, date = date)
 
         coVerify(exactly = 0) { vehicleRepository.updateVehicle(any()) }
     }
@@ -98,7 +102,7 @@ class FuelTrackingViewModelTest {
     fun `existing record is updated instead of inserted`() = runTest {
         observeVehicle(vehicle)
 
-        viewModel.saveFuelRecord(liters = 40.0, totalCost = 200.0, fuelType = "Gas", mileage = 1500.0, date = date, id = 9)
+        viewModel.saveFuelRecord(liters = 40.0, totalCost = 200.0, fuelType = "Gas", mileageKm = 1500.0, date = date, id = 9)
 
         coVerify { fuelRepository.updateFuelRecord(match { it.id == 9L && it.mileage == 1500.0 }) }
         coVerify(exactly = 0) { fuelRepository.insertFuelRecord(any()) }
@@ -113,5 +117,12 @@ class FuelTrackingViewModelTest {
         viewModel.loadRecord(9)
 
         assertEquals(record, viewModel.existingRecord.value)
+    }
+
+    @Test
+    fun `exposes user distance unit`() = runTest {
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.distanceUnit.collect {} }
+
+        assertEquals(DistanceUnit.MILES, viewModel.distanceUnit.value)
     }
 }

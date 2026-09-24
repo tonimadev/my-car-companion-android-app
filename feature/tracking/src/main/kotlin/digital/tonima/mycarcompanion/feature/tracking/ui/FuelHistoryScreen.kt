@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,8 +36,12 @@ import digital.tonima.mycarcompanion.core.designsystem.component.GarageBackgroun
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
 import digital.tonima.mycarcompanion.core.designsystem.model.FuelRecordUi
 import digital.tonima.mycarcompanion.core.designsystem.util.CurrencyUtils
-import java.text.SimpleDateFormat
-import java.util.*
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
+import digital.tonima.mycarcompanion.core.designsystem.util.formatToShortDateTime
+import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
+import digital.tonima.mycarcompanion.core.model.DistanceUnit
+import digital.tonima.mycarcompanion.feature.tracking.R
+import digital.tonima.mycarcompanion.core.designsystem.R as DesignR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,14 +65,14 @@ fun FuelHistoryScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Controle de Abastecimento",
+                        text = stringResource(R.string.fuel_history_title),
                         style = MaterialTheme.typography.headlineSmall.copy(fontFamily = FontFamily.Monospace),
                         color = MaterialTheme.colorScheme.primary
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateUp) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(DesignR.string.action_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -79,7 +84,7 @@ fun FuelHistoryScreen(
             ExtendedFloatingActionButton(
                 onClick = { onNavigateToAddFuel(null) },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Abastecer") }
+                text = { Text(stringResource(R.string.fuel_add)) }
             )
         },
         modifier = modifier
@@ -101,7 +106,7 @@ fun FuelHistoryScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Nenhum veículo selecionado.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.fuel_no_vehicle), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             } else {
                 if (useTwoColumns) {
@@ -113,8 +118,8 @@ fun FuelHistoryScreen(
                                 .padding(16.dp)
                         ) {
                             FuelSummaryCard(
-                                label = "Consumo Médio",
-                                value = uiState.averageConsumption?.let { "%.1f km/L".format(it) } ?: "-- km/L",
+                                label = stringResource(R.string.fuel_average_consumption),
+                                value = uiState.averageConsumption?.let { uiState.consumptionUnit.format(it) } ?: "--",
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 depthColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                             )
@@ -122,7 +127,7 @@ fun FuelHistoryScreen(
                             Spacer(modifier = Modifier.height(12.dp))
 
                             FuelSummaryCard(
-                                label = "Gasto Total",
+                                label = stringResource(R.string.fuel_total_spent),
                                 value = CurrencyUtils.formatCurrency(uiState.totalSpent),
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 depthColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
@@ -136,13 +141,15 @@ fun FuelHistoryScreen(
                                 .fillMaxHeight()
                         ) {
                             Text(
-                                text = "Histórico de Abastecimentos",
+                                text = stringResource(R.string.fuel_history_header),
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                             )
 
                             FuelHistoryList(
                                 items = uiState.items,
+                                distanceUnit = uiState.distanceUnit,
+                                consumptionUnit = uiState.consumptionUnit,
                                 onEdit = onNavigateToAddFuel,
                                 onRequestDelete = { recordPendingDeleteId = it },
                                 isProUser = uiState.isProUser,
@@ -160,15 +167,15 @@ fun FuelHistoryScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
                             FuelSummaryCard(
-                                label = "Consumo Médio",
-                                value = uiState.averageConsumption?.let { "%.1f km/L".format(it) } ?: "-- km/L",
+                                label = stringResource(R.string.fuel_average_consumption),
+                                value = uiState.averageConsumption?.let { uiState.consumptionUnit.format(it) } ?: "--",
                                 containerColor = MaterialTheme.colorScheme.primaryContainer,
                                 depthColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                                 modifier = Modifier.weight(1f)
                             )
 
                             FuelSummaryCard(
-                                label = "Gasto Total",
+                                label = stringResource(R.string.fuel_total_spent),
                                 value = CurrencyUtils.formatCurrency(uiState.totalSpent),
                                 containerColor = MaterialTheme.colorScheme.secondaryContainer,
                                 depthColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
@@ -177,13 +184,15 @@ fun FuelHistoryScreen(
                         }
 
                         Text(
-                            text = "Histórico de Abastecimentos",
+                            text = stringResource(R.string.fuel_history_header),
                             style = MaterialTheme.typography.titleMedium,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                         )
 
                         FuelHistoryList(
                             items = uiState.items,
+                            distanceUnit = uiState.distanceUnit,
+                            consumptionUnit = uiState.consumptionUnit,
                             onEdit = onNavigateToAddFuel,
                             onRequestDelete = { recordPendingDeleteId = it },
                             isProUser = uiState.isProUser,
@@ -198,10 +207,10 @@ fun FuelHistoryScreen(
 
     recordPendingDelete?.let { record ->
         ConfirmDeleteDialog(
-            title = "Excluir abastecimento?",
-            message = "Tem certeza de que deseja excluir este registro de ${"%.2f".format(record.liters)} litros? Esta ação não pode ser desfeita.",
-            confirmText = "Excluir",
-            cancelText = "Cancelar",
+            title = stringResource(R.string.fuel_delete_title),
+            message = stringResource(R.string.fuel_delete_message, NumberUtils.formatDecimal(record.liters, 2)),
+            confirmText = stringResource(DesignR.string.action_delete),
+            cancelText = stringResource(DesignR.string.action_cancel),
             onConfirm = {
                 viewModel.deleteRecord(record)
                 recordPendingDeleteId = null
@@ -240,6 +249,8 @@ private fun FuelSummaryCard(
 @Composable
 private fun FuelHistoryList(
     items: List<FuelRecordUi>,
+    distanceUnit: DistanceUnit,
+    consumptionUnit: ConsumptionUnit,
     onEdit: (Long) -> Unit,
     onRequestDelete: (Long) -> Unit,
     isProUser: Boolean,
@@ -260,11 +271,11 @@ private fun FuelHistoryList(
                 )
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
-                    text = "Nenhum abastecimento registrado.",
+                    text = stringResource(R.string.fuel_empty),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
-                    text = "Toque em \"Abastecer\" para adicionar o primeiro.",
+                    text = stringResource(R.string.fuel_empty_hint),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                 )
@@ -317,6 +328,8 @@ private fun FuelHistoryList(
                 ) {
                     FuelRecordCard(
                         item = item,
+                        distanceUnit = distanceUnit,
+                        consumptionUnit = consumptionUnit,
                         onEdit = { onEdit(item.id) },
                         onDelete = { onRequestDelete(item.id) }
                     )
@@ -337,12 +350,13 @@ private fun FuelHistoryList(
 @Composable
 fun FuelRecordCard(
     item: FuelRecordUi,
+    distanceUnit: DistanceUnit,
+    consumptionUnit: ConsumptionUnit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val formatter = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
-    val formattedDate = formatter.format(Date(item.date.toEpochMilliseconds()))
+    val formattedDate = item.date.formatToShortDateTime()
 
     IsometricCard(
         modifier = modifier
@@ -368,7 +382,12 @@ fun FuelRecordCard(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "%.2f Litros | Km: %.0f".format(item.liters, item.mileage),
+                    text = stringResource(
+                        R.string.fuel_record_details,
+                        NumberUtils.formatDecimal(item.liters, 2),
+                        NumberUtils.formatDecimal(distanceUnit.fromKm(item.mileage), 0),
+                        distanceUnit.symbol
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -382,7 +401,7 @@ fun FuelRecordCard(
                     Spacer(modifier = Modifier.height(4.dp))
                     SuggestionChip(
                         onClick = {},
-                        label = { Text("Média: %.1f km/L".format(consumption)) }
+                        label = { Text(stringResource(R.string.fuel_record_average, consumptionUnit.format(consumption))) }
                     )
                 }
             }
@@ -390,7 +409,7 @@ fun FuelRecordCard(
             IconButton(onClick = onEdit) {
                 Icon(
                     Icons.Default.Edit,
-                    contentDescription = "Editar abastecimento",
+                    contentDescription = stringResource(R.string.fuel_edit_record),
                     tint = MaterialTheme.colorScheme.primary
                 )
             }
@@ -398,7 +417,7 @@ fun FuelRecordCard(
             IconButton(onClick = onDelete) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Excluir abastecimento",
+                    contentDescription = stringResource(R.string.fuel_delete_record),
                     tint = MaterialTheme.colorScheme.error
                 )
             }

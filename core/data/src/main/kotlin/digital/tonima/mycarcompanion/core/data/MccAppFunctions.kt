@@ -58,7 +58,7 @@ abstract class BaseMccAppFunctionService : AppFunctionService() {
                 liters = liters,
                 totalCost = totalCost,
                 mileage = mileage,
-                fuelType = "Gasolina"
+                fuelType = getString(R.string.fuel_type_gasoline)
             )
             fuelRepository.insertFuelRecord(record)
             if (mileage > currentVehicle.currentOdometer) {

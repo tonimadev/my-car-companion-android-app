@@ -1,5 +1,8 @@
 package digital.tonima.mycarcompanion.feature.home
 
+import androidx.compose.ui.res.stringResource
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
+import digital.tonima.mycarcompanion.core.designsystem.R as DesignR
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,10 +61,10 @@ fun MaintenanceHistoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Histórico de Manutenções") },
+                title = { Text(stringResource(R.string.maintenance_history_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(DesignR.string.action_back))
                     }
                 }
             )
@@ -73,7 +76,7 @@ fun MaintenanceHistoryScreen(
             }
         } else if (state.items.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                Text("Nenhuma manutenção registrada.")
+                Text(stringResource(R.string.maintenance_history_empty))
             }
         } else {
             LazyColumn(
@@ -135,7 +138,7 @@ fun MaintenanceRecordCard(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "${unit.fromKm(record.odometerAtMaintenance).toInt()} ${unit.name.lowercase()} | ${CurrencyUtils.formatCurrency(record.cost)}",
+                    text = "${NumberUtils.formatDecimal(unit.fromKm(record.odometerAtMaintenance), 0)} ${unit.symbol} | ${CurrencyUtils.formatCurrency(record.cost)}",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 Text(
@@ -152,10 +155,10 @@ fun MaintenanceRecordCard(
                 }
             }
             IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Default.Edit, contentDescription = stringResource(DesignR.string.action_edit), tint = MaterialTheme.colorScheme.primary)
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Excluir", tint = MaterialTheme.colorScheme.error)
+                Icon(Icons.Default.Delete, contentDescription = stringResource(DesignR.string.action_delete), tint = MaterialTheme.colorScheme.error)
             }
         }
     }

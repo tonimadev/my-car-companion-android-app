@@ -7,4 +7,16 @@
     <string name="shortcut_add_fuel_long">Add Fuel Record</string>
     <string name="shortcut_garage">Garage</string>
     <string name="shortcut_garage_long">Manage Vehicles</string>
+    <string name="car_gas_stations_title">Gas Stations</string>
+    <string name="car_gas_stations_text">Find nearby gas stations</string>
+    <string name="car_gas_stations_query">gas station</string>
+    <string name="car_mechanics_title">Mechanics</string>
+    <string name="car_mechanics_text">Find nearby auto repair</string>
+    <string name="car_mechanics_query">auto repair shop</string>
+    <string name="car_no_vehicles_title">No vehicles found</string>
+    <string name="car_no_vehicles_text">Add a vehicle on your phone</string>
+    <string name="car_odometer">Odometer: %1$s %2$s</string>
+    <string name="car_no_parts">No parts registered for this vehicle</string>
+    <string name="car_part_lifespan">Lifespan: %1$s %2$s</string>
+    <string name="car_parts_title">Parts - %1$s</string>
 </resources>

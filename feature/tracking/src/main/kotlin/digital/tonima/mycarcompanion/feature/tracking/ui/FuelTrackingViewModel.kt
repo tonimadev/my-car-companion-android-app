@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.mycarcompanion.core.data.FuelRepository
+import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
+import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.FuelRecord
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,8 +20,16 @@ import javax.inject.Inject
 @HiltViewModel
 class FuelTrackingViewModel @Inject constructor(
     private val fuelRepository: FuelRepository,
-    private val vehicleRepository: VehicleRepository
+    private val vehicleRepository: VehicleRepository,
+    userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
+
+    val distanceUnit: StateFlow<DistanceUnit> = userPreferencesRepository.distanceUnit
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = DistanceUnit.KM
+        )
 
     val currentVehicle: StateFlow<Vehicle?> = vehicleRepository.getCurrentVehicle()
         .stateIn(
@@ -46,7 +56,7 @@ class FuelTrackingViewModel @Inject constructor(
         liters: Double,
         totalCost: Double,
         fuelType: String,
-        mileage: Double? = null,
+        mileageKm: Double? = null,
         date: Instant? = null,
         id: Long = 0
     ) {
@@ -59,7 +69,7 @@ class FuelTrackingViewModel @Inject constructor(
                 id = id,
                 vehicleId = vehicle.id,
                 date = date ?: Instant.fromEpochMilliseconds(System.currentTimeMillis()),
-                mileage = mileage ?: vehicle.currentOdometer,
+                mileage = mileageKm ?: vehicle.currentOdometer,
                 liters = liters,
                 totalCost = totalCost,
                 fuelType = fuelType
@@ -68,8 +78,8 @@ class FuelTrackingViewModel @Inject constructor(
             if (id == 0L) {
                 fuelRepository.insertFuelRecord(record)
                 // If it's a new record and mileage is greater than current, update vehicle
-                if (mileage != null && mileage > vehicle.currentOdometer) {
-                    vehicleRepository.updateVehicle(vehicle.copy(currentOdometer = mileage))
+                if (mileageKm != null && mileageKm > vehicle.currentOdometer) {
+                    vehicleRepository.updateVehicle(vehicle.copy(currentOdometer = mileageKm))
                 }
             } else {
                 fuelRepository.updateFuelRecord(record)
