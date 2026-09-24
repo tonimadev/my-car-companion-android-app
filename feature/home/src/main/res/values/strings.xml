@@ -89,9 +89,6 @@
     <string name="settings_ads_removed_description">You own the ad-free version.</string>
     <string name="settings_restore_purchases">Restore Purchases</string>
     <string name="settings_restore_purchases_description">Sync purchases and subscriptions with your Play Store account.</string>
-    <string name="settings_tracking_section">Tracking &amp; GPS</string>
-    <string name="settings_gps_tracking">Automatic GPS Tracking</string>
-    <string name="settings_gps_tracking_description">Updates the odometer in real time during your trips using foreground GPS.</string>
     <string name="consumption_unit">Fuel Economy Unit</string>
     <string name="consumption_km_l">Kilometers per liter (km/L)</string>
     <string name="consumption_l_100km">Liters per 100 km (L/100km)</string>

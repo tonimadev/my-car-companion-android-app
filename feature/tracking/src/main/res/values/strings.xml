@@ -1,8 +1,4 @@
 <resources>
-    <string name="tracking_channel_name">Mileage Tracking</string>
-    <string name="tracking_channel_description">Notifications for mileage tracking service</string>
-    <string name="tracking_notification_title">Mileage Tracking Active</string>
-    <string name="tracking_notification_content">Tracking distance for your active vehicle.</string>
     <string name="fuel_new_title">New Fill-up</string>
     <string name="fuel_edit_title">Edit Fill-up</string>
     <string name="fuel_section_mileage">Mileage</string>

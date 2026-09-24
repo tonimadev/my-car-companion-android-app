@@ -1,8 +1,4 @@
 <resources>
-    <string name="tracking_channel_name">Rastreamento de Quilometragem</string>
-    <string name="tracking_channel_description">Notificações para o serviço de rastreamento de quilometragem</string>
-    <string name="tracking_notification_title">Rastreamento de Quilometragem Ativo</string>
-    <string name="tracking_notification_content">Rastreando distância para o seu veículo ativo.</string>
     <string name="fuel_new_title">Novo Abastecimento</string>
     <string name="fuel_edit_title">Editar Abastecimento</string>
     <string name="fuel_section_mileage">Quilometragem</string>

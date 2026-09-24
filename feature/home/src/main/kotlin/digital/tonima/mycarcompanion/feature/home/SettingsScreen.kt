@@ -1,11 +1,6 @@
 package digital.tonima.mycarcompanion.feature.home
 
-import android.Manifest
 import android.app.Activity
-import android.content.pm.PackageManager
-import android.os.Build
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,7 +15,6 @@ import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.DirectionsCar
-import androidx.compose.material.icons.rounded.GpsFixed
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,20 +25,15 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
-import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -54,7 +43,6 @@ import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
-import digital.tonima.mycarcompanion.feature.tracking.service.MileageTrackingService
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -117,20 +105,6 @@ fun SettingsScreen(
     val consumptionUnit by viewModel.consumptionUnit.collectAsStateWithLifecycle()
     val isProUser by viewModel.isProUser.collectAsStateWithLifecycle()
     val isAiUser by viewModel.isAiUser.collectAsStateWithLifecycle()
-    var isTrackingEnabled by remember { mutableStateOf(false) }
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val locationGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true ||
-                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
-        if (locationGranted) {
-            isTrackingEnabled = true
-            MileageTrackingService.start(context)
-        } else {
-            isTrackingEnabled = false
-        }
-    }
 
     Scaffold(
         topBar = {
@@ -203,53 +177,6 @@ fun SettingsScreen(
                 supportingContent = { Text(stringResource(R.string.settings_restore_purchases_description)) },
                 leadingContent = { Icon(Icons.Rounded.Refresh, contentDescription = null) },
                 modifier = Modifier.selectable(selected = false, onClick = { viewModel.refreshPurchases() })
-            )
-
-            HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-
-            Text(
-                text = stringResource(R.string.settings_tracking_section),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(16.dp)
-            )
-
-            ListItem(
-                headlineContent = { Text(stringResource(R.string.settings_gps_tracking)) },
-                supportingContent = { 
-                    Text(stringResource(R.string.settings_gps_tracking_description)) 
-                },
-                leadingContent = { Icon(Icons.Rounded.GpsFixed, contentDescription = null) },
-                trailingContent = {
-                    Switch(
-                        checked = isTrackingEnabled,
-                        onCheckedChange = { enable ->
-                            if (enable) {
-                                val permissionsToRequest = mutableListOf(
-                                    Manifest.permission.ACCESS_FINE_LOCATION,
-                                    Manifest.permission.ACCESS_COARSE_LOCATION
-                                )
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
-                                }
-                                
-                                val hasFineLocation = ContextCompat.checkSelfPermission(
-                                    context,
-                                    Manifest.permission.ACCESS_FINE_LOCATION
-                                ) == PackageManager.PERMISSION_GRANTED
-
-                                if (hasFineLocation) {
-                                    isTrackingEnabled = true
-                                    MileageTrackingService.start(context)
-                                } else {
-                                    permissionLauncher.launch(permissionsToRequest.toTypedArray())
-                                }
-                            } else {
-                                isTrackingEnabled = false
-                                MileageTrackingService.stop(context)
-                            }
-                        }
-                    )
-                }
             )
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))

@@ -88,9 +88,6 @@
     <string name="settings_ads_removed_description">Você possui a versão sem anúncios.</string>
     <string name="settings_restore_purchases">Restaurar Compras</string>
     <string name="settings_restore_purchases_description">Sincronizar compras e assinaturas com sua conta da Play Store.</string>
-    <string name="settings_tracking_section">Rastreamento e GPS</string>
-    <string name="settings_gps_tracking">Rastreamento Automático por GPS</string>
-    <string name="settings_gps_tracking_description">Atualiza o hodômetro em tempo real durante suas viagens usando GPS em primeiro plano.</string>
     <string name="consumption_unit">Unidade de Consumo</string>
     <string name="consumption_km_l">Quilômetros por litro (km/L)</string>
     <string name="consumption_l_100km">Litros por 100 km (L/100km)</string>
