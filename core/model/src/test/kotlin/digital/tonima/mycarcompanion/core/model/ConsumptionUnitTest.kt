@@ -41,4 +41,17 @@ class ConsumptionUnitTest {
     fun `MPG converts km per liter to miles per gallon`() {
         assertEquals("23.5 MPG", ConsumptionUnit.MPG.format(10.0))
     }
+
+    @Test
+    fun `default unit follows region`() {
+        assertEquals(ConsumptionUnit.MPG, ConsumptionUnit.defaultForRegion("US"))
+        assertEquals(ConsumptionUnit.KM_L, ConsumptionUnit.defaultForRegion("br"))
+        assertEquals(ConsumptionUnit.L_100KM, ConsumptionUnit.defaultForRegion("FR"))
+        assertEquals(ConsumptionUnit.L_100KM, ConsumptionUnit.defaultForRegion(""))
+    }
+
+    @Test
+    fun `format uses the given locale for decimals`() {
+        assertEquals("12,5 km/L", ConsumptionUnit.KM_L.format(12.5, Locale.forLanguageTag("pt-BR")))
+    }
 }

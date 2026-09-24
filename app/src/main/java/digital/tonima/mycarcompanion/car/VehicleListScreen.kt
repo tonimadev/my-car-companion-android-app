@@ -16,21 +16,27 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.data.PartRepository
+import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
+import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import digital.tonima.mycarcompanion.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class VehicleListScreen(
     carContext: CarContext,
     private val vehicleRepository: VehicleRepository,
-    private val partRepository: PartRepository
+    private val partRepository: PartRepository,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : Screen(carContext), DefaultLifecycleObserver {
 
     private var vehicles: List<Vehicle> = emptyList()
+    private var distanceUnit: DistanceUnit = DistanceUnit.KM
     private var job: Job? = null
 
     init {
@@ -39,8 +45,11 @@ class VehicleListScreen(
 
     override fun onCreate(owner: LifecycleOwner) {
         job = CoroutineScope(Dispatchers.Main).launch {
-            vehicleRepository.getVehicles().collectLatest {
-                vehicles = it
+            combine(vehicleRepository.getVehicles(), userPreferencesRepository.distanceUnit) { vehicles, unit ->
+                vehicles to unit
+            }.collectLatest { (newVehicles, unit) ->
+                vehicles = newVehicles
+                distanceUnit = unit
                 invalidate()
             }
         }
@@ -51,47 +60,47 @@ class VehicleListScreen(
     }
 
     private fun openMapSearch(query: String) {
-        val intent = Intent(CarContext.ACTION_NAVIGATE, Uri.parse("geo:0,0?q=$query"))
+        val intent = Intent(CarContext.ACTION_NAVIGATE, Uri.parse("geo:0,0?q=${Uri.encode(query)}"))
         carContext.startCarApp(intent)
     }
 
     override fun onGetTemplate(): Template {
         val listBuilder = ItemList.Builder()
 
-        // POI Actions - Importante para a categoria POI da Play Store
+        // POI actions, required for the Play Store POI category
         listBuilder.addItem(
             Row.Builder()
-                .setTitle("Postos de Combustível")
-                .addText("Encontrar postos próximos")
+                .setTitle(carContext.getString(R.string.car_gas_stations_title))
+                .addText(carContext.getString(R.string.car_gas_stations_text))
                 .setImage(
                     CarIcon.Builder(
                         IconCompat.createWithResource(carContext, R.drawable.ic_fuel)
                     ).build()
                 )
-                .setOnClickListener { openMapSearch("fuel station") }
+                .setOnClickListener { openMapSearch(carContext.getString(R.string.car_gas_stations_query)) }
                 .build()
         )
 
         listBuilder.addItem(
             Row.Builder()
-                .setTitle("Oficinas Mecânicas")
-                .addText("Encontrar manutenção próxima")
+                .setTitle(carContext.getString(R.string.car_mechanics_title))
+                .addText(carContext.getString(R.string.car_mechanics_text))
                 .setImage(
                     CarIcon.Builder(
                         IconCompat.createWithResource(carContext, R.drawable.ic_workshop)
                     ).build()
                 )
-                .setOnClickListener { openMapSearch("car repair workshop") }
+                .setOnClickListener { openMapSearch(carContext.getString(R.string.car_mechanics_query)) }
                 .build()
         )
 
         if (vehicles.isEmpty()) {
-            // Se não houver veículos, apenas mostramos as ações de POI e a mensagem
-            // O ItemList não permite setNoItemsMessage se já houver itens, então adicionamos uma linha informativa
+            // ItemList does not allow setNoItemsMessage when it already has items (the POI actions),
+            // so an informative row is added instead.
             listBuilder.addItem(
                 Row.Builder()
-                    .setTitle("Nenhum veículo encontrado")
-                    .addText("Cadastre um veículo no celular")
+                    .setTitle(carContext.getString(R.string.car_no_vehicles_title))
+                    .addText(carContext.getString(R.string.car_no_vehicles_text))
                     .build()
             )
         } else {
@@ -99,9 +108,15 @@ class VehicleListScreen(
                 listBuilder.addItem(
                     Row.Builder()
                         .setTitle(vehicle.name)
-                        .addText("Odômetro: ${vehicle.currentOdometer.toInt()} km")
+                        .addText(
+                            carContext.getString(
+                                R.string.car_odometer,
+                                NumberUtils.formatDecimal(distanceUnit.fromKm(vehicle.currentOdometer), 0),
+                                distanceUnit.symbol
+                            )
+                        )
                         .setOnClickListener {
-                            screenManager.push(PartListScreen(carContext, vehicle.id, vehicle.name, partRepository))
+                            screenManager.push(PartListScreen(carContext, vehicle.id, vehicle.name, partRepository, distanceUnit))
                         }
                         .build()
                 )
@@ -112,7 +127,7 @@ class VehicleListScreen(
             .setSingleList(listBuilder.build())
             .setHeader(
                 Header.Builder()
-                    .setTitle("My Car Companion")
+                    .setTitle(carContext.getString(R.string.app_name))
                     .setStartHeaderAction(Action.APP_ICON)
                     .build()
             )

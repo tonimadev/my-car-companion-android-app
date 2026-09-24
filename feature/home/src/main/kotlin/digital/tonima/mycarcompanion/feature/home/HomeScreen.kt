@@ -1,5 +1,6 @@
 package digital.tonima.mycarcompanion.feature.home
 
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
 import android.app.Activity
 import android.content.Intent
 import androidx.compose.foundation.clickable
@@ -60,6 +61,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
+import android.net.Uri
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
@@ -74,7 +76,7 @@ import digital.tonima.mycarcompanion.core.designsystem.util.CurrencyUtils
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
-import kotlin.math.roundToInt
+import digital.tonima.mycarcompanion.core.designsystem.R as DesignR
 
 @Composable
 fun HomeRoute(
@@ -169,17 +171,17 @@ internal fun HomeScreen(
                     IconButton(onClick = { onIntent(HomeUiIntent.ToggleFinancialData) }) {
                         Icon(
                             imageVector = if (uiState.showFinancialData) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
-                            contentDescription = "Alternar dados financeiros"
+                            contentDescription = stringResource(R.string.toggle_financial_data)
                         )
                     }
                     IconButton(onClick = { onIntent(HomeUiIntent.NavigateToDiagnosticChat) }) {
                         Icon(Icons.Rounded.AutoAwesome, contentDescription = stringResource(R.string.diagnostic_chat_title))
                     }
                     IconButton(onClick = { onIntent(HomeUiIntent.NavigateToMaintenanceHistory) }) {
-                        Icon(Icons.Default.Build, contentDescription = "Manutenção")
+                        Icon(Icons.Default.Build, contentDescription = stringResource(R.string.maintenance_history_title))
                     }
                     IconButton(onClick = { onIntent(HomeUiIntent.NavigateToFuel) }) {
-                        Icon(Icons.Default.LocalGasStation, contentDescription = "Abastecimento")
+                        Icon(Icons.Default.LocalGasStation, contentDescription = stringResource(R.string.fuel_log))
                     }
                     IconButton(onClick = { onIntent(HomeUiIntent.NavigateToSettings) }) {
                         Icon(Icons.Rounded.Settings, contentDescription = stringResource(R.string.settings))
@@ -247,13 +249,17 @@ internal fun HomeScreen(
                                         depthColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f)
                                     ) {
                                         Column {
-                                            Text(text = "Gastos Totais", style = MaterialTheme.typography.labelSmall)
+                                            Text(text = stringResource(R.string.total_expenses), style = MaterialTheme.typography.labelSmall)
                                             Text(
                                                 text = CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost + uiState.totalFuelCost),
                                                 style = MaterialTheme.typography.titleMedium
                                             )
                                             Text(
-                                                text = "Mnt: ${CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost)} | Comb: ${CurrencyUtils.formatCurrency(uiState.totalFuelCost)}",
+                                                text = stringResource(
+                                                    R.string.expenses_breakdown,
+                                                    CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost),
+                                                    CurrencyUtils.formatCurrency(uiState.totalFuelCost)
+                                                ),
                                                 style = MaterialTheme.typography.bodySmall
                                             )
                                         }
@@ -268,7 +274,7 @@ internal fun HomeScreen(
                                         depthColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
                                     ) {
                                         Column(modifier = Modifier.clickable { onNavigateToFuel() }) {
-                                            Text(text = "Consumo", style = MaterialTheme.typography.labelSmall)
+                                            Text(text = stringResource(DesignR.string.label_consumption), style = MaterialTheme.typography.labelSmall)
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Text(
                                                     text = uiState.consumptionUnit.format(avg),
@@ -305,7 +311,7 @@ internal fun HomeScreen(
                                                 depthColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                                             ) {
                                                 Column {
-                                                    Text(text = "Custo/${uiState.distanceUnit.name.lowercase()}", style = MaterialTheme.typography.labelSmall)
+                                                    Text(text = stringResource(R.string.cost_per_distance, uiState.distanceUnit.symbol), style = MaterialTheme.typography.labelSmall)
                                                     Text(
                                                         text = CurrencyUtils.formatCurrency(costPerDist),
                                                         style = MaterialTheme.typography.titleSmall
@@ -322,9 +328,9 @@ internal fun HomeScreen(
                                             depthColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                                         ) {
                                             Column {
-                                                Text(text = "Autonomia", style = MaterialTheme.typography.labelSmall)
+                                                Text(text = stringResource(R.string.estimated_range), style = MaterialTheme.typography.labelSmall)
                                                 Text(
-                                                    text = "${range.roundToInt()} ${uiState.distanceUnit.name.lowercase()}",
+                                                    text = "${NumberUtils.formatDecimal(range, 0)} ${uiState.distanceUnit.symbol}",
                                                     style = MaterialTheme.typography.titleSmall
                                                 )
                                             }
@@ -393,13 +399,17 @@ internal fun HomeScreen(
                                             depthColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.3f)
                                         ) {
                                             Column {
-                                                Text(text = "Gastos Totais", style = MaterialTheme.typography.labelSmall)
+                                                Text(text = stringResource(R.string.total_expenses), style = MaterialTheme.typography.labelSmall)
                                                 Text(
                                                     text = CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost + uiState.totalFuelCost),
                                                     style = MaterialTheme.typography.titleMedium
                                                 )
                                                 Text(
-                                                    text = "Mnt: ${CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost)} | Comb: ${CurrencyUtils.formatCurrency(uiState.totalFuelCost)}",
+                                                    text = stringResource(
+                                                    R.string.expenses_breakdown,
+                                                    CurrencyUtils.formatCurrency(uiState.totalMaintenanceCost),
+                                                    CurrencyUtils.formatCurrency(uiState.totalFuelCost)
+                                                ),
                                                     style = MaterialTheme.typography.bodySmall
                                                 )
                                             }
@@ -413,7 +423,7 @@ internal fun HomeScreen(
                                             depthColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f)
                                         ) {
                                             Column(modifier = Modifier.clickable { onNavigateToFuel() }) {
-                                                Text(text = "Consumo", style = MaterialTheme.typography.labelSmall)
+                                                Text(text = stringResource(DesignR.string.label_consumption), style = MaterialTheme.typography.labelSmall)
                                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                                     Text(
                                                         text = uiState.consumptionUnit.format(avg),
@@ -433,7 +443,7 @@ internal fun HomeScreen(
                                                     )
                                                 }
                                                 Text(
-                                                    text = "Ver histórico",
+                                                    text = stringResource(R.string.view_history),
                                                     style = MaterialTheme.typography.bodySmall
                                                 )
                                             }
@@ -457,7 +467,7 @@ internal fun HomeScreen(
                                                 depthColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                                             ) {
                                                 Column {
-                                                    Text(text = "Custo/${uiState.distanceUnit.name.lowercase()}", style = MaterialTheme.typography.labelSmall)
+                                                    Text(text = stringResource(R.string.cost_per_distance, uiState.distanceUnit.symbol), style = MaterialTheme.typography.labelSmall)
                                                     Text(
                                                         text = CurrencyUtils.formatCurrency(costPerDist),
                                                         style = MaterialTheme.typography.titleSmall
@@ -473,9 +483,9 @@ internal fun HomeScreen(
                                                 depthColor = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f)
                                             ) {
                                                 Column {
-                                                    Text(text = "Autonomia", style = MaterialTheme.typography.labelSmall)
+                                                    Text(text = stringResource(R.string.estimated_range), style = MaterialTheme.typography.labelSmall)
                                                     Text(
-                                                        text = "${range.roundToInt()} ${uiState.distanceUnit.name.lowercase()}",
+                                                        text = "${NumberUtils.formatDecimal(range, 0)} ${uiState.distanceUnit.symbol}",
                                                         style = MaterialTheme.typography.titleSmall
                                                     )
                                                 }
@@ -610,13 +620,15 @@ private fun HomeHeroSection(
     onSubscribeAiClick: (Activity) -> Unit
 ) {
     val context = LocalContext.current
+    val gasStationQuery = stringResource(R.string.maps_query_gas_station)
+    val mechanicQuery = stringResource(R.string.maps_query_mechanic)
 
     IsometricCarView(
         parts = parts,
         modifier = Modifier.padding(top = 8.dp)
     )
 
-    // Botões de busca (Postos e Oficinas)
+    // Search shortcuts (gas stations and mechanics)
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -627,7 +639,7 @@ private fun HomeHeroSection(
             modifier = Modifier
                 .weight(1f)
                 .clickable {
-                    val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=posto+de+gasolina".toUri())
+                    val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=${Uri.encode(gasStationQuery)}".toUri())
                     context.startActivity(intent)
                 },
             containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -638,7 +650,7 @@ private fun HomeHeroSection(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(Icons.Default.LocalGasStation, contentDescription = null)
-                Text("Encontrar Postos", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.find_gas_stations), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
             }
         }
 
@@ -646,7 +658,7 @@ private fun HomeHeroSection(
             modifier = Modifier
                 .weight(1f)
                 .clickable {
-                    val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=oficina+mecanica".toUri())
+                    val intent = Intent(Intent.ACTION_VIEW, "geo:0,0?q=${Uri.encode(mechanicQuery)}".toUri())
                     context.startActivity(intent)
                 },
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -657,7 +669,7 @@ private fun HomeHeroSection(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(Icons.Default.Build, contentDescription = null)
-                Text("Encontrar Oficinas", style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+                Text(stringResource(R.string.find_mechanics), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
             }
         }
     }

@@ -65,9 +65,10 @@ class DiagnosticChatViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 proUserProvider.isAiUser,
-                userPreferencesRepository.distanceUnit
-            ) { isAi, unit -> isAi to unit }
-                .collect { (isAi, unit) ->
+                userPreferencesRepository.distanceUnit,
+                userPreferencesRepository.consumptionUnit
+            ) { isAi, distanceUnit, consumptionUnit -> Triple(isAi, distanceUnit, consumptionUnit) }
+                .collect { (isAi, distanceUnit, consumptionUnit) ->
                     _uiState.update { it.copy(isAiUser = isAi) }
                     if (isAi) {
                         val vehicle = vehicleRepository.getCurrentVehicle().first()
@@ -77,7 +78,8 @@ class DiagnosticChatViewModel @Inject constructor(
                                 vehicle = vehicle,
                                 parts = parts,
                                 predictions = emptyMap(),
-                                distanceUnit = unit
+                                distanceUnit = distanceUnit,
+                                consumptionUnit = consumptionUnit
                             )
                         }
                     }

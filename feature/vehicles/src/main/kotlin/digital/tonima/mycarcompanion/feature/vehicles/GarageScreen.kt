@@ -1,5 +1,6 @@
 package digital.tonima.mycarcompanion.feature.vehicles
 
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -49,7 +50,6 @@ import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import kotlinx.collections.immutable.persistentListOf
 import digital.tonima.mycarcompanion.core.designsystem.util.isometricDepth
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
-import kotlin.math.roundToInt
 
 @Composable
 fun GarageScreen(
@@ -234,7 +234,7 @@ fun VehicleItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = vehicle.name, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = "${unit.fromKm(vehicle.currentOdometer).roundToInt()} ${unit.name.lowercase()}",
+                    text = "${NumberUtils.formatDecimal(unit.fromKm(vehicle.currentOdometer), 0)} ${unit.symbol}",
                     style = MaterialTheme.typography.bodyMedium
                 )
             }

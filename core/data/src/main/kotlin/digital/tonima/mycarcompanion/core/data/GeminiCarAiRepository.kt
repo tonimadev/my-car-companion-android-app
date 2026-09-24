@@ -19,8 +19,8 @@ class GeminiCarAiRepository @Inject constructor(
         message: String,
     ): Result<String> = runCatching {
         val chatHistory = buildList {
-            add(content("user") { text("Contexto do veículo:\n$vehicleContext") })
-            add(content("model") { text("Entendido, estou pronto para ajudar com o diagnóstico.") })
+            add(content("user") { text("Vehicle summary:\n$vehicleContext") })
+            add(content("model") { text("Understood, I am ready to help with the diagnosis.") })
             history.forEach { turn ->
                 val role = if (turn.role == ChatRole.USER) "user" else "model"
                 add(content(role) { text(turn.text) })
@@ -29,22 +29,23 @@ class GeminiCarAiRepository @Inject constructor(
 
         val chat = generativeModel.startChat(chatHistory)
         val response = chat.sendMessage(message)
-        response.text ?: throw IllegalStateException("Resposta vazia da IA")
+        response.text ?: throw IllegalStateException("Empty AI response")
     }.onFailure { e ->
         Log.e(TAG, "diagnose() failed", e)
     }
 
     override suspend fun generateMaintenanceInsight(vehicleContext: String): Result<String> = runCatching {
         val prompt = """
-            Com base no resumo do veículo abaixo, escreva um insight curto (3 a 5 frases) sobre
-            manutenção e consumo: destaque a manutenção mais urgente, dê uma dica prática e comente
-            a tendência de consumo se houver dados suficientes. Não repita o resumo, apenas analise-o.
+            Based on the vehicle summary below, write a short insight (3 to 5 sentences) about
+            maintenance and fuel consumption: highlight the most urgent maintenance, give a practical
+            tip and comment on the consumption trend if there is enough data. Do not repeat the
+            summary, only analyze it. Write it in the "User language" stated in the summary.
 
             $vehicleContext
         """.trimIndent()
 
         val response = generativeModel.generateContent(prompt)
-        response.text ?: throw IllegalStateException("Resposta vazia da IA")
+        response.text ?: throw IllegalStateException("Empty AI response")
     }.onFailure { e ->
         Log.e(TAG, "generateMaintenanceInsight() failed", e)
     }

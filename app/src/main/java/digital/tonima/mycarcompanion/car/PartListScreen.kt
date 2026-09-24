@@ -10,7 +10,10 @@ import androidx.car.app.model.Row
 import androidx.car.app.model.Template
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import digital.tonima.mycarcompanion.R
 import digital.tonima.mycarcompanion.core.data.PartRepository
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
+import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Part
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +25,8 @@ class PartListScreen(
     carContext: CarContext,
     private val vehicleId: Long,
     private val vehicleName: String,
-    private val partRepository: PartRepository
+    private val partRepository: PartRepository,
+    private val distanceUnit: DistanceUnit
 ) : Screen(carContext), DefaultLifecycleObserver {
 
     private var parts: List<Part> = emptyList()
@@ -49,13 +53,19 @@ class PartListScreen(
         val listBuilder = ItemList.Builder()
 
         if (parts.isEmpty()) {
-            listBuilder.setNoItemsMessage("Nenhuma peça cadastrada para este veículo")
+            listBuilder.setNoItemsMessage(carContext.getString(R.string.car_no_parts))
         } else {
             parts.forEach { part ->
                 listBuilder.addItem(
                     Row.Builder()
                         .setTitle(part.name)
-                        .addText("Vida útil: ${part.lifeSpanMileage.toInt()} km")
+                        .addText(
+                            carContext.getString(
+                                R.string.car_part_lifespan,
+                                NumberUtils.formatDecimal(distanceUnit.fromKm(part.lifeSpanMileage), 0),
+                                distanceUnit.symbol
+                            )
+                        )
                         .build()
                 )
             }
@@ -65,7 +75,7 @@ class PartListScreen(
             .setSingleList(listBuilder.build())
             .setHeader(
                 Header.Builder()
-                    .setTitle("Peças - $vehicleName")
+                    .setTitle(carContext.getString(R.string.car_parts_title, vehicleName))
                     .setStartHeaderAction(Action.BACK)
                     .build()
             )

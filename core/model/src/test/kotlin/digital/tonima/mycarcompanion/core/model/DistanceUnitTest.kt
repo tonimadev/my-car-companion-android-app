@@ -26,4 +26,19 @@ class DistanceUnitTest {
         val km = 4321.0
         assertEquals(km, DistanceUnit.MILES.toKm(DistanceUnit.MILES.fromKm(km)), 1e-9)
     }
+
+    @Test
+    fun `symbols are international abbreviations`() {
+        assertEquals("km", DistanceUnit.KM.symbol)
+        assertEquals("mi", DistanceUnit.MILES.symbol)
+    }
+
+    @Test
+    fun `default unit follows region`() {
+        assertEquals(DistanceUnit.MILES, DistanceUnit.defaultForRegion("US"))
+        assertEquals(DistanceUnit.MILES, DistanceUnit.defaultForRegion("gb"))
+        assertEquals(DistanceUnit.KM, DistanceUnit.defaultForRegion("BR"))
+        assertEquals(DistanceUnit.KM, DistanceUnit.defaultForRegion("DE"))
+        assertEquals(DistanceUnit.KM, DistanceUnit.defaultForRegion(""))
+    }
 }

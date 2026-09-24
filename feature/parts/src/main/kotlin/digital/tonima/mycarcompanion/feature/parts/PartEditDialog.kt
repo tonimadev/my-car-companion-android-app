@@ -1,5 +1,7 @@
 package digital.tonima.mycarcompanion.feature.parts
 
+import digital.tonima.mycarcompanion.core.designsystem.R as DesignR
+import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -59,6 +61,9 @@ fun PartEditDialog(
         mutableStateOf(part?.lastMaintenanceDate ?: Instant.fromEpochMilliseconds(System.currentTimeMillis()))
     }
     var showDatePicker by remember { mutableStateOf(false) }
+    val oilChangeName = stringResource(R.string.suggestion_oil_change)
+    val airFilterName = stringResource(R.string.suggestion_air_filter)
+    val tiresName = stringResource(R.string.suggestion_tires)
 
     if (showDatePicker) {
         val datePickerState = rememberDatePickerState(
@@ -73,12 +78,12 @@ fun PartEditDialog(
                     }
                     showDatePicker = false
                 }) {
-                    Text("OK")
+                    Text(stringResource(DesignR.string.action_ok))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) {
-                    Text("Cancelar")
+                    Text(stringResource(DesignR.string.action_cancel))
                 }
             }
         ) {
@@ -92,34 +97,34 @@ fun PartEditDialog(
         text = {
             Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 if (part == null) {
-                    Text(text = "Sugestões:", style = MaterialTheme.typography.labelMedium)
+                    Text(text = stringResource(R.string.suggestions_label), style = MaterialTheme.typography.labelMedium)
                     Row(
                         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         AssistChip(
                             onClick = {
-                                name = "Troca de Óleo"
+                                name = oilChangeName
                                 lifeSpanStr = unit.fromKm(10000.0).roundToInt().toString()
                                 lifeSpanMonthsStr = "6"
                             },
-                            label = { Text("Óleo") }
+                            label = { Text(stringResource(R.string.suggestion_oil_chip)) }
                         )
                         AssistChip(
                             onClick = {
-                                name = "Filtro de Ar"
+                                name = airFilterName
                                 lifeSpanStr = unit.fromKm(15000.0).roundToInt().toString()
                                 lifeSpanMonthsStr = "12"
                             },
-                            label = { Text("Filtro Ar") }
+                            label = { Text(stringResource(R.string.suggestion_air_filter_chip)) }
                         )
                         AssistChip(
                             onClick = {
-                                name = "Pneus"
+                                name = tiresName
                                 lifeSpanStr = unit.fromKm(40000.0).roundToInt().toString()
                                 lifeSpanMonthsStr = "24"
                             },
-                            label = { Text("Pneus") }
+                            label = { Text(tiresName) }
                         )
                     }
                 }
@@ -153,7 +158,7 @@ fun PartEditDialog(
                 TextField(
                     value = lifeSpanMonthsStr,
                     onValueChange = { lifeSpanMonthsStr = it },
-                    label = { Text("Validade em meses (opcional)") },
+                    label = { Text(stringResource(R.string.lifespan_months_label)) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
@@ -163,15 +168,15 @@ fun PartEditDialog(
                     onClick = { showDatePicker = true },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Data da última manutenção: ${lastMaintenanceDate.formatToShortDate()}")
+                    Text(stringResource(R.string.last_maintenance_date_label, lastMaintenanceDate.formatToShortDate()))
                 }
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val lifeSpanInUnit = lifeSpanStr.toDoubleOrNull() ?: 0.0
-                    val lastMaintenanceInUnit = lastMaintenanceStr.toDoubleOrNull() ?: 0.0
+                    val lifeSpanInUnit = NumberUtils.parseDecimal(lifeSpanStr) ?: 0.0
+                    val lastMaintenanceInUnit = NumberUtils.parseDecimal(lastMaintenanceStr) ?: 0.0
                     val lifeSpanMonths = lifeSpanMonthsStr.toIntOrNull()
                     onConfirm(
                         name,
@@ -182,8 +187,8 @@ fun PartEditDialog(
                     )
                 },
                 enabled = name.isNotBlank() && 
-                        lifeSpanStr.toDoubleOrNull() != null && 
-                        lastMaintenanceStr.toDoubleOrNull() != null
+                        NumberUtils.parseDecimal(lifeSpanStr) != null && 
+                        NumberUtils.parseDecimal(lastMaintenanceStr) != null
             ) {
                 Text(stringResource(R.string.confirm))
             }

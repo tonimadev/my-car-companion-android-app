@@ -281,11 +281,12 @@ class HomeViewModel @Inject constructor(
                 },
                 predictions = state.predictions,
                 distanceUnit = state.distanceUnit,
+                consumptionUnit = state.consumptionUnit,
                 averageFuelConsumption = state.averageFuelConsumption,
                 fuelTrendLabel = when (state.fuelConsumptionTrend) {
-                    FuelTrend.IMPROVING -> "melhorando"
-                    FuelTrend.WORSENING -> "piorando"
-                    FuelTrend.STABLE -> "estável"
+                    FuelTrend.IMPROVING -> "improving"
+                    FuelTrend.WORSENING -> "worsening"
+                    FuelTrend.STABLE -> "stable"
                 }
             )
 

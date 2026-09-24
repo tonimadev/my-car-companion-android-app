@@ -9,6 +9,7 @@ import digital.tonima.mycarcompanion.core.data.PartRepository
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
+import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
@@ -54,6 +55,7 @@ class DiagnosticChatViewModelTest {
         every { context.getString(any()) } returns "error"
         every { proUserProvider.isAiUser } returns isAiUserFlow
         every { userPreferencesRepository.distanceUnit } returns flowOf(DistanceUnit.KM)
+        every { userPreferencesRepository.consumptionUnit } returns flowOf(ConsumptionUnit.MPG)
         every { vehicleRepository.getCurrentVehicle() } returns flowOf(vehicle)
         every { partRepository.getPartsForVehicle(1) } returns flowOf(parts)
     }
@@ -95,7 +97,13 @@ class DiagnosticChatViewModelTest {
         assertEquals(listOf("Strange noise", "Check the oil"), state.messages.map { it.text })
         assertEquals(listOf(0L, 1L), state.messages.map { it.id })
         assertFalse(state.isSending)
-        coVerify { carAiRepository.diagnose(match { it.contains("Civic") && it.contains("Oil") }, emptyList(), "Strange noise") }
+        coVerify {
+            carAiRepository.diagnose(
+                match { it.contains("Civic") && it.contains("Oil") && it.contains("fuel economy in MPG") },
+                emptyList(),
+                "Strange noise"
+            )
+        }
     }
 
     @Test

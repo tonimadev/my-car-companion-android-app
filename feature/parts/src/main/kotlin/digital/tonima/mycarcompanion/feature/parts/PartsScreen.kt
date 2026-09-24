@@ -38,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -248,18 +249,18 @@ fun PartItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = part.name, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = stringResource(R.string.lifespan_format, unit.fromKm(part.lifeSpanMileage).roundToInt(), unit.name.lowercase()),
+                    text = stringResource(R.string.lifespan_format, unit.fromKm(part.lifeSpanMileage).roundToInt(), unit.symbol),
                     style = MaterialTheme.typography.bodySmall
                 )
                 part.lifeSpanMonths?.let { months ->
                     Text(
-                        text = "Intervalo: $months meses",
+                        text = pluralStringResource(R.plurals.interval_months, months, months),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.secondary
                     )
                 }
                 Text(
-                    text = stringResource(R.string.last_maint_format, unit.fromKm(part.lastMaintenanceOdometer).roundToInt(), unit.name.lowercase()),
+                    text = stringResource(R.string.last_maint_format, unit.fromKm(part.lastMaintenanceOdometer).roundToInt(), unit.symbol),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
@@ -281,9 +282,9 @@ fun PartItem(
         Text(
             text = stringResource(R.string.wear_used, (wornFraction * 100).roundToInt()) + " · " +
                 if (remaining >= 0)
-                    stringResource(R.string.wear_remaining, remainingInUnit.roundToInt(), unit.name.lowercase())
+                    stringResource(R.string.wear_remaining, remainingInUnit.roundToInt(), unit.symbol)
                 else
-                    stringResource(R.string.wear_overdue, (-remainingInUnit).roundToInt(), unit.name.lowercase()),
+                    stringResource(R.string.wear_overdue, (-remainingInUnit).roundToInt(), unit.symbol),
             style = MaterialTheme.typography.bodySmall,
             color = statusColor
         )

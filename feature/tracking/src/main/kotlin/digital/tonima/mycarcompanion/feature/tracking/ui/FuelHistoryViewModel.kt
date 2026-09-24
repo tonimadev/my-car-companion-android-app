@@ -6,10 +6,13 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.mycarcompanion.core.data.FuelRepository
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
+import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.designsystem.model.FuelRecordUi
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.designsystem.model.toUi
+import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
+import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.FuelRecord
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import kotlinx.collections.immutable.ImmutableList
@@ -36,6 +39,8 @@ data class FuelHistoryUiState(
     val items: ImmutableList<FuelRecordUi> = kotlinx.collections.immutable.persistentListOf(),
     val averageConsumption: Double? = null,
     val totalSpent: Double = 0.0,
+    val distanceUnit: DistanceUnit = DistanceUnit.KM,
+    val consumptionUnit: ConsumptionUnit = ConsumptionUnit.KM_L,
     val isProUser: Boolean = false,
     val isLoading: Boolean = false
 )
@@ -45,14 +50,17 @@ data class FuelHistoryUiState(
 class FuelHistoryViewModel @Inject constructor(
     private val fuelRepository: FuelRepository,
     private val vehicleRepository: VehicleRepository,
-    private val proUserProvider: ProUserProvider
+    private val proUserProvider: ProUserProvider,
+    private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<FuelHistoryUiState> = kotlinx.coroutines.flow.combine(
         vehicleRepository.getCurrentVehicle(),
-        proUserProvider.isProUser
-    ) { vehicle, isPro -> vehicle to isPro }
-        .flatMapLatest { (vehicle, isPro) ->
+        proUserProvider.isProUser,
+        userPreferencesRepository.distanceUnit,
+        userPreferencesRepository.consumptionUnit
+    ) { vehicle, isPro, distanceUnit, consumptionUnit -> Preferences(vehicle, isPro, distanceUnit, consumptionUnit) }
+        .flatMapLatest { (vehicle, isPro, distanceUnit, consumptionUnit) ->
             if (vehicle != null) {
                 fuelRepository.getFuelRecordsForVehicle(vehicle.id).map { records ->
                     val uiItems = records.map { record ->
@@ -72,12 +80,21 @@ class FuelHistoryViewModel @Inject constructor(
                         items = uiItems,
                         averageConsumption = avgConsumption,
                         totalSpent = totalSpent,
+                        distanceUnit = distanceUnit,
+                        consumptionUnit = consumptionUnit,
                         isProUser = isPro,
                         isLoading = false
                     )
                 }
             } else {
-                flowOf(FuelHistoryUiState(isProUser = isPro, isLoading = false))
+                flowOf(
+                    FuelHistoryUiState(
+                        distanceUnit = distanceUnit,
+                        consumptionUnit = consumptionUnit,
+                        isProUser = isPro,
+                        isLoading = false
+                    )
+                )
             }
         }
         .stateIn(
@@ -101,4 +118,11 @@ class FuelHistoryViewModel @Inject constructor(
             )
         }
     }
+
+    private data class Preferences(
+        val vehicle: Vehicle?,
+        val isPro: Boolean,
+        val distanceUnit: DistanceUnit,
+        val consumptionUnit: ConsumptionUnit
+    )
 }

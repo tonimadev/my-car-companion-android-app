@@ -1,0 +1,10 @@
+<resources>
+    <string name="action_ok">OK</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_back">Voltar</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_delete">Excluir</string>
+    <string name="label_date">Data: %1$s</string>
+    <string name="label_consumption">Consumo</string>
+    <string name="unit_liters">Litros</string>
+</resources>
