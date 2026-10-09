@@ -1,6 +1,8 @@
 package digital.tonima.mycarcompanion.core.data
 
 import android.content.Context
+import digital.tonima.mycarcompanion.core.database.OdometerDao
+import digital.tonima.mycarcompanion.core.database.OdometerEntity
 import digital.tonima.mycarcompanion.core.database.PartDao
 import digital.tonima.mycarcompanion.core.database.PartEntity
 import digital.tonima.mycarcompanion.core.database.VehicleDao
@@ -13,6 +15,7 @@ import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.runs
+import io.mockk.slot
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
@@ -24,8 +27,9 @@ class OfflineFirstVehicleRepositoryTest {
 
     private val vehicleDao = mockk<VehicleDao>(relaxUnitFun = true)
     private val partDao = mockk<PartDao>()
+    private val odometerDao = mockk<OdometerDao>(relaxed = true)
     private val context = mockk<Context>()
-    private val repository = OfflineFirstVehicleRepository(vehicleDao, partDao, context)
+    private val repository = OfflineFirstVehicleRepository(vehicleDao, partDao, odometerDao, context)
 
     private val entity = VehicleEntity(id = 1, name = "Civic", currentOdometer = 1000.0, tankCapacity = 50.0, isCurrent = true)
     private val vehicle = Vehicle(id = 1, name = "Civic", currentOdometer = 1000.0, tankCapacity = 50.0, isCurrent = true)
@@ -79,6 +83,7 @@ class OfflineFirstVehicleRepositoryTest {
 
     @Test
     fun `update and delete delegate mapped entity to dao`() = runTest {
+        coEvery { vehicleDao.getVehicle(1) } returns entity
         repository.updateVehicle(vehicle)
         repository.deleteVehicle(vehicle)
 
@@ -112,5 +117,44 @@ class OfflineFirstVehicleRepositoryTest {
         repository.updateActiveVehicleOdometer(12.5)
 
         coVerify(exactly = 0) { vehicleDao.updateVehicle(any()) }
+    }
+
+    @Test
+    fun `insertVehicle records the initial odometer`() = runTest {
+        coEvery { vehicleDao.insertVehicle(any()) } returns 7L
+        coEvery { partDao.insertPart(any()) } returns 1L
+        every { context.getString(any()) } returns "part"
+        val saved = slot<OdometerEntity>()
+        coEvery { odometerDao.insertOdometerRecord(capture(saved)) } returns 1L
+
+        repository.insertVehicle(vehicle.copy(id = 0, currentOdometer = 5000.0))
+
+        assertEquals(7L, saved.captured.vehicleId)
+        assertEquals(5000.0, saved.captured.odometerValue, 0.0)
+    }
+
+    @Test
+    fun `updateVehicle records odometer only when it changed`() = runTest {
+        coEvery { vehicleDao.getVehicle(1) } returns entity
+        val saved = slot<OdometerEntity>()
+        coEvery { odometerDao.insertOdometerRecord(capture(saved)) } returns 1L
+
+        repository.updateVehicle(vehicle.copy(name = "Renamed"))
+        coVerify(exactly = 0) { odometerDao.insertOdometerRecord(any()) }
+
+        repository.updateVehicle(vehicle.copy(currentOdometer = 1500.0))
+        assertEquals(1500.0, saved.captured.odometerValue, 0.0)
+    }
+
+    @Test
+    fun `updateActiveVehicleOdometer records the new odometer`() = runTest {
+        every { vehicleDao.getCurrentVehicle() } returns flowOf(entity)
+        val saved = slot<OdometerEntity>()
+        coEvery { odometerDao.insertOdometerRecord(capture(saved)) } returns 1L
+
+        repository.updateActiveVehicleOdometer(12.5)
+
+        assertEquals(1012.5, saved.captured.odometerValue, 0.0)
+        assertEquals(1L, saved.captured.vehicleId)
     }
 }

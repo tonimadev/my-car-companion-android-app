@@ -2,20 +2,24 @@ package digital.tonima.mycarcompanion.core.data
 
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
+import digital.tonima.mycarcompanion.core.database.OdometerDao
 import digital.tonima.mycarcompanion.core.database.PartDao
 import digital.tonima.mycarcompanion.core.database.PartEntity
 import digital.tonima.mycarcompanion.core.database.VehicleDao
 import digital.tonima.mycarcompanion.core.database.asEntity
 import digital.tonima.mycarcompanion.core.database.asExternalModel
+import digital.tonima.mycarcompanion.core.model.OdometerRecord
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
+import kotlin.time.Clock
 
 class OfflineFirstVehicleRepository @Inject constructor(
     private val vehicleDao: VehicleDao,
     private val partDao: PartDao,
+    private val odometerDao: OdometerDao,
     @ApplicationContext private val context: Context
 ) : VehicleRepository {
     override fun getVehicles(): Flow<List<Vehicle>> = 
@@ -40,12 +44,16 @@ class OfflineFirstVehicleRepository @Inject constructor(
                 )
             )
         }
+        recordOdometer(vehicleId, vehicle.currentOdometer)
 
         return vehicleId
     }
 
-    override suspend fun updateVehicle(vehicle: Vehicle) = 
+    override suspend fun updateVehicle(vehicle: Vehicle) {
+        val previousOdometer = vehicleDao.getVehicle(vehicle.id)?.currentOdometer
         vehicleDao.updateVehicle(vehicle.asEntity())
+        if (previousOdometer != vehicle.currentOdometer) recordOdometer(vehicle.id, vehicle.currentOdometer)
+    }
 
     override suspend fun deleteVehicle(vehicle: Vehicle) = 
         vehicleDao.deleteVehicle(vehicle.asEntity())
@@ -60,6 +68,14 @@ class OfflineFirstVehicleRepository @Inject constructor(
         currentVehicle?.let { vehicle ->
             val newOdometer = vehicle.currentOdometer + incrementInKm
             vehicleDao.updateVehicle(vehicle.copy(currentOdometer = newOdometer))
+            if (incrementInKm != 0.0) recordOdometer(vehicle.id, newOdometer)
         }
+    }
+
+    /** Keeps the odometer history that [PredictionEngine] uses to project the next maintenance by distance. */
+    private suspend fun recordOdometer(vehicleId: Long, odometer: Double) {
+        odometerDao.insertOdometerRecord(
+            OdometerRecord(vehicleId = vehicleId, date = Clock.System.now(), odometerValue = odometer).asEntity()
+        )
     }
 }
