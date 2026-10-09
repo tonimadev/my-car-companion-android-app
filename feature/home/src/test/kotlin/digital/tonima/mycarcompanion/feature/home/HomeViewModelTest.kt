@@ -201,6 +201,30 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `range uses the model's typical consumption until there are refuels`() = runTest {
+        val vehicle = Vehicle(
+            id = 1, name = "Prisma", currentOdometer = 100.0, tankCapacity = 50.0,
+            estimatedConsumption = 12.0, isCurrent = true
+        )
+        every { partRepository.getPartsForVehicle(1) } returns flowOf(emptyList())
+        every { odometerRepository.getOdometerRecordsForVehicle(1) } returns flowOf(emptyList())
+        every { fuelRepository.getFuelRecordsForVehicle(1) } returns flowOf(emptyList())
+        every { maintenanceRepository.getTotalMaintenanceCostForVehicle(1) } returns flowOf(0.0)
+        every { fuelRepository.getTotalFuelCostForVehicle(1) } returns flowOf(0.0)
+        val job = viewModel.uiState.onEach { }.launchIn(this)
+
+        vehiclesFlow.value = listOf(vehicle)
+        currentVehicleFlow.value = vehicle
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(600.0, state.estimatedRange!!, 0.0)
+        assertNull(state.averageFuelConsumption)
+
+        job.cancel()
+    }
+
+    @Test
     fun `fuel prices for the selected state are exposed in brazil and refreshed once`() = runTest {
         val originalLocale = java.util.Locale.getDefault()
         val originalZone = java.util.TimeZone.getDefault()

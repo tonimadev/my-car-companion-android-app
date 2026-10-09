@@ -17,4 +17,18 @@
     <string name="delete_vehicle_title">Delete vehicle?</string>
     <string name="delete_vehicle_message">Are you sure you want to delete \"%s\"? All its parts and maintenance history will be removed. This action cannot be undone.</string>
     <string name="tank_capacity_label">Tank Capacity (Liters)</string>
+    <string name="lookup_title">Find your car</string>
+    <string name="lookup_brand_label">Brand</string>
+    <string name="lookup_model_label">Model</string>
+    <string name="lookup_year_label">Year</string>
+    <string name="lookup_no_results">No results</string>
+    <string name="lookup_failed">Could not load the vehicle list. You can fill in the details manually.</string>
+    <string name="lookup_retry">Try again</string>
+    <string name="lookup_suggest_button">Suggest details with AI</string>
+    <string name="lookup_suggest_loading">Looking up the model…</string>
+    <string name="lookup_suggest_ai_only">Subscribe to the AI Assistant to fill in tank size, consumption and service intervals automatically.</string>
+    <string name="lookup_suggest_error">Could not suggest details right now. Fill them in manually.</string>
+    <string name="lookup_suggest_result">Typical consumption: %1$s · %2$d service intervals will be applied</string>
+    <string name="lookup_suggest_result_no_consumption">%1$d service intervals will be applied</string>
+    <string name="lookup_suggest_disclaimer">Values estimated by AI. Check your vehicle manual.</string>
 </resources>

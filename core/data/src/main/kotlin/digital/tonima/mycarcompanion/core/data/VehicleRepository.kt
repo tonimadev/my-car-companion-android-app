@@ -8,6 +8,9 @@ interface VehicleRepository {
     suspend fun getVehicle(id: Long): Vehicle?
     fun getCurrentVehicle(): Flow<Vehicle?>
     suspend fun insertVehicle(vehicle: Vehicle): Long
+
+    /** Inserts the vehicle with the default parts, overriding their service intervals with [serviceIntervals]. */
+    suspend fun insertVehicle(vehicle: Vehicle, serviceIntervals: List<ServiceInterval>): Long
     suspend fun updateVehicle(vehicle: Vehicle)
     suspend fun deleteVehicle(vehicle: Vehicle)
     suspend fun setCurrentVehicle(id: Long)

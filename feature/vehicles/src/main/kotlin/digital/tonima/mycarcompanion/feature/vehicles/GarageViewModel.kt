@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
+import digital.tonima.mycarcompanion.core.data.VehicleSpecs
 import digital.tonima.mycarcompanion.core.designsystem.model.VehicleUi
 import digital.tonima.mycarcompanion.core.designsystem.model.toUiModels
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
@@ -43,7 +44,12 @@ sealed interface GarageUiEffect {
 }
 
 sealed interface GarageIntent {
-    data class AddVehicle(val name: String, val currentOdometer: Double, val tankCapacity: Double?) : GarageIntent
+    data class AddVehicle(
+        val name: String,
+        val currentOdometer: Double,
+        val tankCapacity: Double?,
+        val specs: VehicleSpecs? = null
+    ) : GarageIntent
     data class UpdateVehicle(val vehicle: VehicleUi) : GarageIntent
     data class DeleteVehicle(val vehicle: VehicleUi) : GarageIntent
     data class SetCurrentVehicle(val id: Long) : GarageIntent
@@ -83,7 +89,7 @@ class GarageViewModel @Inject constructor(
 
     fun handleIntent(intent: GarageIntent) {
         when (intent) {
-            is GarageIntent.AddVehicle -> addVehicle(intent.name, intent.currentOdometer, intent.tankCapacity)
+            is GarageIntent.AddVehicle -> addVehicle(intent.name, intent.currentOdometer, intent.tankCapacity, intent.specs)
             is GarageIntent.UpdateVehicle -> updateVehicle(intent.vehicle)
             is GarageIntent.DeleteVehicle -> deleteVehicle(intent.vehicle)
             is GarageIntent.SetCurrentVehicle -> setCurrentVehicle(intent.id)
@@ -91,16 +97,20 @@ class GarageViewModel @Inject constructor(
         }
     }
 
-    private fun addVehicle(name: String, odometer: Double, tankCapacity: Double?) {
+    private fun addVehicle(name: String, odometer: Double, tankCapacity: Double?, specs: VehicleSpecs?) {
         viewModelScope.launch {
             try {
-                vehicleRepository.insertVehicle(
-                    Vehicle(
-                        name = name,
-                        currentOdometer = odometer,
-                        tankCapacity = tankCapacity
-                    )
+                val vehicle = Vehicle(
+                    name = name,
+                    currentOdometer = odometer,
+                    tankCapacity = tankCapacity,
+                    estimatedConsumption = specs?.consumptionKmPerLiter
                 )
+                if (specs != null && specs.intervals.isNotEmpty()) {
+                    vehicleRepository.insertVehicle(vehicle, specs.intervals)
+                } else {
+                    vehicleRepository.insertVehicle(vehicle)
+                }
             } catch (e: Exception) {
                 triggerEffect(GarageUiEffect.ShowError(e.message ?: context.getString(R.string.error_add_vehicle)))
             }

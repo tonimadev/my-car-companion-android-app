@@ -4,6 +4,7 @@ import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Locale
@@ -113,5 +114,34 @@ class VehicleAiContextTest {
         assertTrue(context.contains("User units: distance in mi, fuel economy in MPG"))
         assertTrue(context.contains("Current odometer: 31068 mi"))
         assertTrue(context.contains("Average consumption: 23.5 MPG"))
+    }
+
+    @Test
+    fun `uses the model's typical consumption, labelled as an estimate, when there is no fuel history`() {
+        val context = VehicleAiContext.build(
+            vehicle = Vehicle(id = 1, name = "Prisma", currentOdometer = 1000.0),
+            parts = emptyList(),
+            predictions = emptyMap(),
+            distanceUnit = DistanceUnit.KM,
+            estimatedConsumption = 12.5,
+        )
+
+        assertTrue(context.contains("estimate"))
+        assertTrue(context.contains("12.5"))
+    }
+
+    @Test
+    fun `real average consumption wins over the model estimate`() {
+        val context = VehicleAiContext.build(
+            vehicle = Vehicle(id = 1, name = "Prisma", currentOdometer = 1000.0),
+            parts = emptyList(),
+            predictions = emptyMap(),
+            distanceUnit = DistanceUnit.KM,
+            averageFuelConsumption = 10.0,
+            estimatedConsumption = 12.5,
+        )
+
+        assertTrue(context.contains("Average consumption: 10.0"))
+        assertFalse(context.contains("estimate"))
     }
 }

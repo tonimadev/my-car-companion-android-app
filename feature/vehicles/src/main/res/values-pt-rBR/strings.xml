@@ -17,4 +17,18 @@
     <string name="delete_vehicle_title">Excluir veículo?</string>
     <string name="delete_vehicle_message">Tem certeza de que deseja excluir \"%s\"? Todas as peças e o histórico de manutenção serão removidos. Esta ação não pode ser desfeita.</string>
     <string name="tank_capacity_label">Capacidade do Tanque (Litros)</string>
+    <string name="lookup_title">Encontre seu carro</string>
+    <string name="lookup_brand_label">Marca</string>
+    <string name="lookup_model_label">Modelo</string>
+    <string name="lookup_year_label">Ano</string>
+    <string name="lookup_no_results">Nenhum resultado</string>
+    <string name="lookup_failed">Não foi possível carregar a lista de veículos. Você pode preencher os dados manualmente.</string>
+    <string name="lookup_retry">Tentar novamente</string>
+    <string name="lookup_suggest_button">Sugerir dados com IA</string>
+    <string name="lookup_suggest_loading">Buscando dados do modelo…</string>
+    <string name="lookup_suggest_ai_only">Assine o Assistente IA para preencher tanque, consumo e intervalos de revisão automaticamente.</string>
+    <string name="lookup_suggest_error">Não foi possível sugerir os dados agora. Preencha manualmente.</string>
+    <string name="lookup_suggest_result">Consumo típico: %1$s · %2$d intervalos de revisão serão aplicados</string>
+    <string name="lookup_suggest_result_no_consumption">%1$d intervalos de revisão serão aplicados</string>
+    <string name="lookup_suggest_disclaimer">Valores estimados pela IA. Confira com o manual do seu veículo.</string>
 </resources>

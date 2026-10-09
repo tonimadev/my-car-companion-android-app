@@ -107,6 +107,7 @@ class DiagnosticChatViewModel @Inject constructor(
                         distanceUnit = distanceUnit,
                         consumptionUnit = consumptionUnit,
                         averageFuelConsumption = consumptions.takeIf { c -> c.isNotEmpty() }?.average(),
+                        estimatedConsumption = it.vehicle.estimatedConsumption,
                     )
                 }
             }.collect { built ->

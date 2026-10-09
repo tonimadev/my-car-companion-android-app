@@ -216,8 +216,10 @@ class HomeViewModel @Inject constructor(
                 } else null
 
                 // Estimated range
-                val estRange = if (currentVehicle?.tankCapacity != null && avgConsumption != null) {
-                    currentVehicle.tankCapacity!! * avgConsumption
+                // Until there are refuels, the model's typical consumption gives a first range estimate.
+                val rangeConsumption = avgConsumption ?: currentVehicle?.estimatedConsumption
+                val estRange = if (currentVehicle?.tankCapacity != null && rangeConsumption != null) {
+                    currentVehicle.tankCapacity!! * rangeConsumption
                 } else null
 
                 val trend = if (consumptions.size >= 2) {

@@ -8,5 +8,7 @@ data class Vehicle(
     val name: String,
     val currentOdometer: Double,
     val tankCapacity: Double? = null,
+    /** Typical fuel economy of the model in km/L, used until real refuel data exists. */
+    val estimatedConsumption: Double? = null,
     val isCurrent: Boolean = false
 )

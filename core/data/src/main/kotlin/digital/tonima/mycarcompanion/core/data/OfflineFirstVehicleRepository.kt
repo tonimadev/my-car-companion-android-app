@@ -31,16 +31,23 @@ class OfflineFirstVehicleRepository @Inject constructor(
     override fun getCurrentVehicle(): Flow<Vehicle?> = 
         vehicleDao.getCurrentVehicle().map { it?.asExternalModel() }
 
-    override suspend fun insertVehicle(vehicle: Vehicle): Long {
+    override suspend fun insertVehicle(vehicle: Vehicle): Long = insertVehicle(vehicle, emptyList())
+
+    override suspend fun insertVehicle(vehicle: Vehicle, serviceIntervals: List<ServiceInterval>): Long {
         val vehicleId = vehicleDao.insertVehicle(vehicle.asEntity())
+        val now = Clock.System.now()
 
         DEFAULT_PARTS.forEach { defaultPart ->
+            val interval = serviceIntervals.firstOrNull { it.part.nameResId == defaultPart.nameResId }
             partDao.insertPart(
                 PartEntity(
                     vehicleId = vehicleId,
                     name = context.getString(defaultPart.nameResId),
-                    lifeSpanMileage = defaultPart.lifeSpanKm,
-                    lastMaintenanceOdometer = vehicle.currentOdometer
+                    lifeSpanMileage = interval?.km ?: defaultPart.lifeSpanKm,
+                    lastMaintenanceOdometer = vehicle.currentOdometer,
+                    lifeSpanMonths = interval?.months,
+                    // A new vehicle has no history, so the time interval starts counting at registration.
+                    lastMaintenanceDate = if (interval?.months != null) now else null
                 )
             )
         }
@@ -50,8 +57,11 @@ class OfflineFirstVehicleRepository @Inject constructor(
     }
 
     override suspend fun updateVehicle(vehicle: Vehicle) {
-        val previousOdometer = vehicleDao.getVehicle(vehicle.id)?.currentOdometer
-        vehicleDao.updateVehicle(vehicle.asEntity())
+        val previous = vehicleDao.getVehicle(vehicle.id)
+        val previousOdometer = previous?.currentOdometer
+        // Screens that edit a vehicle do not know the estimated consumption, so keep the stored one.
+        val estimatedConsumption = vehicle.estimatedConsumption ?: previous?.estimatedConsumption
+        vehicleDao.updateVehicle(vehicle.copy(estimatedConsumption = estimatedConsumption).asEntity())
         if (previousOdometer != vehicle.currentOdometer) recordOdometer(vehicle.id, vehicle.currentOdometer)
     }
 
