@@ -86,4 +86,16 @@ class DataStoreUserPreferencesRepositoryTest {
         assertEquals(DistanceUnit.KM, repository.distanceUnit.first())
         assertEquals(ConsumptionUnit.KM_L, repository.consumptionUnit.first())
     }
+
+    @Test
+    fun `selected state is stored in lower case and can be cleared`() = runTest {
+        val repository = repository()
+        assertEquals(null, repository.selectedState.first())
+
+        repository.setSelectedState("SP")
+        assertEquals("sp", repository.selectedState.first())
+
+        repository.setSelectedState(null)
+        assertEquals(null, repository.selectedState.first())
+    }
 }

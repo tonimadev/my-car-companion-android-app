@@ -22,6 +22,7 @@ class DataStoreUserPreferencesRepository @Inject constructor(
         val IS_ONBOARDING_COMPLETED = booleanPreferencesKey("is_onboarding_completed")
         val IS_PRO_USER = booleanPreferencesKey("is_pro_user")
         val IS_AI_USER = booleanPreferencesKey("is_ai_user")
+        val SELECTED_STATE = stringPreferencesKey("selected_state")
     }
 
     override val distanceUnit: Flow<DistanceUnit> = dataStore.data.map { preferences ->
@@ -73,6 +74,20 @@ class DataStoreUserPreferencesRepository @Inject constructor(
     override suspend fun setAiUser(isAi: Boolean) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.IS_AI_USER] = isAi
+        }
+    }
+
+    override val selectedState: Flow<String?> = dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.SELECTED_STATE]
+    }
+
+    override suspend fun setSelectedState(state: String?) {
+        dataStore.edit { preferences ->
+            if (state == null) {
+                preferences.remove(PreferencesKeys.SELECTED_STATE)
+            } else {
+                preferences[PreferencesKeys.SELECTED_STATE] = state.lowercase()
+            }
         }
     }
 }

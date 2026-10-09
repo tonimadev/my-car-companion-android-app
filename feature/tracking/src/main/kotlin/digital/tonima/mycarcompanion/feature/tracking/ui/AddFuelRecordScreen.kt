@@ -48,6 +48,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import digital.tonima.mycarcompanion.core.data.FuelKind
 import digital.tonima.mycarcompanion.core.designsystem.component.GarageBackground
 import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
 import digital.tonima.mycarcompanion.core.designsystem.util.CurrencyUtils
@@ -71,6 +72,7 @@ fun AddFuelRecordScreen(
     val isSaving by viewModel.isSaving.collectAsStateWithLifecycle()
     val existingRecord by viewModel.existingRecord.collectAsStateWithLifecycle()
     val distanceUnit by viewModel.distanceUnit.collectAsStateWithLifecycle()
+    val suggestedPrices by viewModel.suggestedPrices.collectAsStateWithLifecycle()
 
     val fuelTypeOptions = listOf(
         stringResource(DataR.string.fuel_type_gasoline),
@@ -125,6 +127,17 @@ fun AddFuelRecordScreen(
         }
     }
 
+    // Suggest the state's average price for the selected fuel on new refuels, never overriding what the user typed.
+    val suggestedKind = when {
+        isCustomFuelType -> null
+        fuelType == fuelTypeOptions[0] -> FuelKind.GASOLINE
+        fuelType == fuelTypeOptions[2] -> FuelKind.DIESEL
+        else -> null
+    }
+    val suggestedPrice = suggestedKind?.let { suggestedPrices[it] }?.value
+    val suggestedPriceText = suggestedPrice?.let { NumberUtils.formatDecimalInput(it) }
+    var lastSuggestedPriceText by remember { mutableStateOf("") }
+
     val calculateLiters = { total: String, price: String ->
         val totalVal = NumberUtils.parseDecimal(total) ?: 0.0
         val priceVal = NumberUtils.parseDecimal(price) ?: 0.0
@@ -134,6 +147,16 @@ fun AddFuelRecordScreen(
     }
 
     val currencySymbol = remember { CurrencyUtils.getCurrencySymbol() }
+
+    LaunchedEffect(suggestedPriceText) {
+        if (recordId == null && suggestedPriceText != null &&
+            (pricePerLiterText.isEmpty() || pricePerLiterText == lastSuggestedPriceText)
+        ) {
+            pricePerLiterText = suggestedPriceText
+            lastSuggestedPriceText = suggestedPriceText
+            calculateLiters(totalCostText, suggestedPriceText)
+        }
+    }
     val effectiveFuelType = if (isCustomFuelType) customFuelTypeText else fuelType
     val canSave = !isSaving && litersText.isNotBlank() && totalCostText.isNotBlank() &&
         (NumberUtils.parseDecimal(litersText) ?: 0.0) > 0.0 &&
@@ -294,6 +317,11 @@ fun AddFuelRecordScreen(
                                     calculateLiters(totalCostText, it)
                                 },
                                 label = { Text(stringResource(R.string.fuel_price_per_liter_label)) },
+                                supportingText = if (suggestedPriceText != null && pricePerLiterText == suggestedPriceText) {
+                                    { Text(stringResource(R.string.fuel_price_suggested_hint)) }
+                                } else {
+                                    null
+                                },
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 singleLine = true,
                                 modifier = Modifier.weight(1f)

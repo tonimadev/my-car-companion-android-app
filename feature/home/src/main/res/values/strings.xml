@@ -77,6 +77,13 @@
     <string name="charts_costs_empty">No spending recorded in the last 6 months.</string>
     <string name="charts_consumption_title">Fuel economy (%1$s)</string>
     <string name="charts_consumption_empty">Log at least two refuels to see your fuel economy.</string>
+    <string name="fuel_price_title">Fuel prices</string>
+    <string name="fuel_price_gasoline">Gasoline</string>
+    <string name="fuel_price_diesel">Diesel</string>
+    <string name="fuel_price_state_source">Average in %1$s · updated %2$s</string>
+    <string name="fuel_price_national_source">National average · updated %1$s</string>
+    <string name="settings_fuel_price_state">State for fuel prices</string>
+    <string name="settings_fuel_price_national">National average</string>
     <string name="toggle_financial_data">Toggle financial data</string>
     <string name="maintenance_history_title">Maintenance History</string>
     <string name="fuel_log">Fuel log</string>

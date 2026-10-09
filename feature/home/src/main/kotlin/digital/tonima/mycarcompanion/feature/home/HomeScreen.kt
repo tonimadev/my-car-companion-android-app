@@ -249,6 +249,8 @@ internal fun HomeScreen(
                                     modifier = Modifier.padding(bottom = 8.dp)
                                 )
 
+                                uiState.fuelPrice?.let { FuelPriceCard(it, modifier = Modifier.padding(bottom = 8.dp)) }
+
                                 if (uiState.showFinancialData) {
                                     IsometricCard(
                                         modifier = Modifier.fillMaxWidth(),
@@ -389,6 +391,12 @@ internal fun HomeScreen(
                                     onEditClick = { showUpdateOdometerDialog = true },
                                     modifier = Modifier.padding(16.dp)
                                 )
+                            }
+
+                            uiState.fuelPrice?.let { fuelPrice ->
+                                item {
+                                    FuelPriceCard(fuelPrice, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                                }
                             }
 
                             item {

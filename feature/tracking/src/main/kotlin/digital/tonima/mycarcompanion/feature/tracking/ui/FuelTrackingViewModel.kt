@@ -3,13 +3,19 @@ package digital.tonima.mycarcompanion.feature.tracking.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import digital.tonima.mycarcompanion.core.data.FuelKind
+import digital.tonima.mycarcompanion.core.data.FuelPriceRepository
 import digital.tonima.mycarcompanion.core.data.FuelRepository
+import digital.tonima.mycarcompanion.core.data.StatePrice
+import digital.tonima.mycarcompanion.core.data.isFuelPriceRegion
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.FuelRecord
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -21,8 +27,22 @@ import javax.inject.Inject
 class FuelTrackingViewModel @Inject constructor(
     private val fuelRepository: FuelRepository,
     private val vehicleRepository: VehicleRepository,
-    userPreferencesRepository: UserPreferencesRepository
+    userPreferencesRepository: UserPreferencesRepository,
+    fuelPriceRepository: FuelPriceRepository
 ) : ViewModel() {
+
+    /** Average price per liter for the user's state, used to suggest a value when adding a refuel. */
+    val suggestedPrices: StateFlow<Map<FuelKind, StatePrice>> = if (isFuelPriceRegion()) {
+        combine(fuelPriceRepository.snapshot, userPreferencesRepository.selectedState) { snapshot, state ->
+            FuelKind.entries.mapNotNull { kind -> snapshot?.priceFor(kind, state)?.let { kind to it } }.toMap()
+        }
+    } else {
+        flowOf(emptyMap())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+    init {
+        if (isFuelPriceRegion()) viewModelScope.launch { fuelPriceRepository.refresh() }
+    }
 
     val distanceUnit: StateFlow<DistanceUnit> = userPreferencesRepository.distanceUnit
         .stateIn(

@@ -76,6 +76,13 @@
     <string name="charts_costs_empty">Nenhum gasto registrado nos últimos 6 meses.</string>
     <string name="charts_consumption_title">Consumo (%1$s)</string>
     <string name="charts_consumption_empty">Registre pelo menos dois abastecimentos para ver o consumo.</string>
+    <string name="fuel_price_title">Preço dos combustíveis</string>
+    <string name="fuel_price_gasoline">Gasolina</string>
+    <string name="fuel_price_diesel">Diesel</string>
+    <string name="fuel_price_state_source">Média em %1$s · atualizado em %2$s</string>
+    <string name="fuel_price_national_source">Média nacional · atualizado em %1$s</string>
+    <string name="settings_fuel_price_state">Estado para o preço dos combustíveis</string>
+    <string name="settings_fuel_price_national">Média nacional</string>
     <string name="toggle_financial_data">Alternar dados financeiros</string>
     <string name="maintenance_history_title">Histórico de Manutenções</string>
     <string name="fuel_log">Abastecimento</string>

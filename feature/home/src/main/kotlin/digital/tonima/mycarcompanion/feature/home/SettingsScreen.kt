@@ -28,6 +28,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -41,6 +48,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
+import digital.tonima.mycarcompanion.core.data.isFuelPriceRegion
 import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import kotlinx.coroutines.flow.SharingStarted
@@ -59,6 +67,15 @@ class SettingsViewModel @Inject constructor(
 
     val consumptionUnit: StateFlow<ConsumptionUnit> = userPreferencesRepository.consumptionUnit
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ConsumptionUnit.KM_L)
+
+    val selectedState: StateFlow<String?> = userPreferencesRepository.selectedState
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+
+    fun setSelectedState(state: String?) {
+        viewModelScope.launch {
+            userPreferencesRepository.setSelectedState(state)
+        }
+    }
 
     val isProUser: StateFlow<Boolean> = proUserProvider.isProUser
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
@@ -103,6 +120,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val distanceUnit by viewModel.distanceUnit.collectAsStateWithLifecycle()
     val consumptionUnit by viewModel.consumptionUnit.collectAsStateWithLifecycle()
+    val selectedState by viewModel.selectedState.collectAsStateWithLifecycle()
     val isProUser by viewModel.isProUser.collectAsStateWithLifecycle()
     val isAiUser by viewModel.isAiUser.collectAsStateWithLifecycle()
 
@@ -237,6 +255,50 @@ fun SettingsScreen(
             }
 
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+            if (isFuelPriceRegion()) {
+                StatePicker(selected = selectedState, onSelected = viewModel::setSelectedState)
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+            }
+        }
+    }
+}
+
+private val BRAZILIAN_STATES = listOf(
+    "ac", "al", "ap", "am", "ba", "ce", "df", "es", "go", "ma", "mt", "ms", "mg", "pa", "pb", "pr",
+    "pe", "pi", "rj", "rn", "rs", "ro", "rr", "sc", "sp", "se", "to"
+)
+
+@Composable
+private fun StatePicker(selected: String?, onSelected: (String?) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Column(modifier = Modifier.padding(16.dp)) {
+        Text(
+            text = stringResource(R.string.settings_fuel_price_state),
+            style = MaterialTheme.typography.titleMedium
+        )
+        Box {
+            TextButton(onClick = { expanded = true }) {
+                Text(selected?.uppercase() ?: stringResource(R.string.settings_fuel_price_national))
+            }
+            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.settings_fuel_price_national)) },
+                    onClick = {
+                        onSelected(null)
+                        expanded = false
+                    }
+                )
+                BRAZILIAN_STATES.forEach { uf ->
+                    DropdownMenuItem(
+                        text = { Text(uf.uppercase()) },
+                        onClick = {
+                            onSelected(uf)
+                            expanded = false
+                        }
+                    )
+                }
+            }
         }
     }
 }

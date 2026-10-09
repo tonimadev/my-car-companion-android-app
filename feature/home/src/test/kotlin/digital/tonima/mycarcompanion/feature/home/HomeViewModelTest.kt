@@ -2,6 +2,9 @@ package digital.tonima.mycarcompanion.feature.home
 
 import android.content.Context
 import digital.tonima.mycarcompanion.core.data.CarAiRepository
+import digital.tonima.mycarcompanion.core.data.FuelKind
+import digital.tonima.mycarcompanion.core.data.FuelPriceRepository
+import digital.tonima.mycarcompanion.core.data.FuelPriceSnapshot
 import digital.tonima.mycarcompanion.core.data.FuelRepository
 import digital.tonima.mycarcompanion.core.data.MaintenanceRepository
 import digital.tonima.mycarcompanion.core.data.OdometerRepository
@@ -14,6 +17,8 @@ import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Vehicle
 import io.mockk.coEvery
 import io.mockk.every
+import org.junit.Assert.assertNull
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -41,6 +46,7 @@ class HomeViewModelTest {
     private val maintenanceRepository = mockk<MaintenanceRepository>(relaxed = true)
     private val odometerRepository = mockk<OdometerRepository>(relaxed = true)
     private val fuelRepository = mockk<FuelRepository>(relaxed = true)
+    private val fuelPriceRepository = mockk<FuelPriceRepository>(relaxed = true)
     private val carAiRepository = mockk<CarAiRepository>(relaxed = true)
     private val userPreferencesRepository = mockk<UserPreferencesRepository>(relaxed = true)
     private val proUserProvider = mockk<ProUserProvider>(relaxed = true)
@@ -74,7 +80,8 @@ class HomeViewModelTest {
             fuelRepository,
             carAiRepository,
             userPreferencesRepository,
-            proUserProvider
+            proUserProvider,
+            fuelPriceRepository
         )
     }
 
@@ -191,6 +198,58 @@ class HomeViewModelTest {
         io.mockk.coVerify(exactly = 0) { carAiRepository.generateMaintenanceInsight(any()) }
 
         job.cancel()
+    }
+
+    @Test
+    fun `fuel prices for the selected state are exposed in brazil and refreshed once`() = runTest {
+        val originalLocale = java.util.Locale.getDefault()
+        java.util.Locale.setDefault(java.util.Locale.forLanguageTag("pt-BR"))
+        try {
+            every { userPreferencesRepository.selectedState } returns flowOf("rs")
+            every { fuelPriceRepository.snapshot } returns flowOf(
+                FuelPriceSnapshot(
+                    "2026-10-09 16:34:49",
+                    mapOf(
+                        FuelKind.GASOLINE to mapOf("br" to 6.55, "rs" to 6.24),
+                        FuelKind.DIESEL to mapOf("br" to 7.10)
+                    )
+                )
+            )
+
+            val vm = HomeViewModel(
+                context, vehicleRepository, partRepository, maintenanceRepository, odometerRepository,
+                fuelRepository, carAiRepository, userPreferencesRepository, proUserProvider, fuelPriceRepository
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            val price = vm.uiState.value.fuelPrice!!
+            assertEquals(6.24, price.gasoline!!.value, 0.0)
+            assertFalse(price.gasoline!!.isNationalAverage)
+            assertTrue(price.diesel!!.isNationalAverage)
+            coVerify(atLeast = 1) { fuelPriceRepository.refresh() }
+        } finally {
+            java.util.Locale.setDefault(originalLocale)
+        }
+    }
+
+    @Test
+    fun `fuel prices are not loaded outside brazil`() = runTest {
+        val originalLocale = java.util.Locale.getDefault()
+        java.util.Locale.setDefault(java.util.Locale.US)
+        try {
+            val repository = mockk<FuelPriceRepository>(relaxed = true)
+
+            val vm = HomeViewModel(
+                context, vehicleRepository, partRepository, maintenanceRepository, odometerRepository,
+                fuelRepository, carAiRepository, userPreferencesRepository, proUserProvider, repository
+            )
+            testDispatcher.scheduler.advanceUntilIdle()
+
+            assertNull(vm.uiState.value.fuelPrice)
+            coVerify(exactly = 0) { repository.refresh(any()) }
+        } finally {
+            java.util.Locale.setDefault(originalLocale)
+        }
     }
 
     private fun assertTrue(value: Boolean) {
