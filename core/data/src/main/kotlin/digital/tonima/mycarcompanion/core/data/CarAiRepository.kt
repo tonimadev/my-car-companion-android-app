@@ -4,6 +4,11 @@ enum class ChatRole { USER, MODEL }
 
 data class ChatTurn(val role: ChatRole, val text: String)
 
+/** Failure of an AI request, classified so the UI can show a meaningful message. */
+class AiException(val kind: Kind, cause: Throwable? = null) : Exception(kind.name, cause) {
+    enum class Kind { EMPTY_RESPONSE, TIMEOUT, NETWORK, UNKNOWN }
+}
+
 interface CarAiRepository {
 
     /**

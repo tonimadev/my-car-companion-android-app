@@ -1,5 +1,6 @@
 package digital.tonima.mycarcompanion.feature.home.assistant
 
+import digital.tonima.mycarcompanion.core.designsystem.util.markdownToAnnotatedString
 import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -192,7 +193,7 @@ internal fun DiagnosticChatScreen(
                             inputText = ""
                         }
                     },
-                    enabled = !uiState.isSending && inputText.isNotBlank()
+                    enabled = !uiState.isSending && uiState.isContextReady && inputText.isNotBlank()
                 ) {
                     Icon(Icons.AutoMirrored.Rounded.Send, contentDescription = stringResource(R.string.diagnostic_chat_send))
                 }
@@ -218,7 +219,7 @@ private fun ChatBubble(role: ChatRole, text: String) {
             modifier = Modifier.widthIn(max = 300.dp)
         ) {
             Text(
-                text = text,
+                text = remember(text) { markdownToAnnotatedString(text) },
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(12.dp)
             )

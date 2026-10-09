@@ -2,9 +2,12 @@ package digital.tonima.mycarcompanion.feature.home.assistant
 
 import android.app.Activity
 import android.content.Context
+import digital.tonima.mycarcompanion.core.data.AiException
 import digital.tonima.mycarcompanion.core.data.CarAiRepository
 import digital.tonima.mycarcompanion.core.data.ChatRole
 import digital.tonima.mycarcompanion.core.data.ChatTurn
+import digital.tonima.mycarcompanion.core.data.FuelRepository
+import digital.tonima.mycarcompanion.core.data.OdometerRepository
 import digital.tonima.mycarcompanion.core.data.PartRepository
 import digital.tonima.mycarcompanion.core.data.ProUserProvider
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
@@ -13,6 +16,7 @@ import digital.tonima.mycarcompanion.core.model.ConsumptionUnit
 import digital.tonima.mycarcompanion.core.model.DistanceUnit
 import digital.tonima.mycarcompanion.core.model.Part
 import digital.tonima.mycarcompanion.core.model.Vehicle
+import digital.tonima.mycarcompanion.feature.home.R
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -41,6 +45,8 @@ class DiagnosticChatViewModelTest {
     private val context = mockk<Context>()
     private val vehicleRepository = mockk<VehicleRepository>(relaxed = true)
     private val partRepository = mockk<PartRepository>(relaxed = true)
+    private val odometerRepository = mockk<OdometerRepository>(relaxed = true)
+    private val fuelRepository = mockk<FuelRepository>(relaxed = true)
     private val userPreferencesRepository = mockk<UserPreferencesRepository>(relaxed = true)
     private val proUserProvider = mockk<ProUserProvider>(relaxed = true)
     private val carAiRepository = mockk<CarAiRepository>()
@@ -58,6 +64,8 @@ class DiagnosticChatViewModelTest {
         every { userPreferencesRepository.consumptionUnit } returns flowOf(ConsumptionUnit.MPG)
         every { vehicleRepository.getCurrentVehicle() } returns flowOf(vehicle)
         every { partRepository.getPartsForVehicle(1) } returns flowOf(parts)
+        every { odometerRepository.getOdometerRecordsForVehicle(1) } returns flowOf(emptyList())
+        every { fuelRepository.getFuelRecordsForVehicle(1) } returns flowOf(emptyList())
     }
 
     @After
@@ -69,6 +77,8 @@ class DiagnosticChatViewModelTest {
         context,
         vehicleRepository,
         partRepository,
+        odometerRepository,
+        fuelRepository,
         userPreferencesRepository,
         proUserProvider,
         carAiRepository
@@ -152,6 +162,43 @@ class DiagnosticChatViewModelTest {
         pending.complete(Result.success("done"))
         assertEquals(2, viewModel.uiState.value.messages.size)
         coVerify(exactly = 1) { carAiRepository.diagnose(any(), any(), any()) }
+    }
+
+    @Test
+    fun `messages are ignored until the vehicle context is ready`() = runTest {
+        every { vehicleRepository.getCurrentVehicle() } returns flowOf(null)
+        val viewModel = viewModel()
+
+        viewModel.onIntent(DiagnosticChatIntent.SendMessage("hello"))
+
+        assertFalse(viewModel.uiState.value.isContextReady)
+        assertTrue(viewModel.uiState.value.messages.isEmpty())
+        coVerify(exactly = 0) { carAiRepository.diagnose(any(), any(), any()) }
+    }
+
+    @Test
+    fun `context follows the current vehicle`() = runTest {
+        val vehicleFlow = MutableStateFlow(vehicle)
+        every { vehicleRepository.getCurrentVehicle() } returns vehicleFlow
+        coEvery { carAiRepository.diagnose(any(), any(), any()) } returns Result.success("ok")
+        val viewModel = viewModel()
+
+        vehicleFlow.value = vehicle.copy(name = "Corolla")
+        viewModel.onIntent(DiagnosticChatIntent.SendMessage("hello"))
+
+        coVerify { carAiRepository.diagnose(match { it.contains("Corolla") && !it.contains("Civic") }, any(), any()) }
+    }
+
+    @Test
+    fun `timeout failure shows the timeout message`() = runTest {
+        every { context.getString(R.string.diagnostic_chat_error_timeout) } returns "timeout"
+        coEvery { carAiRepository.diagnose(any(), any(), any()) } returns
+            Result.failure(AiException(AiException.Kind.TIMEOUT))
+        val viewModel = viewModel()
+
+        viewModel.onIntent(DiagnosticChatIntent.SendMessage("hello"))
+
+        assertEquals("timeout", viewModel.uiState.value.error)
     }
 
     @Test
