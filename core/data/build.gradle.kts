@@ -35,6 +35,8 @@ dependencies {
     ksp(libs.hilt.compiler)
     
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.okhttp)
+    implementation(libs.moshi.kotlin)
     implementation(libs.androidx.core.ktx)
     
     implementation(libs.androidx.appfunctions)

@@ -29,6 +29,16 @@ interface DataModule {
 
 
     @Binds
+    fun bindsFuelPriceRepository(
+        repository: OnlineFuelPriceRepository
+    ): FuelPriceRepository
+
+    @Binds
+    fun bindsFuelPriceApi(
+        api: OkHttpFuelPriceApi
+    ): FuelPriceApi
+
+    @Binds
     fun bindsUserPreferencesRepository(
         repository: DataStoreUserPreferencesRepository
     ): UserPreferencesRepository

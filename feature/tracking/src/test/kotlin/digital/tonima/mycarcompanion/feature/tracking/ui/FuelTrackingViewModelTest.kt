@@ -1,5 +1,8 @@
 package digital.tonima.mycarcompanion.feature.tracking.ui
 
+import digital.tonima.mycarcompanion.core.data.FuelKind
+import digital.tonima.mycarcompanion.core.data.FuelPriceRepository
+import digital.tonima.mycarcompanion.core.data.FuelPriceSnapshot
 import digital.tonima.mycarcompanion.core.data.FuelRepository
 import digital.tonima.mycarcompanion.core.data.UserPreferencesRepository
 import digital.tonima.mycarcompanion.core.data.VehicleRepository
@@ -21,6 +24,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
@@ -32,6 +36,8 @@ class FuelTrackingViewModelTest {
     private val fuelRepository = mockk<FuelRepository>(relaxed = true)
     private val vehicleRepository = mockk<VehicleRepository>(relaxed = true)
     private val userPreferencesRepository = mockk<UserPreferencesRepository>()
+    private val fuelPriceRepository = mockk<FuelPriceRepository>(relaxed = true)
+    private val originalLocale = java.util.Locale.getDefault()
     private val currentVehicleFlow = MutableStateFlow<Vehicle?>(null)
 
     private val vehicle = Vehicle(id = 1, name = "Civic", currentOdometer = 1000.0, isCurrent = true)
@@ -43,13 +49,19 @@ class FuelTrackingViewModelTest {
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         every { vehicleRepository.getCurrentVehicle() } returns currentVehicleFlow
+        java.util.Locale.setDefault(java.util.Locale.forLanguageTag("pt-BR"))
         every { userPreferencesRepository.distanceUnit } returns flowOf(DistanceUnit.MILES)
-        viewModel = FuelTrackingViewModel(fuelRepository, vehicleRepository, userPreferencesRepository)
+        every { userPreferencesRepository.selectedState } returns flowOf("sp")
+        every { fuelPriceRepository.snapshot } returns flowOf(
+            FuelPriceSnapshot("2026-10-09 16:34:49", mapOf(FuelKind.GASOLINE to mapOf("br" to 6.55, "sp" to 6.36)))
+        )
+        viewModel = FuelTrackingViewModel(fuelRepository, vehicleRepository, userPreferencesRepository, fuelPriceRepository)
     }
 
     @After
     fun tearDown() {
         Dispatchers.resetMain()
+        java.util.Locale.setDefault(originalLocale)
     }
 
     private fun TestScope.observeVehicle(value: Vehicle?) {
@@ -124,5 +136,17 @@ class FuelTrackingViewModelTest {
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { viewModel.distanceUnit.collect {} }
 
         assertEquals(DistanceUnit.MILES, viewModel.distanceUnit.value)
+    }
+
+    @Test
+    fun `suggests the selected state's price per fuel and refreshes the cache`() = runTest {
+        val collector = backgroundScope.launch(UnconfinedTestDispatcher()) { viewModel.suggestedPrices.collect {} }
+
+        val prices = viewModel.suggestedPrices.value
+
+        assertEquals(6.36, prices.getValue(FuelKind.GASOLINE).value, 0.0)
+        assertNull(prices[FuelKind.DIESEL])
+        coVerify { fuelPriceRepository.refresh() }
+        collector.cancel()
     }
 }

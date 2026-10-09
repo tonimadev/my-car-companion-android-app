@@ -8,6 +8,7 @@
     <string name="fuel_type_custom_label">Qual combustível?</string>
     <string name="fuel_total_cost_label">Valor Total (%1$s)</string>
     <string name="fuel_price_per_liter_label">Preço/Litro</string>
+    <string name="fuel_price_suggested_hint">Média do estado, ajuste para o que você pagou</string>
     <string name="fuel_save">Salvar Abastecimento</string>
     <string name="fuel_update">Atualizar Abastecimento</string>
     <string name="fuel_history_title">Controle de Abastecimento</string>

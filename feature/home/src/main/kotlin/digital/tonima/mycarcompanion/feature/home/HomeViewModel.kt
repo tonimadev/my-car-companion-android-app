@@ -8,7 +8,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import digital.tonima.mycarcompanion.core.data.CarAiRepository
+import digital.tonima.mycarcompanion.core.data.FuelKind
+import digital.tonima.mycarcompanion.core.data.FuelPriceRepository
 import digital.tonima.mycarcompanion.core.data.FuelRepository
+import digital.tonima.mycarcompanion.core.data.StatePrice
+import digital.tonima.mycarcompanion.core.data.isFuelPriceRegion
 import digital.tonima.mycarcompanion.core.data.MaintenanceRepository
 import digital.tonima.mycarcompanion.core.data.OdometerRepository
 import digital.tonima.mycarcompanion.core.data.PartRepository
@@ -65,7 +69,16 @@ data class HomeUiState(
     val showFinancialData: Boolean = false,
     val isLoading: Boolean = false,
     val aiInsight: AiInsightUiState = AiInsightUiState.Idle,
+    val fuelPrice: FuelPriceUi? = null,
     val effect: HomeUiEffect? = null
+)
+
+/** Average pump prices (gasoline and diesel) for the user's state, as published on [collectedAt]. */
+@Immutable
+data class FuelPriceUi(
+    val gasoline: StatePrice?,
+    val diesel: StatePrice?,
+    val collectedAt: String,
 )
 
 enum class FuelTrend {
@@ -127,12 +140,28 @@ class HomeViewModel @Inject constructor(
     private val fuelRepository: FuelRepository,
     private val carAiRepository: CarAiRepository,
     userPreferencesRepository: UserPreferencesRepository,
-    private val proUserProvider: ProUserProvider
+    private val proUserProvider: ProUserProvider,
+    fuelPriceRepository: FuelPriceRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState(isLoading = true))
 
     init {
+        if (isFuelPriceRegion()) {
+            viewModelScope.launch { fuelPriceRepository.refresh() }
+            viewModelScope.launch {
+                combine(fuelPriceRepository.snapshot, userPreferencesRepository.selectedState) { snapshot, state ->
+                    snapshot?.let {
+                        FuelPriceUi(
+                            gasoline = it.priceFor(FuelKind.GASOLINE, state),
+                            diesel = it.priceFor(FuelKind.DIESEL, state),
+                            collectedAt = it.collectedAt
+                        )
+                    }
+                }.collect { price -> _uiState.update { it.copy(fuelPrice = price) } }
+            }
+        }
+
         viewModelScope.launch {
             combine(
                 vehicleRepository.getVehicles(),

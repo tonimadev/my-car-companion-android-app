@@ -19,4 +19,8 @@ interface UserPreferencesRepository {
 
     val isAiUser: Flow<Boolean>
     suspend fun setAiUser(isAi: Boolean)
+
+    /** Brazilian state (UF, lower case) chosen for fuel prices, or null to use the national average. */
+    val selectedState: Flow<String?>
+    suspend fun setSelectedState(state: String?)
 }
