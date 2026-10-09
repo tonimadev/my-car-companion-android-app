@@ -94,6 +94,7 @@ sealed interface HomeUiIntent {
     data object NavigateToFuel : HomeUiIntent
     data object NavigateToMaintenanceHistory : HomeUiIntent
     data object NavigateToDiagnosticChat : HomeUiIntent
+    data object NavigateToCharts : HomeUiIntent
     data object ToggleFinancialData : HomeUiIntent
     data object GenerateAiInsight : HomeUiIntent
     data object ConsumeEffect : HomeUiIntent
@@ -111,6 +112,8 @@ sealed interface HomeUiEffect {
     data object NavigateToMaintenanceHistory : HomeUiEffect
     @Immutable
     data object NavigateToDiagnosticChat : HomeUiEffect
+    @Immutable
+    data object NavigateToCharts : HomeUiEffect
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -170,7 +173,8 @@ class HomeViewModel @Inject constructor(
             ) { (vehicles, currentVehicle), uiData, distanceUnit, consumptionUnit, (isPro, isAi) ->
                 val sortedParts = uiData.parts.sortedBy { (it.lastMaintenanceOdometer + it.lifeSpanMileage) - (currentVehicle?.currentOdometer ?: 0.0) }
                 val predictions = sortedParts.associate { part ->
-                    part.id to PredictionEngine.estimateNextMaintenanceDate(part, uiData.records)?.toEpochMilliseconds()
+                    part.id to PredictionEngine.estimateNextMaintenanceDate(part, uiData.records, includeMileageProjection = isAi)
+                        ?.toEpochMilliseconds()
                 }.toImmutableMap()
 
                 // Calculate average consumption
@@ -242,6 +246,7 @@ class HomeViewModel @Inject constructor(
             HomeUiIntent.NavigateToFuel -> triggerEffect(HomeUiEffect.NavigateToFuel)
             HomeUiIntent.NavigateToMaintenanceHistory -> triggerEffect(HomeUiEffect.NavigateToMaintenanceHistory)
             HomeUiIntent.NavigateToDiagnosticChat -> triggerEffect(HomeUiEffect.NavigateToDiagnosticChat)
+            HomeUiIntent.NavigateToCharts -> triggerEffect(HomeUiEffect.NavigateToCharts)
             HomeUiIntent.ToggleFinancialData -> _uiState.update { it.copy(showFinancialData = !it.showFinancialData) }
             HomeUiIntent.GenerateAiInsight -> generateAiInsight()
             HomeUiIntent.ConsumeEffect -> consumeEffect()

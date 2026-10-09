@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.compose.adaptive.layout)
     implementation(libs.kotlinx.datetime)
     implementation(libs.kotlinx.collections.immutable)
+    implementation(libs.vico.compose.m3)
     
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

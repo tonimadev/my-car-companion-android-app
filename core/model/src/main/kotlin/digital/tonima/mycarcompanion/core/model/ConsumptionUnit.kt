@@ -7,6 +7,13 @@ import java.util.Locale
 enum class ConsumptionUnit(val symbol: String) {
     KM_L("km/L"), L_100KM("L/100km"), MPG("MPG");
 
+    /** Converts a consumption given in km/L into this unit's numeric value. */
+    fun fromKmPerLiter(value: Double): Double = when (this) {
+        KM_L -> value
+        L_100KM -> if (value > 0) 100.0 / value else 0.0
+        MPG -> value * 2.35215
+    }
+
     /** Formats a consumption given in km/L as this unit, using [locale] for the number. */
     fun format(value: Double, locale: Locale = Locale.getDefault()): String = when (this) {
         KM_L -> "%.1f $symbol".format(locale, value)

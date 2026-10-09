@@ -11,8 +11,13 @@ object PredictionEngine {
      * Calcula a data estimada para a próxima troca de uma peça considerando tanto
      * o limite de tempo (meses) quanto a quilometragem estimada por regressão linear.
      * Retorna a data mais próxima (o que vencer primeiro).
+     * Com [includeMileageProjection] = false, só o limite de tempo é considerado.
      */
-    fun estimateNextMaintenanceDate(part: Part, odometerRecords: List<OdometerRecord>): Instant? {
+    fun estimateNextMaintenanceDate(
+        part: Part,
+        odometerRecords: List<OdometerRecord>,
+        includeMileageProjection: Boolean = true,
+    ): Instant? {
         val lifeSpanMonths = part.lifeSpanMonths
         val lastMaintenanceDate = part.lastMaintenanceDate
 
@@ -26,7 +31,8 @@ object PredictionEngine {
             null
         }
 
-        val mileageBasedEstimate: Instant? = estimateMileageBasedDate(part, odometerRecords)
+        val mileageBasedEstimate: Instant? =
+            if (includeMileageProjection) estimateMileageBasedDate(part, odometerRecords) else null
 
         return when {
             dateBasedEstimate != null && mileageBasedEstimate != null -> {

@@ -78,4 +78,32 @@ class PredictionEngineTest {
         // Use delta for floating point precision in regression
         assertEquals(expectedTime.toDouble(), result?.toEpochMilliseconds()?.toDouble() ?: 0.0, 1000.0)
     }
+
+    @Test
+    fun `mileage projection can be excluded so only the time limit is used`() {
+        val start = Instant.fromEpochMilliseconds(1_000_000_000_000L)
+        val part = Part(
+            id = 1, vehicleId = 1, name = "Oil",
+            lifeSpanMileage = 1000.0, lastMaintenanceOdometer = 0.0,
+            lifeSpanMonths = 12, lastMaintenanceDate = start
+        )
+        // 100 km per day: the distance limit would be reached in about 10 days.
+        val records = (0..5).map {
+            OdometerRecord(vehicleId = 1, date = start + it.days, odometerValue = it * 100.0)
+        }
+
+        val withProjection = PredictionEngine.estimateNextMaintenanceDate(part, records)
+        val timeOnly = PredictionEngine.estimateNextMaintenanceDate(part, records, includeMileageProjection = false)
+
+        assertEquals(start + (12 * 30.4375).toLong().days, timeOnly)
+        assertNotNull(withProjection)
+        assert(withProjection!! < timeOnly!!)
+    }
+
+    @Test
+    fun `time only estimate is null without a lifespan in months`() {
+        val part = Part(id = 1, vehicleId = 1, name = "Tires", lifeSpanMileage = 1000.0, lastMaintenanceOdometer = 0.0)
+
+        assertNull(PredictionEngine.estimateNextMaintenanceDate(part, emptyList(), includeMileageProjection = false))
+    }
 }

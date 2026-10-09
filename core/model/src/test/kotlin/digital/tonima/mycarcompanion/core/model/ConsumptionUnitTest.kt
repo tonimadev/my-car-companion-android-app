@@ -54,4 +54,12 @@ class ConsumptionUnitTest {
     fun `format uses the given locale for decimals`() {
         assertEquals("12,5 km/L", ConsumptionUnit.KM_L.format(12.5, Locale.forLanguageTag("pt-BR")))
     }
+
+    @Test
+    fun `fromKmPerLiter converts to the numeric value of each unit`() {
+        assertEquals(12.5, ConsumptionUnit.KM_L.fromKmPerLiter(12.5), 0.0)
+        assertEquals(8.0, ConsumptionUnit.L_100KM.fromKmPerLiter(12.5), 0.0001)
+        assertEquals(29.4, ConsumptionUnit.MPG.fromKmPerLiter(12.5), 0.01)
+        assertEquals(0.0, ConsumptionUnit.L_100KM.fromKmPerLiter(0.0), 0.0)
+    }
 }
