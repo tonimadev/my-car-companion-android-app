@@ -8,7 +8,7 @@
     <string name="fuel_type_custom_label">Which fuel?</string>
     <string name="fuel_total_cost_label">Total (%1$s)</string>
     <string name="fuel_price_per_liter_label">Price/Liter</string>
-    <string name="fuel_price_suggested_hint">State average, adjust to what you paid</string>
+    <string name="fuel_price_suggested_hint">Average price, adjust to what you paid</string>
     <string name="fuel_save">Save Fill-up</string>
     <string name="fuel_update">Update Fill-up</string>
     <string name="fuel_history_title">Fuel Log</string>

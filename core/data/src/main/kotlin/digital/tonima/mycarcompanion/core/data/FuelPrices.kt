@@ -3,9 +3,21 @@ package digital.tonima.mycarcompanion.core.data
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 
-/** The fuel price source only covers Brazil, so the feature is limited to that region. */
-fun isFuelPriceRegion(locale: java.util.Locale = java.util.Locale.getDefault()): Boolean =
-    locale.country.equals("BR", ignoreCase = true)
+private val BRAZILIAN_TIME_ZONES = setOf(
+    "America/Sao_Paulo", "America/Bahia", "America/Fortaleza", "America/Recife", "America/Belem",
+    "America/Maceio", "America/Araguaina", "America/Santarem", "America/Manaus", "America/Cuiaba",
+    "America/Campo_Grande", "America/Porto_Velho", "America/Boa_Vista", "America/Rio_Branco",
+    "America/Eirunepe", "America/Noronha",
+)
+
+/**
+ * The fuel price source only covers Brazil. The feature is on when the device region is Brazil or its
+ * time zone is Brazilian, so people in Brazil using the phone in another language still get it.
+ */
+fun isFuelPriceRegion(
+    locale: java.util.Locale = java.util.Locale.getDefault(),
+    timeZone: java.util.TimeZone = java.util.TimeZone.getDefault(),
+): Boolean = locale.country.equals("BR", ignoreCase = true) || timeZone.id in BRAZILIAN_TIME_ZONES
 
 enum class FuelKind(internal val apiKey: String) {
     GASOLINE("gasolina"),
