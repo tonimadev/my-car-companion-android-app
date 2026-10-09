@@ -1,5 +1,7 @@
 package digital.tonima.mycarcompanion.feature.home
 
+import androidx.compose.runtime.remember
+import digital.tonima.mycarcompanion.core.designsystem.util.markdownToAnnotatedString
 import digital.tonima.mycarcompanion.core.designsystem.util.NumberUtils
 import digital.tonima.mycarcompanion.core.designsystem.R as DesignR
 import androidx.compose.animation.core.animateFloatAsState
@@ -269,7 +271,7 @@ fun AiInsightCard(
                     }
                 }
                 is AiInsightUiState.Success -> {
-                    Text(text = insightState.text, style = MaterialTheme.typography.bodyMedium)
+                    Text(text = remember(insightState.text) { markdownToAnnotatedString(insightState.text) }, style = MaterialTheme.typography.bodyMedium)
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(onClick = onGenerateClick) {
                         Text(stringResource(R.string.ai_insight_regenerate_button))
@@ -350,7 +352,7 @@ fun LazyListScope.maintenanceItems(
         ) {
             MaintenanceItem(
                 part = part,
-                prediction = if (isAiUser) predictions[part.id] else null,
+                prediction = predictions[part.id],
                 currentOdometer = currentOdometer,
                 unit = unit,
                 onPerformMaintenance = { onPerformMaintenance(part) },

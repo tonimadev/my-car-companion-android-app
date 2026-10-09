@@ -2,6 +2,18 @@ package digital.tonima.mycarcompanion.core.data
 
 object AiConfig {
     const val GEMINI_MODEL = "gemini-3.5-flash-lite"
+    const val REQUEST_TIMEOUT_MS = 60_000L
+    const val MAX_HISTORY_TURNS = 20
+    const val MAX_MESSAGE_LENGTH = 2_000
+
+    private val INSIGHT_INSTRUCTION = """
+        Based on the vehicle summary below, write a short insight (3 to 5 sentences) about
+        maintenance and fuel consumption: highlight the most urgent maintenance, give a practical
+        tip and comment on the consumption trend if there is enough data. Do not repeat the
+        summary, only analyze it. Write it in the "User language" stated in the summary.
+    """.trimIndent()
+
+    fun insightPrompt(vehicleContext: String): String = "$INSIGHT_INSTRUCTION\n\n$vehicleContext"
 
     val SYSTEM_INSTRUCTION = """
         You are an automotive diagnostic and maintenance assistant built into the My Car Companion app.
