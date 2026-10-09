@@ -35,13 +35,13 @@ class DefaultProUserProvider @Inject constructor(
 
     override val isProUser: StateFlow<Boolean> = payWallManager.ownedProductIds
         .map { owned -> 
-            owned.contains("remove_ads_premium") || owned.contains("month_subscription")
+            owned.contains("remove_ads_premium") || owned.contains(AI_PRODUCT_ID)
         }
         .stateIn(scope, SharingStarted.Eagerly, initialProStatus)
 
     override val isAiUser: StateFlow<Boolean> = payWallManager.ownedProductIds
         .map { owned ->
-            owned.contains("month_subscription")
+            owned.contains(AI_PRODUCT_ID)
         }
         .stateIn(scope, SharingStarted.Eagerly, initialAiStatus)
 
@@ -50,7 +50,8 @@ class DefaultProUserProvider @Inject constructor(
     }
 
     override fun launchSubscribeAi(activity: Activity) {
-        payWallManager.launchSubscription(activity, "month_subscription")
+        // The free trial offer is only listed by Play for users who are eligible for it.
+        payWallManager.launchSubscription(activity, AI_PRODUCT_ID, AI_BASE_PLAN_ID, AI_FREE_TRIAL_OFFER_ID)
     }
 
     init {
