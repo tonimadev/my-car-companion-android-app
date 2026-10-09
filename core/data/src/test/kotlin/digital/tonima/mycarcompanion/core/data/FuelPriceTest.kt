@@ -68,6 +68,19 @@ class FuelPriceParserTest {
     }
 }
 
+class FuelPriceRegionTest {
+    private val newYork = java.util.TimeZone.getTimeZone("America/New_York")
+    private val saoPaulo = java.util.TimeZone.getTimeZone("America/Sao_Paulo")
+
+    @Test
+    fun `enabled by Brazilian region or Brazilian time zone`() {
+        assertTrue(isFuelPriceRegion(java.util.Locale.forLanguageTag("pt-BR"), newYork))
+        assertTrue(isFuelPriceRegion(java.util.Locale.US, saoPaulo))
+        assertFalse(isFuelPriceRegion(java.util.Locale.US, newYork))
+        assertFalse(isFuelPriceRegion(java.util.Locale.forLanguageTag("pt-PT"), java.util.TimeZone.getTimeZone("Europe/Lisbon")))
+    }
+}
+
 class OnlineFuelPriceRepositoryTest {
 
     @get:Rule

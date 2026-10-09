@@ -19,6 +19,8 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
+private val BRAZIL = java.util.Locale.forLanguageTag("pt-BR")
+
 /** Average gasoline and diesel prices for the user's state (or Brazil), with the date they were collected. */
 @Composable
 fun FuelPriceCard(fuelPrice: FuelPriceUi, modifier: Modifier = Modifier) {
@@ -54,7 +56,7 @@ private fun PriceColumn(label: String, price: StatePrice) {
     Column {
         Text(label, style = MaterialTheme.typography.labelMedium)
         Text(
-            text = CurrencyUtils.formatCurrency(price.value),
+            text = CurrencyUtils.formatCurrency(price.value, BRAZIL),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.primary
         )

@@ -203,6 +203,7 @@ class HomeViewModelTest {
     @Test
     fun `fuel prices for the selected state are exposed in brazil and refreshed once`() = runTest {
         val originalLocale = java.util.Locale.getDefault()
+        val originalZone = java.util.TimeZone.getDefault()
         java.util.Locale.setDefault(java.util.Locale.forLanguageTag("pt-BR"))
         try {
             every { userPreferencesRepository.selectedState } returns flowOf("rs")
@@ -229,13 +230,16 @@ class HomeViewModelTest {
             coVerify(atLeast = 1) { fuelPriceRepository.refresh() }
         } finally {
             java.util.Locale.setDefault(originalLocale)
+            java.util.TimeZone.setDefault(originalZone)
         }
     }
 
     @Test
     fun `fuel prices are not loaded outside brazil`() = runTest {
         val originalLocale = java.util.Locale.getDefault()
+        val originalZone = java.util.TimeZone.getDefault()
         java.util.Locale.setDefault(java.util.Locale.US)
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/New_York"))
         try {
             val repository = mockk<FuelPriceRepository>(relaxed = true)
 
@@ -249,6 +253,7 @@ class HomeViewModelTest {
             coVerify(exactly = 0) { repository.refresh(any()) }
         } finally {
             java.util.Locale.setDefault(originalLocale)
+            java.util.TimeZone.setDefault(originalZone)
         }
     }
 
