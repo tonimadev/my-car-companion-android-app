@@ -32,8 +32,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
@@ -43,6 +45,7 @@ import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLa
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis
+import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisLabelComponent
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProducer
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.columnSeries
@@ -53,7 +56,7 @@ import digital.tonima.mycarcompanion.core.designsystem.component.IsometricCard
 import digital.tonima.mycarcompanion.core.designsystem.model.MaintenanceStatus
 import digital.tonima.mycarcompanion.core.designsystem.util.formatToShortDate
 import digital.tonima.mycarcompanion.feature.home.R
-import java.time.format.TextStyle
+import java.time.format.TextStyle as MonthTextStyle
 import java.util.Locale
 import kotlin.time.Instant
 
@@ -175,10 +178,13 @@ private fun MonthlyCostsCard(costs: List<MonthlyCost>) {
                 }
             }
             val monthLabels = remember(costs) {
-                costs.map { it.month.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()) }
+                costs.map { it.month.month.getDisplayName(MonthTextStyle.SHORT, Locale.getDefault()) }
             }
             val fuelColor = MaterialTheme.colorScheme.primary
             val maintenanceColor = MaterialTheme.colorScheme.tertiary
+            val axisLabel = rememberAxisLabelComponent(
+                TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp)
+            )
             CartesianChartHost(
                 chart = rememberCartesianChart(
                     rememberColumnCartesianLayer(
@@ -187,8 +193,9 @@ private fun MonthlyCostsCard(costs: List<MonthlyCost>) {
                             rememberLineComponent(Fill(maintenanceColor), 12.dp),
                         )
                     ),
-                    startAxis = VerticalAxis.rememberStart(),
+                    startAxis = VerticalAxis.rememberStart(label = axisLabel),
                     bottomAxis = HorizontalAxis.rememberBottom(
+                        label = axisLabel,
                         valueFormatter = CartesianValueFormatter { _, x, _ -> monthLabels.getOrElse(x.toInt()) { "" } }
                     ),
                 ),
@@ -219,11 +226,15 @@ private fun ConsumptionCard(points: List<ConsumptionPoint>, unit: digital.tonima
             val dateLabels = remember(points) {
                 points.map { Instant.fromEpochMilliseconds(it.dateMillis).formatToShortDate() }
             }
+            val axisLabel = rememberAxisLabelComponent(
+                TextStyle(color = MaterialTheme.colorScheme.onSurface, fontSize = 12.sp)
+            )
             CartesianChartHost(
                 chart = rememberCartesianChart(
                     rememberLineCartesianLayer(),
-                    startAxis = VerticalAxis.rememberStart(),
+                    startAxis = VerticalAxis.rememberStart(label = axisLabel),
                     bottomAxis = HorizontalAxis.rememberBottom(
+                        label = axisLabel,
                         valueFormatter = CartesianValueFormatter { _, x, _ -> dateLabels.getOrElse(x.toInt()) { "" } }
                     ),
                 ),
