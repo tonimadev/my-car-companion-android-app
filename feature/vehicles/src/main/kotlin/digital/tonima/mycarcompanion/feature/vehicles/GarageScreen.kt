@@ -169,9 +169,9 @@ fun GarageContent(
                     vehicle = editingVehicle,
                     unit = state.distanceUnit,
                     onDismiss = { showDialog = false },
-                    onConfirm = { name, odometer, tankCapacity ->
+                    onConfirm = { name, odometer, tankCapacity, specs ->
                         if (editingVehicle == null) {
-                            onIntent(GarageIntent.AddVehicle(name, odometer, tankCapacity))
+                            onIntent(GarageIntent.AddVehicle(name, odometer, tankCapacity, specs))
                         } else {
                             onIntent(
                                 GarageIntent.UpdateVehicle(

@@ -157,4 +157,40 @@ class OfflineFirstVehicleRepositoryTest {
         assertEquals(1012.5, saved.captured.odometerValue, 0.0)
         assertEquals(1L, saved.captured.vehicleId)
     }
+
+    @Test
+    fun `insertVehicle applies suggested service intervals only to the matching parts`() = runTest {
+        coEvery { vehicleDao.insertVehicle(any()) } returns 7L
+        val inserted = mutableListOf<PartEntity>()
+        coEvery { partDao.insertPart(capture(inserted)) } returns 1L
+        every { context.getString(any()) } answers { "part-${firstArg<Int>()}" }
+
+        repository.insertVehicle(
+            vehicle.copy(id = 0, currentOdometer = 5000.0),
+            listOf(ServiceInterval(ServicePart.ENGINE_OIL, 8_000.0, 12))
+        )
+
+        val oil = inserted.single { it.name == "part-${ServicePart.ENGINE_OIL.nameResId}" }
+        assertEquals(8_000.0, oil.lifeSpanMileage, 0.0)
+        assertEquals(12, oil.lifeSpanMonths)
+        assertEquals(true, oil.lastMaintenanceDate != null)
+
+        val others = inserted - oil
+        assertEquals(DEFAULT_PARTS.size - 1, others.size)
+        assertEquals(true, others.all { it.lifeSpanMonths == null && it.lastMaintenanceDate == null })
+        val defaultCoolant = DEFAULT_PARTS.single { it.nameResId == ServicePart.COOLANT.nameResId }
+        assertEquals(defaultCoolant.lifeSpanKm, others.single { it.name == "part-${ServicePart.COOLANT.nameResId}" }.lifeSpanMileage, 0.0)
+    }
+
+    @Test
+    fun `updateVehicle keeps the stored estimated consumption when the caller does not know it`() = runTest {
+        coEvery { vehicleDao.getVehicle(1) } returns entity.copy(estimatedConsumption = 12.5)
+        val saved = slot<VehicleEntity>()
+        coEvery { vehicleDao.updateVehicle(capture(saved)) } returns Unit
+
+        repository.updateVehicle(vehicle.copy(name = "Renamed"))
+
+        assertEquals(12.5, saved.captured.estimatedConsumption!!, 0.0)
+        assertEquals("Renamed", saved.captured.name)
+    }
 }

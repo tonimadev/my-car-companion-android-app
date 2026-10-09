@@ -22,6 +22,7 @@ object VehicleAiContext {
         consumptionUnit: ConsumptionUnit = ConsumptionUnit.KM_L,
         averageFuelConsumption: Double? = null,
         fuelTrendLabel: String? = null,
+        estimatedConsumption: Double? = null,
         userLocale: Locale = Locale.getDefault(),
     ): String {
         val unit = distanceUnit.symbol
@@ -46,6 +47,9 @@ object VehicleAiContext {
         val consumptionSection = if (averageFuelConsumption != null) {
             "Average consumption: ${consumptionUnit.format(averageFuelConsumption, Locale.US)}" +
                 (fuelTrendLabel?.let { " (trend: $it)" } ?: "")
+        } else if (estimatedConsumption != null) {
+            "No fuel history yet. Typical consumption for this model (estimate): " +
+                consumptionUnit.format(estimatedConsumption, Locale.US)
         } else {
             "Not enough fuel history."
         }

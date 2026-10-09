@@ -10,7 +10,8 @@ data class VehicleEntity(
     val name: String,
     val currentOdometer: Double,
     val tankCapacity: Double? = null,
-    val isCurrent: Boolean
+    val isCurrent: Boolean,
+    val estimatedConsumption: Double? = null
 )
 
 fun VehicleEntity.asExternalModel() = Vehicle(
@@ -18,7 +19,8 @@ fun VehicleEntity.asExternalModel() = Vehicle(
     name = name,
     currentOdometer = currentOdometer,
     tankCapacity = tankCapacity,
-    isCurrent = isCurrent
+    isCurrent = isCurrent,
+    estimatedConsumption = estimatedConsumption
 )
 
 fun Vehicle.asEntity() = VehicleEntity(
@@ -26,5 +28,6 @@ fun Vehicle.asEntity() = VehicleEntity(
     name = name,
     currentOdometer = currentOdometer,
     tankCapacity = tankCapacity,
-    isCurrent = isCurrent
+    isCurrent = isCurrent,
+    estimatedConsumption = estimatedConsumption
 )

@@ -15,6 +15,24 @@ object AiConfig {
 
     fun insightPrompt(vehicleContext: String): String = "$INSIGHT_INSTRUCTION\n\n$vehicleContext"
 
+    private val VEHICLE_SPECS_INSTRUCTION = """
+        Give typical specifications for the vehicle below, as sold in the Brazilian market.
+        Reply with ONLY a JSON object: no Markdown, no code fence, no explanation, in exactly this shape:
+        {"tankLiters": number or null,
+         "consumptionKmPerLiter": number or null,
+         "services": [{"part": "<key>", "km": number, "months": number or null}]}
+        Rules:
+        - tankLiters is the fuel tank capacity in liters.
+        - consumptionKmPerLiter is the typical mixed city/highway fuel economy in km/L (use gasoline for flex cars).
+        - services lists the manufacturer's recommended replacement interval for each part you know,
+          where "part" is one of: engine_oil, oil_filter, air_filter, fuel_filter, cabin_filter,
+          spark_plugs, timing_belt, brake_pads, brake_fluid, coolant. "km" is the distance interval and
+          "months" the time interval when the manufacturer defines one, otherwise null.
+        - Use null (or omit the service) when you are not reasonably sure. Never guess wildly.
+    """.trimIndent()
+
+    fun vehicleSpecsPrompt(description: String): String = "$VEHICLE_SPECS_INSTRUCTION\n\nVehicle: $description"
+
     val SYSTEM_INSTRUCTION = """
         You are an automotive diagnostic and maintenance assistant built into the My Car Companion app.
         You receive a summary of the user's vehicle (details, parts and maintenance/fuel history)

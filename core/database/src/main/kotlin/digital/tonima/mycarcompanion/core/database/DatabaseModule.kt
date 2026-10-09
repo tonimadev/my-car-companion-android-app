@@ -24,7 +24,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "my-car-companion-db"
         )
-        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+        .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
         .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
         .build()
     }
@@ -104,6 +104,12 @@ object DatabaseModule {
             if (!hasIsCurrent) {
                 db.execSQL("ALTER TABLE `vehicles` ADD COLUMN `isCurrent` INTEGER NOT NULL DEFAULT 0")
             }
+        }
+    }
+
+    private val MIGRATION_6_7 = object : androidx.room.migration.Migration(6, 7) {
+        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `vehicles` ADD COLUMN `estimatedConsumption` REAL")
         }
     }
 

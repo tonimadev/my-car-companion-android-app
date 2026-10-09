@@ -39,6 +39,21 @@ interface DataModule {
     ): FuelPriceApi
 
     @Binds
+    fun bindsFipeRepository(
+        repository: OnlineFipeRepository
+    ): FipeRepository
+
+    @Binds
+    fun bindsFipeApi(
+        api: OkHttpFipeApi
+    ): FipeApi
+
+    @Binds
+    fun bindsVehicleSpecsRepository(
+        repository: GeminiCarAiRepository
+    ): VehicleSpecsRepository
+
+    @Binds
     fun bindsUserPreferencesRepository(
         repository: DataStoreUserPreferencesRepository
     ): UserPreferencesRepository
@@ -83,6 +98,12 @@ interface DataModule {
                 produceFile = { context.preferencesDataStoreFile("user_preferences") }
             )
         }
+
+        @Provides
+        @Singleton
+        fun provideOkHttpClient(): okhttp3.OkHttpClient = okhttp3.OkHttpClient.Builder()
+            .callTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
 
         @Provides
         @Singleton

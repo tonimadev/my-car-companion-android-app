@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -30,10 +29,7 @@ interface FuelPriceApi {
 }
 
 @Singleton
-class OkHttpFuelPriceApi @Inject constructor() : FuelPriceApi {
-    private val client = OkHttpClient.Builder()
-        .callTimeout(15, TimeUnit.SECONDS)
-        .build()
+class OkHttpFuelPriceApi @Inject constructor(private val client: OkHttpClient) : FuelPriceApi {
 
     override suspend fun fetch(): String = withContext(Dispatchers.IO) {
         client.newCall(Request.Builder().url(URL).build()).execute().use { response ->

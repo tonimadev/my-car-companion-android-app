@@ -12,7 +12,7 @@ import androidx.room.TypeConverters
         OdometerEntity::class,
         FuelEntity::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(InstantConverter::class)
