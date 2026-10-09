@@ -73,4 +73,13 @@ class DefaultProUserProviderTest {
         proUserProvider.launchPurchasePro(activity)
         verify { payWallManager.launchPurchase(activity, "remove_ads_premium") }
     }
+
+    @Test
+    fun `subscribing to the AI assistant requests the base plan and the free trial offer`() {
+        val activity = mockk<android.app.Activity>()
+
+        proUserProvider.launchSubscribeAi(activity)
+
+        verify { payWallManager.launchSubscription(activity, "month_subscription", "monthly-basic-plan", "days-free") }
+    }
 }

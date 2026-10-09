@@ -6,6 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import digital.tonima.mycarcompanion.core.data.AI_PRODUCT_ID
 import digital.tonima.paywall.core.PayWallConfig
 import digital.tonima.paywall.core.PayWallManager
 import digital.tonima.paywall.play.PayWallManagerImpl
@@ -20,7 +21,7 @@ object PayWallModule {
     fun providePayWallConfig(): PayWallConfig {
         return PayWallConfig(
             inAppProductIds = setOf("remove_ads_premium"),
-            subscriptionProductIds = setOf("month_subscription")
+            subscriptionProductIds = setOf(AI_PRODUCT_ID)
         )
     }
 
