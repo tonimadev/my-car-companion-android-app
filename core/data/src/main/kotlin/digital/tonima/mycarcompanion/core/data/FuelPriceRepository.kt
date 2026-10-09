@@ -34,7 +34,7 @@ class OkHttpFuelPriceApi @Inject constructor(private val client: OkHttpClient) :
     override suspend fun fetch(): String = withContext(Dispatchers.IO) {
         client.newCall(Request.Builder().url(URL).build()).execute().use { response ->
             check(response.isSuccessful) { "HTTP ${response.code}" }
-            response.body.string()
+            response.body?.string() ?: error("Empty response body")
         }
     }
 

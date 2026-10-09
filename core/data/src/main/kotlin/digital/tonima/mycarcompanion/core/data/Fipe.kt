@@ -31,7 +31,7 @@ class OkHttpFipeApi @Inject constructor(private val client: OkHttpClient) : Fipe
     override suspend fun get(path: String): String = withContext(Dispatchers.IO) {
         client.newCall(Request.Builder().url(BASE_URL + path).build()).execute().use { response ->
             check(response.isSuccessful) { "HTTP ${response.code}" }
-            response.body.string()
+            response.body?.string() ?: error("Empty response body")
         }
     }
 
