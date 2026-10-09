@@ -26,6 +26,7 @@ import androidx.compose.material.icons.automirrored.rounded.TrendingUp
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material.icons.rounded.AutoAwesome
+import androidx.compose.material.icons.rounded.BarChart
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.Visibility
 import androidx.compose.material.icons.rounded.VisibilityOff
@@ -81,6 +82,7 @@ fun HomeRoute(
     onNavigateToFuel: () -> Unit,
     onNavigateToMaintenanceHistory: () -> Unit,
     onNavigateToDiagnosticChat: () -> Unit,
+    onNavigateToCharts: () -> Unit,
     adUnitId: String,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
@@ -95,6 +97,7 @@ fun HomeRoute(
         onNavigateToFuel = onNavigateToFuel,
         onNavigateToMaintenanceHistory = onNavigateToMaintenanceHistory,
         onNavigateToDiagnosticChat = onNavigateToDiagnosticChat,
+        onNavigateToCharts = onNavigateToCharts,
         onSubscribeAiClick = viewModel::subscribeAi,
         adUnitId = adUnitId
     )
@@ -110,6 +113,7 @@ internal fun HomeScreen(
     onNavigateToFuel: () -> Unit,
     onNavigateToMaintenanceHistory: () -> Unit,
     onNavigateToDiagnosticChat: () -> Unit = {},
+    onNavigateToCharts: () -> Unit = {},
     onSubscribeAiClick: (Activity) -> Unit = {},
     adUnitId: String
 ) {
@@ -137,6 +141,9 @@ internal fun HomeScreen(
                 }
                 HomeUiEffect.NavigateToDiagnosticChat -> {
                     onNavigateToDiagnosticChat()
+                }
+                HomeUiEffect.NavigateToCharts -> {
+                    onNavigateToCharts()
                 }
             }
             onIntent(HomeUiIntent.ConsumeEffect)
@@ -173,6 +180,9 @@ internal fun HomeScreen(
                     }
                     IconButton(onClick = { onIntent(HomeUiIntent.NavigateToDiagnosticChat) }) {
                         Icon(Icons.Rounded.AutoAwesome, contentDescription = stringResource(R.string.diagnostic_chat_title))
+                    }
+                    IconButton(onClick = { onIntent(HomeUiIntent.NavigateToCharts) }) {
+                        Icon(Icons.Rounded.BarChart, contentDescription = stringResource(R.string.charts_title))
                     }
                     IconButton(onClick = { onIntent(HomeUiIntent.NavigateToMaintenanceHistory) }) {
                         Icon(Icons.Default.Build, contentDescription = stringResource(R.string.maintenance_history_title))

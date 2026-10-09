@@ -33,6 +33,7 @@ import digital.tonima.mycarcompanion.feature.home.onboarding.OnboardingRoute
 import digital.tonima.mycarcompanion.feature.parts.PartsScreen
 import digital.tonima.mycarcompanion.feature.parts.PartsViewModel
 import digital.tonima.mycarcompanion.feature.tracking.ui.AddFuelRecordScreen
+import digital.tonima.mycarcompanion.feature.home.charts.ChartsScreen
 import digital.tonima.mycarcompanion.feature.tracking.ui.FuelHistoryScreen
 import kotlinx.serialization.Serializable
 import javax.inject.Inject
@@ -48,6 +49,7 @@ sealed interface Route : NavKey {
     @Serializable data object MaintenanceHistory : Route
     @Serializable data class AddFuel(val recordId: Long? = null) : Route
     @Serializable data object DiagnosticChat : Route
+    @Serializable data object Charts : Route
 }
 
 @AndroidEntryPoint
@@ -164,9 +166,19 @@ fun AppNavigation(
                     onNavigateToFuel = { backStack.add(Route.FuelHistory) },
                     onNavigateToMaintenanceHistory = { backStack.add(Route.MaintenanceHistory) },
                     onNavigateToDiagnosticChat = { backStack.add(Route.DiagnosticChat) },
+                    onNavigateToCharts = { backStack.add(Route.Charts) },
                     adUnitId = BuildConfig.ADMOB_BANNER_HOME_ID
                 )
                 Route.DiagnosticChat -> DiagnosticChatRoute(
+                    onBack = {
+                        if (backStack.size > 1) {
+                            backStack.removeAt(backStack.lastIndex)
+                        } else {
+                            onFinish()
+                        }
+                    }
+                )
+                Route.Charts -> ChartsScreen(
                     onBack = {
                         if (backStack.size > 1) {
                             backStack.removeAt(backStack.lastIndex)
