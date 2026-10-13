@@ -13,10 +13,13 @@
     <string name="car_mechanics_title">Oficinas Mecânicas</string>
     <string name="car_mechanics_text">Encontrar manutenção próxima</string>
     <string name="car_mechanics_query">oficina mecânica</string>
+    <string name="car_no_navigation_app">Nenhum app de navegação disponível</string>
     <string name="car_no_vehicles_title">Nenhum veículo encontrado</string>
     <string name="car_no_vehicles_text">Cadastre um veículo no celular</string>
     <string name="car_odometer">Odômetro: %1$s %2$s</string>
     <string name="car_no_parts">Nenhuma peça cadastrada para este veículo</string>
     <string name="car_part_lifespan">Vida útil: %1$s %2$s</string>
+    <string name="car_part_remaining">%1$d%% restante · %2$s %3$s</string>
+    <string name="car_part_overdue">Vencida</string>
     <string name="car_parts_title">Peças - %1$s</string>
 </resources>

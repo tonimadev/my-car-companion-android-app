@@ -13,6 +13,7 @@ class MyCarSession(
     private val userPreferencesRepository: UserPreferencesRepository
 ) : Session() {
     override fun onCreateScreen(intent: Intent): Screen {
+        lifecycle.addObserver(CarOdometerSync(carContext, vehicleRepository))
         return VehicleListScreen(carContext, vehicleRepository, partRepository, userPreferencesRepository)
     }
 }

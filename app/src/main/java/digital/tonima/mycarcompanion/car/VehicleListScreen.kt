@@ -3,6 +3,8 @@ package digital.tonima.mycarcompanion.car
 import android.content.Intent
 import android.net.Uri
 import androidx.car.app.CarContext
+import androidx.car.app.CarToast
+import androidx.car.app.constraints.ConstraintManager
 import androidx.car.app.Screen
 import androidx.car.app.model.Action
 import androidx.car.app.model.CarIcon
@@ -61,7 +63,12 @@ class VehicleListScreen(
 
     private fun openMapSearch(query: String) {
         val intent = Intent(CarContext.ACTION_NAVIGATE, Uri.parse("geo:0,0?q=${Uri.encode(query)}"))
-        carContext.startCarApp(intent)
+        try {
+            carContext.startCarApp(intent)
+        } catch (e: Exception) {
+            // No navigation app available (or host refused): never crash the car session.
+            CarToast.makeText(carContext, R.string.car_no_navigation_app, CarToast.LENGTH_LONG).show()
+        }
     }
 
     override fun onGetTemplate(): Template {
@@ -104,7 +111,10 @@ class VehicleListScreen(
                     .build()
             )
         } else {
-            vehicles.forEach { vehicle ->
+            // The host rejects lists above the car's content limit, so keep the POI rows plus as many vehicles as fit.
+            val limit = carContext.getCarService(ConstraintManager::class.java)
+                .getContentLimit(ConstraintManager.CONTENT_LIMIT_TYPE_LIST)
+            vehicles.take((limit - POI_ROWS).coerceAtLeast(0)).forEach { vehicle ->
                 listBuilder.addItem(
                     Row.Builder()
                         .setTitle(vehicle.name)
@@ -116,7 +126,7 @@ class VehicleListScreen(
                             )
                         )
                         .setOnClickListener {
-                            screenManager.push(PartListScreen(carContext, vehicle.id, vehicle.name, partRepository, distanceUnit))
+                            screenManager.push(PartListScreen(carContext, vehicle.id, vehicle.name, partRepository, vehicleRepository, distanceUnit))
                         }
                         .build()
                 )
@@ -132,5 +142,9 @@ class VehicleListScreen(
                     .build()
             )
             .build()
+    }
+
+    private companion object {
+        const val POI_ROWS = 2
     }
 }
