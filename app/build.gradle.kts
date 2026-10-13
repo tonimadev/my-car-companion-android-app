@@ -19,8 +19,8 @@ android {
         applicationId = "digital.tonima.mycarcompanion"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 22
-        versionName = "1.21"
+        versionCode = 24
+        versionName = "1.23"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
